@@ -89,28 +89,33 @@ class ProviderServiceSecondaryCard extends StatelessWidget {
                 color: AppColors.primaryColorLight,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Expanded(child: Text(time)),
                   Expanded(
-                    child: Row(
-                      spacing: 8,
-                      children: <Widget>[
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                            child: const Text("Cancel", style: TextStyle(fontSize: 14)),
-                          ),
-                        ),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            style: OutlinedButton.styleFrom(foregroundColor: Colors.green),
-                            child: const Text("Accept", style: TextStyle(fontSize: 14)),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      time,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IntrinsicWidth(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text("Cancel", style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IntrinsicWidth(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text("Accept", style: TextStyle(fontSize: 12)),
                     ),
                   ),
                 ],

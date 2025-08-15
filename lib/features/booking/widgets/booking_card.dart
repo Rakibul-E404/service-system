@@ -42,7 +42,7 @@ class HorizontalServiceCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: width,
-        height: height ?? 100,
+        height: height ?? 150,
         // constraints: BoxConstraints(minHeight: height ?? 100),
         // decoration: BoxDecoration(border: Border.all(color: AppColors.primaryColor)),
         child: Row(

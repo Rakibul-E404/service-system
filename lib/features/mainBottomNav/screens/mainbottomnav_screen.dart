@@ -67,7 +67,7 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
             selectedIndex = index;
           });
         },
-        itemCount: 1, // Only one page containing IndexedStack
+        itemCount: _screens.length, // Only one page containing IndexedStack
         itemBuilder: (BuildContext context, int index) {
           // IndexedStack inside PageView
           return IndexedStack(
@@ -85,6 +85,10 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
             children: List<GestureDetector>.generate(_icons.length, (int index) {
               return GestureDetector(
                 onTap: () {
+                  // setState(() {
+                  //   selectedIndex = index;
+                  //   _pageController.jumpToPage(index);
+                  // });
                   _pageController.animateToPage(
                     index,
                     duration: const Duration(milliseconds: 500),
