@@ -121,7 +121,8 @@ class HorizontalServiceCard extends StatelessWidget {
                       child: Text(
                         status,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
                           color: status == "Requested"
                               ? AppColors.primaryColor
                               : AppColors.whiteColor,
