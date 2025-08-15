@@ -64,7 +64,7 @@ class _ProviderMainBottomNavScreenState extends State<ProviderMainBottomNavScree
             selectedIndex = index;
           });
         },
-        itemCount: 1, // Only one page containing IndexedStack
+        itemCount: _screens.length,
         itemBuilder: (BuildContext context, int index) {
           // IndexedStack inside PageView
           return IndexedStack(
