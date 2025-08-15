@@ -1,0 +1,377 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:manx_mate/core/config/app_colors.dart';
+import 'package:manx_mate/features/provider/controllers/provider_profile_controller.dart';
+
+// Business Profile Page
+class ProviderProfilePage extends GetView<ProviderProfileController> {
+  const ProviderProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () => Get.back(),
+        ),
+        title: const Text(
+          'Profile',
+          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+        actions: <Widget>[
+          Obx(
+            () => Container(
+              margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+              child: ElevatedButton(
+                onPressed: () => controller.toggleEdit(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber[600],
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 0,
+                ),
+                child: Text(
+                  controller.isEditing.value ? 'Save' : 'Edit',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // Business Information Section with Border
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.primaryColor, width: 1),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'Business information',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Form Fields
+                  Obx(
+                    () => Column(
+                      children: <Widget>[
+                        _buildFormField(
+                          label: 'Name',
+                          value: controller.businessName.value,
+                          controller: controller.nameController,
+                          isEditing: controller.isEditing.value,
+                          placeholder: 'Add a business name',
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        _buildFormField(
+                          label: 'Category',
+                          value: controller.category.value,
+                          controller: controller.categoryController,
+                          isEditing: controller.isEditing.value,
+                          placeholder: 'Add a business category',
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        _buildFormField(
+                          label: 'Sub-Category',
+                          value: controller.subCategory.value,
+                          controller: controller.subCategoryController,
+                          isEditing: controller.isEditing.value,
+                          placeholder: 'Add a business sub-category',
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        _buildFormField(
+                          label: 'Location',
+                          value: controller.location.value,
+                          controller: controller.locationController,
+                          isEditing: controller.isEditing.value,
+                          placeholder: 'Add a business location (State/Province/County)',
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        _buildFormField(
+                          label: 'Advertising',
+                          value: controller.advertising.value,
+                          controller: controller.advertisingController,
+                          isEditing: controller.isEditing.value,
+                          placeholder: 'Add a business advertising',
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        _buildFormField(
+                          label: 'Contact details',
+                          value: controller.contactDetails.value,
+                          controller: controller.contactController,
+                          isEditing: controller.isEditing.value,
+                          placeholder: 'Add a business contact details',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Business Image Section
+                  Obx(
+                    () => controller.isEditing.value
+                        ? const Text(
+                            'Business Image',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          )
+                        : SizedBox.shrink(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Image Upload Section
+                  Obx(
+                    () => controller.isEditing.value
+                        ? Column(
+                            children: <Widget>[
+                              // Image Display/Upload Area
+                              GestureDetector(
+                                onTap: () => controller.showImagePickerDialog(),
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: controller.selectedImage.value != null
+                                      ? Stack(
+                                          children: <Widget>[
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(11),
+                                              child: Image.file(
+                                                controller.selectedImage.value!,
+                                                width: double.infinity,
+                                                height: double.infinity,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 8,
+                                              right: 8,
+                                              child: GestureDetector(
+                                                onTap: () => controller.removeImage(),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.red,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Icon(
+                                              Icons.cloud_upload_outlined,
+                                              size: 40,
+                                              color: Colors.grey[600],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Tap to upload image',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[600],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Format Information
+                              Text(
+                                'Format: jpeg, png & Max file size: 25 MB',
+                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Upload Button
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () => controller.showImagePickerDialog(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.amber[600],
+                                        foregroundColor: Colors.black,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        elevation: 0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          const Icon(Icons.upload, size: 18),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            controller.selectedImage.value != null
+                                                ? 'Change Image'
+                                                : 'Upload Image',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  if (controller.selectedImage.value != null) ...<Widget>[
+                                    const SizedBox(width: 12),
+                                    ElevatedButton(
+                                      onPressed: () => controller.removeImage(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red[100],
+                                        foregroundColor: Colors.red[700],
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                          horizontal: 16,
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child: const Icon(Icons.delete, size: 18),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          )
+                        : SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Cancel Button (only in edit mode)
+            Obx(
+              () => controller.isEditing.value
+                  ? SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => controller.cancelEdit(),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                      ),
+                    )
+                  : const SizedBox(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormField({
+    required String label,
+    required String value,
+    required TextEditingController controller,
+    required bool isEditing,
+    required String placeholder,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87),
+        ),
+
+        const SizedBox(height: 8),
+
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isEditing ? AppColors.primaryColor : Colors.grey[300]!,
+              width: isEditing ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: isEditing
+              ? TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: placeholder,
+                    hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: value.startsWith('Add a') ? Colors.grey[500] : Colors.black87,
+                    ),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
