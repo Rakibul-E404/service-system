@@ -19,21 +19,25 @@ class PrimaryButton extends StatelessWidget {
     return Container(
       width: width.toDouble(),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: AppColors.blackColor,
-            // Blue shadow with opacity
-            offset: Offset(0, 6),
-          ),
+          // BoxShadow(
+          //   color: AppColors.blackColor,
+          //   // Blue shadow with opacity
+          //   offset: Offset(0, 6),
+          // ),
         ],
       ),
       child: ElevatedButton(
         onPressed: () {
           DeviceUtility.hapticFeedback();
-          onPressed;
+          onPressed();
         },
-
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0), // Adjust the radius as needed
+          ),
+        ),
         child: Text(buttonText, style: Theme.of(context).textTheme.labelMedium),
       ),
     );

@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
       // initialRoute: AppRoutes.homeRoute,
       getPages: AppNavigation.routes,
 
-      initialBinding: ControllerBinder(),
+      // initialBinding: ControllerBinder(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -1,11 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
-
 import '../../auth/widgets/app_custom_modal.dart';
 
 class HorizontalServiceCard extends StatelessWidget {

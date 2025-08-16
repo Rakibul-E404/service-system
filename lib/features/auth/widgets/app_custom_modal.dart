@@ -14,7 +14,7 @@ class AppCustomModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: Get.height / 2,
+      height: Get.height /2,
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
@@ -42,7 +42,7 @@ class AppCustomModal extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
               CircleAvatar(
                 radius: 66,
@@ -74,6 +74,7 @@ class AppCustomModal extends StatelessWidget {
                   Get.offAll(() => const SignInScreen());
                 },
               ),
+               SizedBox(height: AppSizes.lg),
             ],
           ),
         ),

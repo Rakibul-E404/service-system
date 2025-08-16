@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:manx_mate/core/extensions/widget_extensions.dart';
 import 'package:manx_mate/features/booking/screens/booking_screen.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/screens/home_screen.dart';
@@ -19,7 +20,13 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
   final PageController _pageController = PageController();
 
   final List<Widget> _screens = <Widget>[
-    HomeScreen(),
+ // Text("Home").centered,
+ // Text("Booking").centered,
+ // Text("Fav").centered,
+ // Text("Mesasge").centered,
+ // Text("Profile").centered,
+
+    const HomeScreen(),
     const BookingScreen(),
     const FavoriteScreen(),
     const MessageScreen(),
@@ -85,17 +92,14 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
             children: List<GestureDetector>.generate(_icons.length, (int index) {
               return GestureDetector(
                 onTap: () {
-                  // setState(() {
-                  //   selectedIndex = index;
-                  //   _pageController.jumpToPage(index);
-                  // });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeInOut,
-                  );
 
+                  // _pageController.animateToPage(
+                  //   index,
+                  //   duration: const Duration(milliseconds: 500),
+                  //   curve: Curves.easeInOut,
+                  // );
                   _pageController.jumpToPage(index);
+
                   setState(() {
                     selectedIndex = index;
                   });

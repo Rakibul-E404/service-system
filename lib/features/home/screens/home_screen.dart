@@ -17,16 +17,17 @@ import '../widget/inquiry_bottom_sheet.dart';
 import '../widget/reusable_small_card.dart';
 
 class HomeScreen extends GetView<HomeController> {
-  HomeScreen({super.key});
+  const HomeScreen({super.key});
 
-  final TextEditingController _serviceNameTEController = TextEditingController();
-  final TextEditingController _locationTEController = TextEditingController();
-  final TextEditingController _additionalNoteTEController = TextEditingController();
-  final TextEditingController _dateTEController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
     final TimeController timeController = Get.put(TimeController());
+    final TextEditingController _serviceNameTEController = TextEditingController();
+    final TextEditingController _locationTEController = TextEditingController();
+    final TextEditingController _additionalNoteTEController = TextEditingController();
+    final TextEditingController _dateTEController = TextEditingController();
 
     return Scaffold(
       body: Scaffold(
