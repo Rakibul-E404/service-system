@@ -12,10 +12,11 @@ class SplashScreenScreen extends GetView<SplashScreenController> {
   Widget build(BuildContext context) {
     controller.navigateToNextScreen();
     return Scaffold(
-      body: Container(
+       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
+
           image: DecorationImage(
             image: AssetImage(AppImages.splashScreenImage),
             fit: BoxFit.contain,

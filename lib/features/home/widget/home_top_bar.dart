@@ -15,7 +15,7 @@ class HomeTopBar extends StatelessWidget {
       children: <Widget>[
         // Main Card
         Container(
-          margin: const EdgeInsets.only(bottom: 25),
+          margin: const EdgeInsets.only(bottom: 40),
           // Space for half of the search field
           child: Card(
             color: AppColors.whiteColor,

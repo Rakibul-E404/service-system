@@ -142,6 +142,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                     },
                   ),
 
+
                   /// ============= Secondary Card =========>
                   ListView.separated(
                     padding: const EdgeInsets.symmetric(
@@ -239,6 +240,9 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                   ),
                 ],
               ),
+            ),
+           const SizedBox(
+              height: AppSizes.xxxL,
             ),
           ],
         ),

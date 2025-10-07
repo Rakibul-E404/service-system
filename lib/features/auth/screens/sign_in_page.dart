@@ -64,26 +64,30 @@ class _SignInScreenState extends State<SignInScreen> {
                   const SizedBox(height: AppSizes.md),
 
                   ///  ==========================> Google login container ==============>
-                  InkWell(
-                    onTap: () {
-                      /// TODO : Google sign-in
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: AppSizes.sm, horizontal: AppSizes.lg),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                        border: Border.all(color: AppColors.primaryColor, width: 2),
-                        color: AppColors.primaryColorLight,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text('Google'),
-                          Text('  G', style: context.txtTheme.labelMedium),
-                        ],
-                      ),
-                    ).centered,
-                  ),
+                  // InkWell(
+                  //   onTap: () {
+                  //     /// TODO : Google sign-in
+                  //   },
+                  //   child: Container(
+                  //     padding: const EdgeInsets.symmetric(vertical: AppSizes.sm, horizontal: AppSizes.lg),
+                  //     decoration: BoxDecoration(
+                  //       borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                  //       border: Border.all(color: AppColors.primaryColor, width: 2),
+                  //       color: AppColors.primaryColorLight,
+                  //     ),
+                  //     child: Row(
+                  //       mainAxisSize: MainAxisSize.min,
+                  //       children: <Widget>[
+                  //         const Text('Google'),
+                  //         Text('  G', style: context.txtTheme.labelMedium),
+                  //       ],
+                  //     ),
+                  //   ).centered,
+                  // ),
+
+
+
+
 
                   const SizedBox(height: 32),
                   Text(AppStrings.email, style: Theme.of(context).textTheme.headlineMedium),
