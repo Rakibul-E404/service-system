@@ -44,6 +44,7 @@ dependencies:
   #for rating :
   custom_rating_bar: ^3.0.0
   flutter_secure_storage:
+  dio: ^5.9.0
 
 
 dev_dependencies:
