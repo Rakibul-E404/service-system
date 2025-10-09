@@ -59,7 +59,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.signUpRoute,
-      page: () => const SignUpScreen(),
+      page: () => /*const*/ SignUpScreen(),
       transition: Transition.leftToRight,
       binding: AuthBinding(),
     ),
