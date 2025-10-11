@@ -14,6 +14,6 @@ class AppUrl {
 
   // User URLs
   static const String selfProfileUrl = '$baseUrl/user/self';
+  static const String updateSelfProfileUrl = '$baseUrl/user/update-profile';
   static const String getUserProfileUrl = '$baseUrl/user/profile';
-  static const String updateUserProfileUrl = '$baseUrl/user/profile/update';
 }
