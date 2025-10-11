@@ -4,7 +4,6 @@ import 'package:manx_mate/core/extensions/widget_extensions.dart';
 
 import '../config/app_colors.dart';
 
-
 /// A reusable widget that displays a centered loading spinner using [SpinKitCircle].
 ///
 /// This widget is commonly used to indicate that a page or section is loading.
@@ -26,17 +25,10 @@ class CustomLoading extends StatelessWidget {
   final Color? color;
 
   /// Creates a [CustomPageLoading] widget.
-  const CustomLoading({
-    super.key,
-    this.size,
-    this.color,
-  });
+  const CustomLoading({super.key, this.size, this.color});
 
   @override
   Widget build(BuildContext context) {
-    return SpinKitCircle(
-      color: color ?? AppColors.whiteColor,
-      size: size ?? 60.0,
-    ).centered;
+    return SpinKitCircle(color: color ?? AppColors.primaryColor, size: size ?? 60.0).centered;
   }
 }

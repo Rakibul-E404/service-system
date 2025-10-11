@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../main.dart';
 
-
 class ToastManager {
   /// Add this in the main.dart ======> [final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();]
 
@@ -10,7 +9,7 @@ class ToastManager {
 
   static void show({
     required String message,
-    Widget icon = const Icon(Icons.error_outline),
+    Widget icon = const Icon(Icons.error_outline, color: Colors.white),
     Color backgroundColor = const Color(0xFF222222),
     Color iconColor = Colors.white,
     Color textColor = Colors.white,
@@ -28,8 +27,7 @@ class ToastManager {
     _currentToast?.remove();
 
     _currentToast = OverlayEntry(
-      builder:
-          (BuildContext context) => Positioned(
+      builder: (BuildContext context) => Positioned(
         bottom: 50,
         left: 20,
         right: 20,

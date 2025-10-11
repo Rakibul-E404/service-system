@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
- import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/core/utils/custom_loader.dart';
 import 'package:manx_mate/features/auth/widgets/primary_button.dart';
 
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_strings.dart';
-import '../controllers/taking_email_controller.dart';
+import '../controllers/forgot_password_controller.dart';
 import '../widgets/app_custom_textfield.dart';
 import '../widgets/custom_text.dart';
 import '../widgets/custom_text_field.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+class ForgotPasswordScreen extends StatelessWidget {
+  final ForgotPasswordController forgotPasswordController = Get.put(ForgotPasswordController());
 
-  @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
-}
-
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final TextEditingController _forgotPasswordTEController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  ForgotPasswordController forgotPasswordController = Get.find<ForgotPasswordController>();
+  ForgotPasswordScreen({super.key});
 
   /// controller initialization
 
@@ -52,28 +46,34 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(height: 24),
               Text(AppStrings.email, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 14),
-              AppCustomContainerField(
-                containerChild: MyTextFormFieldWithIcon(
-                  controller: _forgotPasswordTEController,
-                  validator: (String? value) {
-                    return isEmailValid(value);
-                  },
-                  formHintText: AppStrings.enterYourEmail,
-                  prefixIcon: const Icon(Icons.mail_outline, color: AppColors.primaryColor),
+              Form(
+                key: forgotPasswordController.formKey,
+                child: AppCustomContainerField(
+                  containerChild: MyTextFormFieldWithIcon(
+                    controller: forgotPasswordController.forgotPasswordTEController,
+                    validator: (String? value) {
+                      return isEmailValid(value);
+                    },
+                    formHintText: AppStrings.enterYourEmail,
+                    prefixIcon: const Icon(Icons.mail_outline, color: AppColors.primaryColor),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 32),
 
-              PrimaryButton(
-                buttonText: AppStrings.sendOTP,
-                // Text that will appear on the button
-                onPressed: () {
-                  /// TODO: OTP logic
-                  // // if (_formKey.currentState!.validate()) {}
-                  Get.toNamed(AppRoutes.verifyEmailRoute);
-                },
-              ),
+              Obx(() {
+                return forgotPasswordController.loader.value
+                    ? const Center(child: CustomLoading())
+                    : PrimaryButton(
+                        buttonText: AppStrings.sendOTP,
+                        // Text that will appear on the button
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          forgotPasswordController.sendOtp();
+                        },
+                      );
+              }),
             ],
           ),
         ),
@@ -88,16 +88,5 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return 'Please enter a valid email address';
     }
     return null;
-  }
-
-  void clearTextFields() {
-    _forgotPasswordTEController.clear();
-  }
-
-  @override
-  void dispose() {
-    _forgotPasswordTEController.dispose();
-
-    super.dispose();
   }
 }
