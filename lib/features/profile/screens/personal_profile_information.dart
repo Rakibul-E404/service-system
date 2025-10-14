@@ -418,7 +418,12 @@ class PersonalInformationScreen extends GetView<ProfileInformationController> {
 ///
 ///
 ///
-///
+///----------
+///----------
+///----------
+///---------- todo::: trying to fetch image
+///----------
+///----------
 ///
 ///
 ///
@@ -450,9 +455,9 @@ import 'package:get/get.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/extensions/widget_extensions.dart';
+import 'package:manx_mate/core/utils/api/app_url.dart';
 import '../controllers/personal_profile_information_controller.dart';
-
-
+import 'package:dio/dio.dart'; // Import Dio for multipart upload
 
 class PersonalInformationScreen extends GetView<ProfileInformationController> {
   const PersonalInformationScreen({super.key});
@@ -745,7 +750,7 @@ class PersonalInformationScreen extends GetView<ProfileInformationController> {
               child: ElevatedButton(
                 onPressed: controller.isLoading.value
                     ? null
-                    : () => controller.toggleEdit(),
+                    : () => controller.updateProfile(), // Here update the profile
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.amber[600],
                   foregroundColor: Colors.black,
@@ -868,3 +873,4 @@ class PersonalInformationScreen extends GetView<ProfileInformationController> {
     );
   }
 }
+

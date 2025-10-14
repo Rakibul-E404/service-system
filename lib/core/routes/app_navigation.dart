@@ -38,6 +38,7 @@ import '../../features/auth/screens/sign_in_page.dart';
 import '../../features/auth/screens/sign_up_page.dart';
 import '../../features/auth/screens/verify_mail.dart';
 import '../../features/home/screens/search_screen.dart';
+import '../../features/profile/controllers/privacy_policy_screen_controller.dart';
 import '../../features/provider/screens/provider_profile_page.dart';
 import 'app_routes.dart';
 
@@ -65,7 +66,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.forgotPasswordRoute,
-      page: () =>   ForgotPasswordScreen(),
+      page: () => ForgotPasswordScreen(),
       transition: Transition.rightToLeft,
       binding: AuthBinding(),
     ),
@@ -83,7 +84,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.homeRoute,
-      page: () => const HomeScreen(),
+      page: () => HomeScreen(),
       transition: Transition.downToUp,
       binding: HomeBinding(),
     ),
@@ -119,25 +120,25 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.bookingPage,
-      page: () => const BookingScreen(),
+      page: () => BookingScreen(),
       transition: Transition.rightToLeftWithFade,
       binding: BookingBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.reviewPage,
-      page: () => const ReviewForServiceScreen(),
+      page: () => ReviewForServiceScreen(),
       transition: Transition.rightToLeftWithFade,
       binding: BookingBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.favoritePage,
-      page: () => const FavoriteScreen(),
+      page: () => FavoriteScreen(),
       transition: Transition.leftToRightWithFade,
       binding: FavoriteBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.messagePage,
-      page: () => const MessageScreen(),
+      page: () => MessageScreen(),
       transition: Transition.fadeIn,
       binding: MessageBinding(),
     ),
@@ -149,7 +150,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.profilePage,
-      page: () => const ProfileScreen(),
+      page: () => ProfileScreen(),
       transition: Transition.noTransition,
       binding: ProfileBinding(),
     ),
@@ -173,16 +174,27 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.changePasswordPage,
-      page: () => ChangePassword(),
+      page: () => const ChangePassword(),
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
+    /**GetPage<dynamic>(
+      name: AppRoutes.privacyPolicyTemplatePage,
+      page: () =>  const PrivacyPolicyTemplatePage(),
+      transition: Transition.rightToLeft,
+      binding: ProfileBinding(),
+    ),*/
     GetPage<dynamic>(
       name: AppRoutes.privacyPolicyTemplatePage,
       page: () => const PrivacyPolicyTemplatePage(),
       transition: Transition.rightToLeft,
-      binding: ProfileBinding(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<PrivacyPolicyTemplateController>(
+              () => PrivacyPolicyTemplateController(),
+        );
+      }),
     ),
+
     GetPage<dynamic>(
       name: AppRoutes.reportPage,
       page: () => const ReportPage(),
@@ -209,25 +221,25 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerAvailabilityRoute,
-      page: () => const ProviderAvailabilityPage(),
+      page: () => ProviderAvailabilityPage(),
       transition: Transition.rightToLeft,
       binding: ProviderBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.roleSelectionRoute,
-      page: () => const RoleSelectionScreen(),
+      page: () => RoleSelectionScreen(),
       transition: Transition.upToDown,
       binding: RoleSelectionBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerMainBottomNavPage,
-      page: () => const ProviderMainBottomNavScreen(),
+      page: () => ProviderMainBottomNavScreen(),
       transition: Transition.zoom,
       binding: RoleSelectionBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.splashRoute,
-      page: () => const SplashScreenScreen(),
+      page: () => SplashScreenScreen(),
       transition: Transition.circularReveal,
       binding: SplashScreenBinding(),
     ),
