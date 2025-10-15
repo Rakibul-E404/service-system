@@ -20,11 +20,6 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
   final PageController _pageController = PageController();
 
   final List<Widget> _screens = <Widget>[
- // Text("Home").centered,
- // Text("Booking").centered,
- // Text("Fav").centered,
- // Text("Mesasge").centered,
- // Text("Profile").centered,
 
     const HomeScreen(),
     const BookingScreen(),

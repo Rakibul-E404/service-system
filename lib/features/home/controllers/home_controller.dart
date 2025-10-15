@@ -1,3 +1,4 @@
+
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
@@ -28,3 +29,12 @@ class HomeController extends GetxController {
     count.value = 0;
   }
 }
+
+
+
+
+
+
+
+
+

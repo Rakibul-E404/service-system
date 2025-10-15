@@ -1,23 +1,21 @@
-/*
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/network/network_caller.dart';
+import 'package:manx_mate/core/config/app_constants.dart';
+import 'package:manx_mate/core/data/secured_storage.dart';
+import 'package:manx_mate/core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
 
 class ProfileController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
 
   // Observables
-  final _name = ''.obs;
-  final _email = ''.obs;
-  final _profileImage = ''.obs;
-  final _isLoading = false.obs;
-
-  // Getters
-  String get name => _name.value;
-  String get email => _email.value;
-  String get profileImage => _profileImage.value;
-  bool get isLoading => _isLoading.value;
+  RxString name = ''.obs;
+  RxString email = ''.obs;
+  RxString profileImage = ''.obs;
+  RxString location = ''.obs;
+  RxString role = ''.obs;
+  RxBool isLoading = false.obs;
 
   @override
   void onInit() {
@@ -28,103 +26,115 @@ class ProfileController extends GetxController {
   /// Fetch user profile data
   Future<void> fetchUserProfile() async {
     try {
-      _isLoading.value = true;
+      isLoading.value = true;
 
-      final response = await _networkCaller.getRequest(
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('👤 FETCHING USER PROFILE (ProfileScreen)');
+      debugPrint('═══════════════════════════════════════');
+
+      final String? token = await SecureStorageService().read(AppConstants.authToken);
+
+      if (token == null || token.isEmpty) {
+        debugPrint('❌ No auth token found');
+        Get.snackbar(
+          'Error',
+          'Please login again',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+        isLoading.value = false;
+        return;
+      }
+
+      debugPrint('📤 API REQUEST');
+      debugPrint('URL: ${AppUrl.selfProfileUrl}');
+
+      final NetworkResponse response = await _networkCaller.getRequest(
         AppUrl.selfProfileUrl,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
-      if (response.isSuccess && response.jsonResponse != null) {
-        final data = response.jsonResponse!['data'];
+      debugPrint('───────────────────────────────────────');
+      debugPrint('📥 API RESPONSE');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Is Success: ${response.isSuccess}');
+      debugPrint('Response JSON: ${response.jsonResponse}');
+      debugPrint('───────────────────────────────────────');
 
-        if (data != null) {
-          _name.value = data['name'] ?? '';
-          _email.value = data['email'] ?? '';
-          _profileImage.value = data['profileImage'] ?? '';
+      isLoading.value = false;
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final bool success = response.jsonResponse!['success'] ?? false;
+        final Map<String, dynamic>? data = response.jsonResponse!['data'];
+
+        debugPrint('✅ Profile Fetch Success: $success');
+        debugPrint('📦 User Data: $data');
+
+        if (success && data != null) {
+          name.value = data['name'] ?? '';
+          email.value = data['email'] ?? '';
+          profileImage.value = data['image'] ?? '';
+          location.value = data['location'] ?? '';
+          role.value = data['role'] ?? '';
+
+          debugPrint('📛 Name: ${name.value}');
+          debugPrint('📧 Email: ${email.value}');
+          debugPrint('🖼️ Image: ${profileImage.value}');
+          debugPrint('📍 Location: ${location.value}');
+          debugPrint('🎭 Role: ${role.value}');
+        } else {
+          debugPrint('❌ Failed to parse profile data');
+          Get.snackbar(
+            'Error',
+            'Failed to load profile data',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+          );
         }
       } else {
-        debugPrint('Failed to load profile: ${response.errorMessage}');
+        final String errorMessage = response.jsonResponse?['message'] ??
+            response.errorMessage ??
+            'Failed to load profile';
+
+        debugPrint('❌ Failed to load profile: $errorMessage');
+
+        Get.snackbar(
+          'Error',
+          errorMessage,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
       }
-    } catch (e) {
-      debugPrint('Error fetching profile: ${e.toString()}');
+    } catch (e, stackTrace) {
+      isLoading.value = false;
+      debugPrint('❌ EXCEPTION OCCURRED');
+      debugPrint('Error: $e');
+      debugPrint('StackTrace: $stackTrace');
+
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
     } finally {
-      _isLoading.value = false;
+      debugPrint('═══════════════════════════════════════');
     }
+  }
+
+  /// Get full image URL using AppUrl.getUserProfileImageUrl
+  String getImageUrl() {
+    if (profileImage.isEmpty) return '';
+    return AppUrl.getUserProfileImageUrl(profileImage.value);
   }
 
   /// Refresh profile data
-  Future<void> refreshProfile() async {
-    await fetchUserProfile();
-  }
-}*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// profile_controller.dart
-import 'package:flutter/cupertino.dart';
-import 'package:get/get.dart';
-import 'package:manx_mate/core/network/network_caller.dart';
-import 'package:manx_mate/core/utils/api/app_url.dart';
-
-class ProfileController extends GetxController {
-  final NetworkCaller _networkCaller = NetworkCaller();
-
-  // Observables
-  final _name = ''.obs;
-  final _email = ''.obs;
-  final _profileImage = ''.obs;
-  final _isLoading = false.obs;
-
-  // Getters
-  String get name => _name.value;
-  String get email => _email.value;
-  String get profileImage => _profileImage.value;
-  bool get isLoading => _isLoading.value;
-
-  // Method to update name
-  void updateName(String newName) {
-    _name.value = newName;
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    fetchUserProfile();
-  }
-
-  Future<void> fetchUserProfile() async {
-    try {
-      _isLoading.value = true;
-      final response = await _networkCaller.getRequest(AppUrl.selfProfileUrl);
-      if (response.isSuccess && response.jsonResponse != null) {
-        final data = response.jsonResponse!['data'];
-        if (data != null) {
-          _name.value = data['name'] ?? '';
-          _email.value = data['email'] ?? '';
-          // Use 'image' key based on backend response for profile image
-          _profileImage.value = data['image'] ?? '';
-        }
-      }
-    } catch (e) {
-      debugPrint('Error fetching profile: ${e.toString()}');
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
   Future<void> refreshProfile() async {
     await fetchUserProfile();
   }

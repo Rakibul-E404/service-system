@@ -29,7 +29,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      initialRoute: AppRoutes.splashRoute,
+      // initialRoute: AppRoutes.splashRoute,
+      initialRoute: AppRoutes.mainBottomNavPage,
       // home: BookingScreen(),
       // home: FavoriteScreen(),
       // home: MessageScreen(),

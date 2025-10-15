@@ -150,7 +150,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.profilePage,
-      page: () => ProfileScreen(),
+      page: () => const ProfileScreen(),
       transition: Transition.noTransition,
       binding: ProfileBinding(),
     ),
@@ -221,25 +221,25 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerAvailabilityRoute,
-      page: () => ProviderAvailabilityPage(),
+      page: () => const ProviderAvailabilityPage(),
       transition: Transition.rightToLeft,
       binding: ProviderBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.roleSelectionRoute,
-      page: () => RoleSelectionScreen(),
+      page: () => const RoleSelectionScreen(),
       transition: Transition.upToDown,
       binding: RoleSelectionBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerMainBottomNavPage,
-      page: () => ProviderMainBottomNavScreen(),
+      page: () => const ProviderMainBottomNavScreen(),
       transition: Transition.zoom,
       binding: RoleSelectionBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.splashRoute,
-      page: () => SplashScreenScreen(),
+      page: () => const SplashScreenScreen(),
       transition: Transition.circularReveal,
       binding: SplashScreenBinding(),
     ),

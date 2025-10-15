@@ -1,3 +1,4 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -80,7 +81,7 @@ class HomeScreen extends GetView<HomeController> {
                         );
                       },
                     ),
-                    /* GridView.builder(
+ GridView.builder(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       physics: const ClampingScrollPhysics(),
@@ -94,9 +95,12 @@ class HomeScreen extends GetView<HomeController> {
 
                       /// for fun
                       itemBuilder: (BuildContext context, int index) {
-                        return const ReusableSmallCard(imagePath: '', title: 'Service ');
+                        return ReusableSmallCard(imagePath: '',
+                          title: 'Service ',
+                          onTap: () {},);
                       },
-                    ),*/
+                    ),
+
                     const SizedBox(height: AppSizes.md),
                     Container(
                       decoration: BoxDecoration(
@@ -167,3 +171,17 @@ class HomeScreen extends GetView<HomeController> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
