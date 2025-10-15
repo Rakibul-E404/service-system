@@ -1,5 +1,3 @@
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
@@ -17,23 +15,21 @@ import '../widget/home_top_bar.dart';
 import '../widget/inquiry_bottom_sheet.dart';
 import '../widget/reusable_small_card.dart';
 
-class HomeScreen extends GetView<HomeController> {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-
 
   @override
   Widget build(BuildContext context) {
+    final HomeController controller = Get.put(HomeController());
     final TimeController timeController = Get.put(TimeController());
-    final TextEditingController _serviceNameTEController = TextEditingController();
-    final TextEditingController _locationTEController = TextEditingController();
-    final TextEditingController _additionalNoteTEController = TextEditingController();
-    final TextEditingController _dateTEController = TextEditingController();
+    final TextEditingController serviceNameTEController = TextEditingController();
+    final TextEditingController locationTEController = TextEditingController();
+    final TextEditingController additionalNoteTEController = TextEditingController();
+    final TextEditingController dateTEController = TextEditingController();
 
     return Scaffold(
       body: Scaffold(
         body: SingleChildScrollView(
-          // padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -57,49 +53,77 @@ class HomeScreen extends GetView<HomeController> {
                     Text('Categories', style: context.txtTheme.headlineLarge),
                     const SizedBox(height: AppSizes.md),
 
-                    /// ============================> Gridview ===============>
-                    MasonryGridView.count(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 18,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 10,
-                      itemBuilder: (BuildContext context, int index) {
-                        return SizedBox(
-                          height: 150,
-                          child: ReusableSmallCard(
-                            imagePath: '',
-                            title: 'Service ',
-                            onTap: () {
-                              Get.toNamed(
-                                AppRoutes.homeSubCategoriesPage,
-                                arguments: "Main Category ",
-                              );
-                            },
+                    /// ============================> Categories GridView ===============>
+                    Obx(() {
+                      // Show loading indicator
+                      if (controller.isLoadingCategories.value) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSizes.xl),
+                            child: CircularProgressIndicator(),
                           ),
                         );
-                      },
-                    ),
- GridView.builder(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        childAspectRatio: .6,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: AppSizes.md.toInt(),
+                      }
 
-                      /// for fun
-                      itemBuilder: (BuildContext context, int index) {
-                        return ReusableSmallCard(imagePath: '',
-                          title: 'Service ',
-                          onTap: () {},);
-                      },
-                    ),
+                      // Show error message
+                      if (controller.errorMessage.isNotEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSizes.xl),
+                            child: Column(
+                              children: [
+                                Text(
+                                  controller.errorMessage.value,
+                                  style: const TextStyle(color: Colors.red),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: AppSizes.md),
+                                ElevatedButton(
+                                  onPressed: () => controller.fetchCategories(),
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Show empty state
+                      if (controller.categories.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSizes.xl),
+                            child: Text('No categories available'),
+                          ),
+                        );
+                      }
+
+                      // Show categories grid
+                      return MasonryGridView.count(
+                        crossAxisCount: 4,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 18,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: controller.categories.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final category = controller.categories[index];
+                          return SizedBox(
+                            height: 150,
+                            child: ReusableSmallCard(
+                              imagePath: category.fullImageUrl,
+                              title: category.name,
+                              onTap: () {
+                                Get.toNamed(
+                                  AppRoutes.homeSubCategoriesPage,
+                                  arguments: category.name,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    }),
 
                     const SizedBox(height: AppSizes.md),
                     Container(
@@ -142,15 +166,14 @@ class HomeScreen extends GetView<HomeController> {
                                 context: context,
                                 buttonText: 'Send',
                                 onButtonPressed: () {
-                                  // Your action here
                                   Navigator.pop(context);
                                 },
                                 child: InquiryBottomSheet(
-                                  serviceNameTEController: _serviceNameTEController,
-                                  dateTEController: _dateTEController,
+                                  serviceNameTEController: serviceNameTEController,
+                                  dateTEController: dateTEController,
                                   timeController: timeController,
-                                  locationTEController: _locationTEController,
-                                  additionalNoteTEController: _additionalNoteTEController,
+                                  locationTEController: locationTEController,
+                                  additionalNoteTEController: additionalNoteTEController,
                                 ),
                               );
                             },
@@ -171,17 +194,3 @@ class HomeScreen extends GetView<HomeController> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
