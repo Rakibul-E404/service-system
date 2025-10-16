@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
@@ -102,14 +103,14 @@ class HomeScreen extends StatelessWidget {
                       return MasonryGridView.count(
                         crossAxisCount: 4,
                         mainAxisSpacing: 16,
-                        crossAxisSpacing: 18,
+                        crossAxisSpacing: 15,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: controller.categories.length,
                         itemBuilder: (BuildContext context, int index) {
                           final category = controller.categories[index];
                           return SizedBox(
-                            height: 150,
+                            height: 180,
                             child: ReusableSmallCard(
                               imagePath: category.fullImageUrl,
                               title: category.name,
@@ -194,3 +195,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+

@@ -120,8 +120,12 @@ class ProfileScreen extends GetView<ProfileController> {
                   onTap: () {
                     LogoutModal.show(
                       context: context,
-                      onConfirm: () {
-                        Get.offAllNamed(AppRoutes.roleSelectionRoute);
+                      onConfirm: () async {
+                        // Close the modal first
+                        Get.back();
+
+                        // Call the controller's logout method
+                        await controller.logout();
                       },
                     );
                   },

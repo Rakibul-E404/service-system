@@ -4,10 +4,14 @@ import 'package:manx_mate/core/network/network_caller.dart';
 import 'package:manx_mate/core/config/app_constants.dart';
 import 'package:manx_mate/core/data/secured_storage.dart';
 import 'package:manx_mate/core/network/network_response.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
 
 class ProfileController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
+  final SharedPrefService _sharedPrefService = SharedPrefService();
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   // Observables
   RxString name = ''.obs;
@@ -32,7 +36,7 @@ class ProfileController extends GetxController {
       debugPrint('👤 FETCHING USER PROFILE (ProfileScreen)');
       debugPrint('═══════════════════════════════════════');
 
-      final String? token = await SecureStorageService().read(AppConstants.authToken);
+      final String? token = await _secureStorage.read(AppConstants.authToken);
 
       if (token == null || token.isEmpty) {
         debugPrint('❌ No auth token found');
@@ -137,5 +141,100 @@ class ProfileController extends GetxController {
   /// Refresh profile data
   Future<void> refreshProfile() async {
     await fetchUserProfile();
+  }
+
+  /// Logout the user by clearing all stored data
+  Future<void> logout() async {
+    try {
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('🚪 LOGGING OUT USER');
+      debugPrint('═══════════════════════════════════════');
+
+      // Show loading indicator
+      isLoading.value = true;
+
+      // ============================================
+      // STEP 1: Clear SharedPreferences (login persistence)
+      // ============================================
+      debugPrint('🧹 Clearing SharedPreferences...');
+      await _sharedPrefService.clearAll();
+      debugPrint('✅ SharedPreferences cleared');
+
+      // ============================================
+      // STEP 2: Clear SecureStorage (all sensitive data)
+      // ============================================
+      debugPrint('🧹 Clearing SecureStorage...');
+
+      // Clear auth tokens
+      await _secureStorage.delete(AppConstants.authToken);
+      debugPrint('✅ Auth token deleted');
+
+      await _secureStorage.delete(AppConstants.refressToken);
+      debugPrint('✅ Refresh token deleted');
+
+      // Clear user data
+      await _secureStorage.delete(AppConstants.roleType);
+      debugPrint('✅ Role type deleted');
+
+      await _secureStorage.delete(AppConstants.userId);
+      debugPrint('✅ User ID deleted');
+
+      await _secureStorage.delete(AppConstants.userName);
+      debugPrint('✅ User name deleted');
+
+      debugPrint('✅ All SecureStorage data cleared');
+
+      // ============================================
+      // STEP 3: Reset controller state
+      // ============================================
+      debugPrint('🔄 Resetting controller state...');
+      name.value = '';
+      email.value = '';
+      profileImage.value = '';
+      location.value = '';
+      role.value = '';
+      isLoading.value = false;
+      debugPrint('✅ Controller state reset');
+
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('✅ LOGOUT COMPLETED SUCCESSFULLY');
+      debugPrint('🔄 Navigating to Role Selection...');
+      debugPrint('═══════════════════════════════════════');
+
+      // ============================================
+      // STEP 4: Navigate to role selection and clear navigation stack
+      // ============================================
+      Get.offAllNamed(AppRoutes.roleSelectionRoute);
+
+      // Show success message after navigation
+      await Future.delayed(const Duration(milliseconds: 300));
+      Get.snackbar(
+        'Success',
+        'You have been logged out successfully',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 2),
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+      );
+
+    } catch (e, stackTrace) {
+      isLoading.value = false;
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('❌ LOGOUT FAILED');
+      debugPrint('Error: $e');
+      debugPrint('StackTrace: $stackTrace');
+      debugPrint('═══════════════════════════════════════');
+
+      Get.snackbar(
+        'Error',
+        'An error occurred during logout. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+        icon: const Icon(Icons.error, color: Colors.white),
+      );
+    }
   }
 }

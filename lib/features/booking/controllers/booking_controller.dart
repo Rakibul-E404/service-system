@@ -7,12 +7,12 @@ class BookingController extends GetxController {
   void increment() => count.value++;
 
 
-  
+
   /// [onInit] Lifecycle method called when the controller is initialized.
   ///
   /// Resets loading states, clears existing data, and triggers and more..
   /// initial fetch
-  /// 
+  ///
   @override
   void onInit() {
     super.onInit();

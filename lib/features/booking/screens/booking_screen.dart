@@ -103,7 +103,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
               child: TabBarView(
                 controller: _tabController,
                 children: <Widget>[
-                  // Active Slot Tab
+                  ///----------------- Active Slot Tab
                   ListView.separated(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSizes.md,
@@ -141,7 +141,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     },
                   ),
 
-                  // Ongoing Slot Tab
+                  ///------------- Ongoing Slot Tab
                   ListView.separated(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSizes.md,
@@ -177,7 +177,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     },
                   ),
 
-                  // Past Slot Tab
+                  ///----------- Past Slot Tab
                   ListView.separated(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSizes.md,
