@@ -1,3 +1,4 @@
+/**
 import 'package:get/get.dart';
 import '../model/review.dart';
 
@@ -83,5 +84,131 @@ class MyReviewController extends GetxController {
     if (reviews.isEmpty) return 0.0;
     double total = reviews.fold(0.0, (double sum, Review review) => sum + review.rating);
     return total / reviews.length;
+  }
+}
+*/
+
+
+
+
+
+
+
+
+///
+///
+///
+/// todo:: adding the api
+///
+///
+///
+
+
+
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import '../../../core/network/network_caller.dart';
+import '../../../core/network/network_response.dart';
+import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
+
+class MyReviewController extends GetxController {
+  RxList<Review> reviews = <Review>[].obs;
+  RxBool isLoading = true.obs;
+  RxString errorMessage = ''.obs;
+
+  final NetworkCaller _networkCaller = NetworkCaller();
+  final SharedPrefService _sharedPrefService = SharedPrefService();
+
+  // Fetch reviews from API
+  Future<void> loadReviews(String providerServiceId) async {
+    try {
+      isLoading(true);
+      errorMessage('');
+
+      final url = AppUrl.getReviewsUrl(providerServiceId);
+
+      // Get the access token
+      final String? token = await _sharedPrefService.getAccessToken();
+
+      Map<String, String>? headers;
+      if (token != null && token.isNotEmpty) {
+        headers = {'Authorization': 'Bearer $token'};
+      }
+
+      final NetworkResponse response = await _networkCaller.getRequest(
+        url,
+        headers: headers,
+      );
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final data = response.jsonResponse!['data'];
+
+        if (data != null && data['data'] != null) {
+          final List<dynamic> reviewData = data['data'];
+          reviews.value = reviewData.map((json) => Review.fromJson(json)).toList();
+
+          if (reviews.isEmpty) {
+            errorMessage.value = 'No reviews available yet';
+          }
+        } else {
+          errorMessage.value = 'No reviews found';
+        }
+      } else if (response.statusCode == 401) {
+        errorMessage.value = 'Please login to view reviews';
+      } else {
+        errorMessage.value = response.errorMessage ?? 'Error fetching reviews';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error: $e';
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  double getAverageRating() {
+    if (reviews.isEmpty) return 0.0;
+    double total = reviews.fold(0.0, (double sum, Review review) => sum + review.rating);
+    return total / reviews.length;
+  }
+}
+
+class Review {
+  final String id;
+  final String userName;
+  final String userAvatar;
+  final double rating;
+  final String date;
+  final String comment;
+
+  Review({
+    required this.id,
+    required this.userName,
+    required this.userAvatar,
+    required this.rating,
+    required this.date,
+    required this.comment,
+  });
+
+  factory Review.fromJson(Map<String, dynamic> json) {
+    // Format the date from ISO string to readable format
+    String formattedDate = 'Unknown date';
+    try {
+      final DateTime dateTime = DateTime.parse(json['createdAt']);
+      formattedDate = DateFormat('MMM dd, yyyy').format(dateTime);
+    } catch (e) {
+      formattedDate = json['createdAt'] ?? 'Unknown date';
+    }
+
+    return Review(
+      id: json['_id'] ?? '',
+      // Since author is an ID, we'll show "User" for now
+      // You'll need to fetch user details separately or include them in the API response
+      userName: json['authorName'] ?? 'User ${json['author']?.substring(0, 8) ?? 'Unknown'}',
+      userAvatar: json['authorAvatar'] ?? '', // Will be empty, fallback to icon
+      rating: (json['rating'] ?? 0).toDouble(),
+      date: formattedDate,
+      comment: json['description'] ?? 'No comment',
+    );
   }
 }

@@ -29,8 +29,7 @@ class HomeScreen extends StatelessWidget {
     final TextEditingController dateTEController = TextEditingController();
 
     return Scaffold(
-      body: Scaffold(
-        body: SingleChildScrollView(
+      body: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -114,11 +113,25 @@ class HomeScreen extends StatelessWidget {
                             child: ReusableSmallCard(
                               imagePath: category.fullImageUrl,
                               title: category.name,
+                              // onTap: () {
+                              //   Get.toNamed(
+                              //     AppRoutes.homeSubCategoriesPage,
+                              //     arguments: category.name,
+                              //   );
+                              // },
                               onTap: () {
+                                // Navigate to subcategories with both ID and name
                                 Get.toNamed(
                                   AppRoutes.homeSubCategoriesPage,
-                                  arguments: category.name,
+                                  arguments: {
+                                    'categoryId': category.id,  // Pass the category ID
+                                    'categoryName': category.name,  // Pass the category name
+                                  },
                                 );
+
+                                debugPrint('🚀 Navigating to subcategories');
+                                debugPrint('📌 Category: ${category.name}');
+                                debugPrint('🆔 Category ID: ${category.id}');
                               },
                             ),
                           );
@@ -191,7 +204,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

@@ -3,13 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
 import '../model/categor_model.dart';
 
 class HomeController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
-
-  // Bearer token
-  static const String bearerToken = 'adminAccessToken';
+  final SharedPrefService _sharedPrefService = SharedPrefService(); // Instantiate SharedPrefService
 
   // Observable lists
   final RxList<CategoryModel> categories = <CategoryModel>[].obs;
@@ -28,13 +27,22 @@ class HomeController extends GetxController {
     try {
       debugPrint('🔄 Starting category fetch...');
       debugPrint('📍 URL: ${AppUrl.allCategory}');
-      debugPrint('🔑 Using Authorization Token');
+
+      // Fetch the Bearer token dynamically from SharedPreferences
+      final String? accessToken = await _sharedPrefService.getAccessToken();
+
+      if (accessToken == null || accessToken.isEmpty) {
+        errorMessage.value = 'No access token available';
+        debugPrint('❌ No access token found');
+        return;
+      }
+
+      debugPrint('🔑 Using Authorization Token: ${accessToken.substring(0, 20)}...');
 
       final NetworkResponse response = await _networkCaller.getRequest(
         AppUrl.allCategory,
         headers: <String, String>{
-          'Authorization':
-              'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGM1M2VlYTNlOThmY2UzZjM5ZjQ3YTEiLCJpYXQiOjE3NjA1MjgwODAsImV4cCI6MzUyMTA1Njc2MCwidHlwZSI6ImFjY2VzcyJ9.h5UcEyLYakOFkuof0dM7fBG5fmChnpGNxaisFxmpnMA',
+          'Authorization': 'Bearer $accessToken',  // Use the dynamic token
         },
       );
 
@@ -68,7 +76,6 @@ class HomeController extends GetxController {
   }
 
   /// [onInit] Lifecycle method called when the controller is initialized.
-  ///
   /// Resets loading states, clears existing data, and triggers initial fetch
   @override
   void onInit() {
@@ -77,7 +84,6 @@ class HomeController extends GetxController {
   }
 
   /// [dispose] Lifecycle method called when the controller is destroyed.
-  ///
   /// Cleans up by resetting loading states and clearing lists
   @override
   void dispose() {
@@ -85,6 +91,3 @@ class HomeController extends GetxController {
     super.dispose();
   }
 }
-
-
-

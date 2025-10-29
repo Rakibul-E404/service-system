@@ -16,7 +16,8 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
   Widget build(BuildContext context) {
     Get.put(RoleSelectionController());
     return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: SizedBox(
         height: 50,
         width: context.screenWidth * 0.9,
