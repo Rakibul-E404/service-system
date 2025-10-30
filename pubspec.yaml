@@ -33,6 +33,8 @@ dependencies:
   connectivity_plus:
   #for pin code fields :
   pin_code_fields: ^8.0.1
+  #for Html parse :
+  flutter_html: ^3.0.0
   #for logging the error:
   logger:
   image_picker:

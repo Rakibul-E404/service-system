@@ -1,110 +1,3 @@
-/**
-import 'package:get/get.dart';
-import '../model/review.dart';
-
-class MyReviewController extends GetxController {
-  RxList<Review> reviews = <Review>[].obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    loadReviews();
-  }
-
-  void loadReviews() {
-    reviews.value = <Review>[
-      Review(
-          id: '1',
-          userName: 'Lahan',
-          userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-          rating: 5,
-          date: 'May 2023',
-          comment: 'Best tutor I had so far. Super nice communicating attitude, listens to your query and has a lot is patience. She has experience with all age groups and provides best. Can check my daughter, notes too. .',
-      ),
-      Review(
-        id: '2',
-        userName: 'Afkana Afaq',
-        userAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b772390e?w=100&h=100&fit=crop',
-        rating: 5,
-        date: 'Apr 2023',
-        comment: 'Excellent tutor with an amazing communicating attitude! She listens to your query and has a lot is patience. She has experience with all age groups and provides best results.',
-      ),
-      Review(
-        id: '3',
-        userName: 'Sarah Johnson',
-        userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-        rating: 4,
-        date: 'Mar 2023',
-        comment: 'Very professional and knowledgeable. My daughter has improved significantly in her studies. Highly recommend for anyone looking for quality tutoring.',
-      ),
-      Review(
-        id: '4',
-        userName: 'Michael Chen',
-        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-        rating: 5,
-        date: 'Feb 2023',
-        comment: 'Amazing experience! The tutor is very patient and explains concepts clearly. My son\'s grades have improved dramatically since starting sessions.',
-      ),
-      Review(
-        id: '5',
-        userName: 'Emma Wilson',
-        userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-        rating: 4,
-        date: 'Jan 2023',
-        comment: 'Great tutor with excellent communication skills. Very punctual and well-prepared for each session. Would definitely recommend to others.',
-      ),
-      Review(
-        id: '6',
-        userName: 'David Rodriguez',
-        userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-        rating: 5,
-        date: 'Dec 2022',
-        comment: 'Outstanding service! The tutor helped my daughter with math and science. She\'s now more confident in her studies and enjoys learning.',
-      ),
-      Review(
-        id: '7',
-        userName: 'Lisa Anderson',
-        userAvatar: 'https://images.unsplash.com/photo-1534751516642-a1af1ef26a56?w=100&h=100&fit=crop',
-        rating: 4,
-        date: 'Nov 2022',
-        comment: 'Very satisfied with the tutoring sessions. The tutor is knowledgeable and patient. My son has shown great improvement in his academic performance.',
-      ),
-      Review(
-        id: '8',
-        userName: 'James Thompson',
-        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-        rating: 5,
-        date: 'Oct 2022',
-        comment: 'Exceptional tutor! Very professional and caring. My daughter looks forward to every session. Highly recommend for any subject.',
-      ),
-    ];
-  }
-
-  double getAverageRating() {
-    if (reviews.isEmpty) return 0.0;
-    double total = reviews.fold(0.0, (double sum, Review review) => sum + review.rating);
-    return total / reviews.length;
-  }
-}
-*/
-
-
-
-
-
-
-
-
-///
-///
-///
-/// todo:: adding the api
-///
-///
-///
-
-
-
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../core/network/network_caller.dart';
@@ -116,25 +9,79 @@ class MyReviewController extends GetxController {
   RxList<Review> reviews = <Review>[].obs;
   RxBool isLoading = true.obs;
   RxString errorMessage = ''.obs;
+  RxList<Service> services = <Service>[].obs;
 
   final NetworkCaller _networkCaller = NetworkCaller();
   final SharedPrefService _sharedPrefService = SharedPrefService();
 
-  // Fetch reviews from API
-  Future<void> loadReviews(String providerServiceId) async {
+  @override
+  void onInit() {
+    super.onInit();
+    loadAllServicesAndReviews();
+  }
+
+  // Fetch all services and then fetch reviews for each service
+  Future<void> loadAllServicesAndReviews() async {
     try {
       isLoading(true);
       errorMessage('');
 
-      final url = AppUrl.getReviewsUrl(providerServiceId);
+      // Step 1: Fetch all services
+      final servicesUrl = AppUrl.baseUrl + "/service/all"; // Use correct URL for all services
 
-      // Get the access token
       final String? token = await _sharedPrefService.getAccessToken();
-
       Map<String, String>? headers;
       if (token != null && token.isNotEmpty) {
         headers = {'Authorization': 'Bearer $token'};
       }
+
+      final NetworkResponse servicesResponse = await _networkCaller.getRequest(
+        servicesUrl,
+        headers: headers,
+      );
+
+      if (servicesResponse.isSuccess && servicesResponse.jsonResponse != null) {
+        final data = servicesResponse.jsonResponse!['data'];
+
+        if (data != null && data['data'] != null) {
+          final List<dynamic> servicesData = data['data'];
+          services.value = servicesData.map((json) => Service.fromJson(json)).toList();
+
+          // Step 2: Fetch reviews for each service
+          List<Review> allReviews = [];
+          for (var service in services) {
+            final reviewsList = await fetchReviewsForService(service.id, headers);
+            allReviews.addAll(reviewsList);
+          }
+
+          reviews.value = allReviews;
+
+          if (reviews.isEmpty) {
+            errorMessage.value = 'No reviews available';
+          }
+        } else {
+          errorMessage.value = 'No services found';
+        }
+      } else if (servicesResponse.statusCode == 401) {
+        errorMessage.value = 'Please login to view reviews';
+      } else {
+        errorMessage.value = servicesResponse.errorMessage ?? 'Failed to load services';
+      }
+    } catch (e) {
+      errorMessage.value = 'Something went wrong. Please try again.';
+      print('Error loading services and reviews: $e');
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // Fetch reviews for a specific service
+  Future<List<Review>> fetchReviewsForService(
+      String providerServiceId,
+      Map<String, String>? headers,
+      ) async {
+    try {
+      final url = AppUrl.getReviewsUrl(providerServiceId);
 
       final NetworkResponse response = await _networkCaller.getRequest(
         url,
@@ -146,33 +93,82 @@ class MyReviewController extends GetxController {
 
         if (data != null && data['data'] != null) {
           final List<dynamic> reviewData = data['data'];
-          reviews.value = reviewData.map((json) => Review.fromJson(json)).toList();
-
-          if (reviews.isEmpty) {
-            errorMessage.value = 'No reviews available yet';
-          }
-        } else {
-          errorMessage.value = 'No reviews found';
+          return reviewData.map((json) => Review.fromJson(json)).toList();
         }
-      } else if (response.statusCode == 401) {
-        errorMessage.value = 'Please login to view reviews';
-      } else {
-        errorMessage.value = response.errorMessage ?? 'Error fetching reviews';
       }
+      return [];
     } catch (e) {
-      errorMessage.value = 'Error: $e';
-    } finally {
-      isLoading(false);
+      print('Error fetching reviews for service $providerServiceId: $e');
+      return [];
     }
   }
 
+  // Get average rating
   double getAverageRating() {
     if (reviews.isEmpty) return 0.0;
     double total = reviews.fold(0.0, (double sum, Review review) => sum + review.rating);
     return total / reviews.length;
   }
+
+  // Get reviews grouped by service
+  Map<String, List<Review>> getReviewsByService() {
+    Map<String, List<Review>> grouped = {};
+    for (var review in reviews) {
+      if (!grouped.containsKey(review.providerServiceId)) {
+        grouped[review.providerServiceId] = [];
+      }
+      grouped[review.providerServiceId]!.add(review);
+    }
+    return grouped;
+  }
+
+  // Get service name by ID
+  String getServiceName(String serviceId) {
+    try {
+      return services.firstWhere((s) => s.id == serviceId).name;
+    } catch (e) {
+      return 'Unknown Service';
+    }
+  }
 }
 
+// Service Model
+class Service {
+  final String id;
+  final String name;
+  final String description;
+  final String image;
+  final String subCategory;
+  final String location;
+  final double rating;
+  final int ratingCount;
+
+  Service({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.image,
+    required this.subCategory,
+    required this.location,
+    required this.rating,
+    required this.ratingCount,
+  });
+
+  factory Service.fromJson(Map<String, dynamic> json) {
+    return Service(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      image: json['image'] ?? '',
+      subCategory: json['subCategory'] ?? '',
+      location: json['location'] ?? '',
+      rating: (json['rating'] ?? 0).toDouble(),
+      ratingCount: json['ratingCount'] ?? 0,
+    );
+  }
+}
+
+// Review Model
 class Review {
   final String id;
   final String userName;
@@ -180,6 +176,8 @@ class Review {
   final double rating;
   final String date;
   final String comment;
+  final String providerServiceId;
+  final String authorId;
 
   Review({
     required this.id,
@@ -188,10 +186,11 @@ class Review {
     required this.rating,
     required this.date,
     required this.comment,
+    required this.providerServiceId,
+    required this.authorId,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
-    // Format the date from ISO string to readable format
     String formattedDate = 'Unknown date';
     try {
       final DateTime dateTime = DateTime.parse(json['createdAt']);
@@ -202,13 +201,13 @@ class Review {
 
     return Review(
       id: json['_id'] ?? '',
-      // Since author is an ID, we'll show "User" for now
-      // You'll need to fetch user details separately or include them in the API response
       userName: json['authorName'] ?? 'User ${json['author']?.substring(0, 8) ?? 'Unknown'}',
-      userAvatar: json['authorAvatar'] ?? '', // Will be empty, fallback to icon
+      userAvatar: json['authorAvatar'] ?? '',
       rating: (json['rating'] ?? 0).toDouble(),
       date: formattedDate,
       comment: json['description'] ?? 'No comment',
+      providerServiceId: json['providerService'] ?? '',
+      authorId: json['author'] ?? '',
     );
   }
 }

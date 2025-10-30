@@ -1,19 +1,19 @@
-
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:manx_mate/core/network/network_caller.dart';
+import 'package:manx_mate/core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
 
 class PrivacyPolicyTemplateController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
 
   // Observables
-  final _appBarTitle = ''.obs;  // Title for AppBar (from arguments)
-  final _contentTitle = ''.obs;  // Title from API (for content body)
-  final _content = ''.obs;
-  final _updatedAt = ''.obs;
-  final _isLoading = true.obs;
-  final _pageType = ''.obs;
+  final RxString _appBarTitle = ''.obs;  // Title for AppBar (from arguments)
+  final RxString _contentTitle = ''.obs;  // Title from API (for content body)
+  final RxString _content = ''.obs;
+  final RxString _updatedAt = ''.obs;
+  final RxBool _isLoading = true.obs;
+  final RxString _pageType = ''.obs;
 
   // Getters
   String get appBarTitle => _appBarTitle.value;
@@ -79,8 +79,8 @@ class PrivacyPolicyTemplateController extends GetxController {
     try {
       _isLoading.value = true;
 
-      final endpoint = _getEndpoint(type);
-      final response = await _networkCaller.getRequest(endpoint);
+      final String endpoint = _getEndpoint(type);
+      final NetworkResponse response = await _networkCaller.getRequest(endpoint);
 
       if (response.isSuccess && response.jsonResponse != null) {
         final data = response.jsonResponse!['data'];
@@ -126,4 +126,5 @@ class PrivacyPolicyTemplateController extends GetxController {
     Get.back();
   }
 }
+
 

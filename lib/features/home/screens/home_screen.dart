@@ -41,11 +41,11 @@ class HomeScreen extends StatelessWidget {
                   children: <Widget>[
                     const ImageSlider(
                       imgList: <String>[
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                        AppImages.loginImage,
+                        AppImages.loginImage1,
+                        AppImages.loginImage2,
+                        AppImages.loginImage3,
+                        AppImages.loginImage4,
+                        AppImages.loginImage5,
                       ],
                       height: 220,
                     ),

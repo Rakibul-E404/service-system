@@ -204,7 +204,8 @@ class FavoriteScreen extends GetView<FavoriteController> {
                     'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop',
                     title: 'Ongoing Service $index',
                     subtitle: 'Math & Science',
-                    location: 'Dublin, Ireland',
+                    // location: 'Dublin, Ireland',
+                    description: 'Dublin, Ireland',
                     rating: "4.7",
                     onTap: () {
                       // print('Ongoing card $index tapped');

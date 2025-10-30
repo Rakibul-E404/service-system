@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
+import 'package:flutter_html/flutter_html.dart';  // Import flutter_html for HTML rendering
 import '../controllers/privacy_policy_screen_controller.dart';
-
 
 class PrivacyPolicyTemplatePage extends GetView<PrivacyPolicyTemplateController> {
   const PrivacyPolicyTemplatePage({super.key});
@@ -89,14 +89,16 @@ class PrivacyPolicyTemplatePage extends GetView<PrivacyPolicyTemplateController>
 
                 const SizedBox(height: 20),
 
-                // Content
-                Text(
-                  controller.content,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    color: Colors.black87,
-                  ),
+                // Render HTML content
+                Html(
+                  data: controller.content,  // Display the content with HTML rendering
+                  style: {
+                    "body": Style(
+                      fontSize: FontSize(14),
+                      // height: LineHeight(1.6),
+                      color: Colors.black87,
+                    ),
+                  },
                 ),
               ],
             ),
@@ -106,4 +108,3 @@ class PrivacyPolicyTemplatePage extends GetView<PrivacyPolicyTemplateController>
     );
   }
 }
-

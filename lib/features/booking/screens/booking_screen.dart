@@ -1,13 +1,719 @@
-/**
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:manx_mate/core/config/app_colors.dart';
+// import 'package:manx_mate/core/routes/app_routes.dart';
+// import 'package:manx_mate/core/config/app_sizes.dart';
+// import 'package:manx_mate/features/home/controllers/home_top_bar_controller.dart';
+// import 'package:manx_mate/features/booking/widgets/booking_card.dart';
+// import 'package:http/http.dart' as http;
+// import 'dart:convert';
+// import 'package:shared_preferences/shared_preferences.dart';
+//
+// import 'booking_screen_controller.dart';
+//
+//
+// class BookingScreen extends StatefulWidget {
+//   const BookingScreen({super.key});
+//
+//   @override
+//   State<BookingScreen> createState() => _BookingScreenState();
+// }
+//
+// class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
+//   late TabController _tabController;
+//   final PendingBookingsController pendingBookingsController = Get.put(PendingBookingsController());
+//   final CompletedBookingsController completedBookingsController = Get.put(CompletedBookingsController());
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _tabController = TabController(length: 3, vsync: this);
+//
+//     // Add listener to fetch data when tab changes
+//     _tabController.addListener(_handleTabChange);
+//
+//     // Fetch initial data for first tab
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       print('🚀 Initializing booking screen...');
+//       pendingBookingsController.fetchPendingBookings();
+//       completedBookingsController.fetchCompletedBookings();
+//     });
+//   }
+//
+//   void _handleTabChange() {
+//     print('🔁 Tab changed to index: ${_tabController.index}');
+//     if (_tabController.index == 1) {
+//       // Fetch pending bookings when switching to Ongoing Slot tab
+//       print('📥 Fetching pending bookings for Ongoing Slot...');
+//       pendingBookingsController.fetchPendingBookings();
+//     } else if (_tabController.index == 2) {
+//       // Fetch completed bookings when switching to Past Slot tab
+//       print('📥 Fetching completed bookings for Past Slot...');
+//       completedBookingsController.fetchCompletedBookings();
+//     }
+//   }
+//
+//   @override
+//   void dispose() {
+//     _tabController.removeListener(_handleTabChange);
+//     _tabController.dispose();
+//     super.dispose();
+//   }
+//
+//   // Helper method to build booking card from API data
+//   Widget _buildBookingCard(Map<String, dynamic> booking, String status, VoidCallback? onTap) {
+//     final service = booking['service'] ?? {};
+//     final subCategory = service['subCategory'] ?? {};
+//
+//     print('🎴 Building card for booking: ${booking['_id']}');
+//     print('🛠️ Service data: $service');
+//     print('📁 Subcategory data: $subCategory');
+//
+//     // Construct full image URL - FIXED
+//     String imageUrl;
+//     final imagePath = service['image'];
+//
+//     if (imagePath != null && imagePath.toString().isNotEmpty) {
+//       // Check if image URL is already complete
+//       if (imagePath.toString().startsWith('http')) {
+//         imageUrl = imagePath;
+//       } else {
+//         // Remove any leading slash and construct URL
+//         String cleanPath = imagePath.toString().replaceFirst(RegExp(r'^/'), '');
+//         imageUrl = 'https://d7001.sobhoy.com/api/v1/$cleanPath';
+//       }
+//     } else {
+//       // Fallback image
+//       imageUrl = 'https://images.unsplash.com/photo-1494790108755-2616b772390e?w=400&h=300&fit=crop';
+//     }
+//
+//     print('🖼️ Image URL: $imageUrl');
+//
+//     // Format date
+//     String formattedDate = 'Unknown date';
+//     try {
+//       final createdAt = booking['createdAt'];
+//       if (createdAt != null) {
+//         final dateTime = DateTime.parse(createdAt);
+//         formattedDate = '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+//       }
+//     } catch (e) {
+//       print('❌ Error parsing date: $e');
+//     }
+//
+//     return HorizontalServiceCard(
+//       imageUrl: imageUrl,
+//       title: service['name'] ?? 'Unknown Service',
+//       subtitle: subCategory['name'] ?? 'General',
+//       description: service['description'] ?? 'No description available',
+//       rating: "4.8", // Default rating
+//       onTap: onTap ?? () {
+//         print('👆 Card tapped for booking: ${booking['_id']}');
+//       },
+//       onDelete: () {
+//         _showDeleteConfirmation(booking['_id'], status);
+//       },
+//       status: status,
+//     );
+//   }
+//
+//   // Helper method to build API data list view
+//   Widget _buildApiListView({
+//     required RxList<Map<String, dynamic>> bookings,
+//     required RxBool isLoading,
+//     required RxString errorMessage,
+//     required String emptyMessage,
+//     required String status,
+//     required VoidCallback onRetry,
+//     VoidCallback? onCardTap,
+//   }) {
+//     print('📱 Building $status list view');
+//     print('📊 Bookings count: ${bookings.length}');
+//     print('🔄 Loading: ${isLoading.value}');
+//     print('❌ Error: ${errorMessage.value}');
+//
+//     // LOADING STATE
+//     if (isLoading.value) {
+//       print('⏳ Showing loading indicator for $status');
+//       return const Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             CircularProgressIndicator(
+//               color: AppColors.primaryColor,
+//             ),
+//             SizedBox(height: 16),
+//             Text(
+//               'Loading bookings...',
+//               style: TextStyle(
+//                 fontSize: 16,
+//                 color: Colors.black54,
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
+//
+//     // ERROR STATE
+//     if (errorMessage.isNotEmpty) {
+//       print('🚨 Showing error state for $status: ${errorMessage.value}');
+//       return Center(
+//         child: Padding(
+//           padding: const EdgeInsets.all(AppSizes.lg),
+//           child: Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               Icon(
+//                 Icons.error_outline,
+//                 size: 60,
+//                 color: Colors.red.shade300,
+//               ),
+//               const SizedBox(height: 16),
+//               Text(
+//                 errorMessage.value,
+//                 style: const TextStyle(
+//                   fontSize: 16,
+//                   color: Colors.black54,
+//                 ),
+//                 textAlign: TextAlign.center,
+//               ),
+//               const SizedBox(height: 24),
+//               ElevatedButton.icon(
+//                 onPressed: onRetry,
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: AppColors.primaryColor,
+//                   foregroundColor: Colors.white,
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 24,
+//                     vertical: 12,
+//                   ),
+//                 ),
+//                 icon: const Icon(Icons.refresh),
+//                 label: const Text('Retry'),
+//               ),
+//             ],
+//           ),
+//         ),
+//       );
+//     }
+//
+//     // EMPTY STATE
+//     if (bookings.isEmpty) {
+//       print('📭 Showing empty state for $status');
+//       return Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Icon(
+//               Icons.history,
+//               size: 60,
+//               color: Colors.grey.shade400,
+//             ),
+//             const SizedBox(height: 16),
+//             Text(
+//               emptyMessage,
+//               style: const TextStyle(
+//                 fontSize: 16,
+//                 color: Colors.black54,
+//               ),
+//             ),
+//             const SizedBox(height: 8),
+//             Text(
+//               'Your $status bookings will appear here',
+//               style: TextStyle(
+//                 fontSize: 14,
+//                 color: Colors.grey.shade500,
+//               ),
+//             ),
+//             const SizedBox(height: 24),
+//             ElevatedButton.icon(
+//               onPressed: onRetry,
+//               style: ElevatedButton.styleFrom(
+//                 backgroundColor: AppColors.primaryColor,
+//                 foregroundColor: Colors.white,
+//               ),
+//               icon: const Icon(Icons.refresh),
+//               label: const Text('Refresh'),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
+//
+//     // SUCCESS STATE - Display bookings
+//     print('✅ Showing ${bookings.length} $status bookings');
+//     return RefreshIndicator(
+//       onRefresh: () async {
+//         print('🔄 Pull to refresh triggered for $status');
+//         onRetry();
+//       },
+//       color: AppColors.primaryColor,
+//       child: ListView.separated(
+//         padding: const EdgeInsets.symmetric(
+//           horizontal: AppSizes.md,
+//           vertical: AppSizes.lg,
+//         ),
+//         physics: const AlwaysScrollableScrollPhysics(),
+//         itemCount: bookings.length,
+//         itemBuilder: (BuildContext context, int index) {
+//           print('📦 Building item $index for $status');
+//           return _buildBookingCard(bookings[index], status, onCardTap);
+//         },
+//         separatorBuilder: (BuildContext context, int index) {
+//           return const Column(
+//             children: <Widget>[
+//               Divider(),
+//               SizedBox(height: AppSizes.md),
+//             ],
+//           );
+//         },
+//       ),
+//     );
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final HomeTopBarController controller = Get.put(HomeTopBarController());
+//
+//     return Scaffold(
+//       body: SafeArea(
+//         child: Column(
+//           children: <Widget>[
+//             // ================================================================
+//             // TOP BAR - Profile Avatar and Bell Icon
+//             // ================================================================
+//             Card(
+//               elevation: 2,
+//               color: AppColors.whiteColor,
+//               child: Container(
+//                 padding: const EdgeInsets.symmetric(
+//                   horizontal: AppSizes.md,
+//                   vertical: AppSizes.lg,
+//                 ),
+//                 child: Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: <Widget>[
+//                     // Profile Image - Dynamically get image from controller
+//                     Obx(() {
+//                       final imageUrl = controller.getImageUrl();
+//                       return CircleAvatar(
+//                         radius: 30,
+//                         backgroundImage: imageUrl.isNotEmpty
+//                             ? NetworkImage(imageUrl)
+//                             : null,
+//                         child: imageUrl.isEmpty
+//                             ? const Icon(
+//                           Icons.person,
+//                           size: 50,
+//                           color: Colors.grey,
+//                         )
+//                             : null,
+//                       );
+//                     }),
+//
+//                     // Bell Icon Button
+//                     Container(
+//                       decoration: BoxDecoration(
+//                         color: AppColors.whiteColor,
+//                         border: Border.all(color: AppColors.primaryColor),
+//                         borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+//                       ),
+//                       child: IconButton(
+//                         onPressed: () {
+//                           Get.toNamed(AppRoutes.notificationPage);
+//                         },
+//                         icon: const Icon(
+//                           CupertinoIcons.bell,
+//                           color: AppColors.primaryColor,
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//
+//             // ================================================================
+//             // TAB BAR
+//             // ================================================================
+//             PreferredSize(
+//               preferredSize: const Size.fromHeight(50.0),
+//               child: Container(
+//                 color: Colors.white,
+//                 child: TabBar(
+//                   controller: _tabController,
+//                   dividerColor: Colors.transparent,
+//                   isScrollable: true,
+//                   indicatorColor: AppColors.primaryColor,
+//                   indicatorWeight: 5,
+//                   tabAlignment: TabAlignment.center,
+//                   labelColor: Colors.black87,
+//                   labelStyle: const TextStyle(
+//                     fontWeight: FontWeight.w600,
+//                     fontSize: 18,
+//                   ),
+//                   unselectedLabelStyle: const TextStyle(
+//                     fontWeight: FontWeight.w400,
+//                     fontSize: 14,
+//                   ),
+//                   tabs: const <Widget>[
+//                     Tab(text: "Active Slot"),
+//                     Tab(text: "Ongoing Slot"),
+//                     Tab(text: "Past Slot"),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//
+//             // Divider
+//             Padding(
+//               padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+//               child: Divider(
+//                 thickness: 1,
+//                 color: Colors.grey.withOpacity(0.3),
+//               ),
+//             ),
+//
+//             // ================================================================
+//             // TAB BAR VIEW - Content for each tab
+//             // ================================================================
+//             Expanded(
+//               child: TabBarView(
+//                 controller: _tabController,
+//                 children: <Widget>[
+//                   // ============================================================
+//                   // TAB 1: ACTIVE SLOT (Sample Static Data)
+//                   // ============================================================
+//                   ListView.separated(
+//                     padding: const EdgeInsets.symmetric(
+//                       horizontal: AppSizes.md,
+//                       vertical: AppSizes.lg,
+//                     ),
+//                     shrinkWrap: true,
+//                     itemCount: 5,
+//                     itemBuilder: (BuildContext context, int index) {
+//                       return HorizontalServiceCard(
+//                         imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+//                         title: 'TutorPro Academy $index',
+//                         subtitle: 'Children & Education',
+//                         description: 'Cork, Ireland',
+//                         rating: "4.9",
+//                         onTap: () {
+//                           print('👆 Active slot card $index tapped');
+//                         },
+//                         onDelete: () {
+//                           _showDeleteConfirmation('active_$index', 'Processing');
+//                         },
+//                         status: 'Processing',
+//                       );
+//                     },
+//                     separatorBuilder: (BuildContext context, int index) {
+//                       return const Column(
+//                         children: <Widget>[
+//                           Divider(),
+//                           SizedBox(height: AppSizes.md),
+//                         ],
+//                       );
+//                     },
+//                   ),
+//
+//                   // ============================================================
+//                   // TAB 2: ONGOING SLOT (API INTEGRATED - PENDING BOOKINGS)
+//                   // ============================================================
+//                   Obx(() {
+//                     print('🔄 Rebuilding Ongoing Slot tab');
+//                     return _buildApiListView(
+//                       bookings: pendingBookingsController.pendingBookings,
+//                       isLoading: pendingBookingsController.isLoading,
+//                       errorMessage: pendingBookingsController.errorMessage,
+//                       emptyMessage: 'No ongoing bookings yet',
+//                       status: 'Pending',
+//                       onRetry: () {
+//                         pendingBookingsController.fetchPendingBookings();
+//                       },
+//                       onCardTap: () {
+//                         // Get.toNamed(AppRoutes.bookingDetails);
+//                       },
+//                     );
+//                   }),
+//
+//                   // ============================================================
+//                   // TAB 3: PAST SLOT (API INTEGRATED - COMPLETED BOOKINGS)
+//                   // ============================================================
+//                   Obx(() {
+//                     print('🔄 Rebuilding Past Slot tab');
+//                     return _buildApiListView(
+//                       bookings: completedBookingsController.completedBookings,
+//                       isLoading: completedBookingsController.isLoading,
+//                       errorMessage: completedBookingsController.errorMessage,
+//                       emptyMessage: 'No completed bookings yet',
+//                       status: 'Completed',
+//                       onRetry: () {
+//                         completedBookingsController.fetchCompletedBookings();
+//                       },
+//                       onCardTap: () {
+//                         Get.toNamed(AppRoutes.reviewPage);
+//                       },
+//                     );
+//                   }),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   void _showDeleteConfirmation(String bookingId, String status) {
+//     print('🗑️ Delete confirmation for $status booking: $bookingId');
+//     Get.dialog(
+//       AlertDialog(
+//         title: const Text('Remove Booking'),
+//         content: Text('Are you sure you want to remove this $status booking from your history?'),
+//         actions: [
+//           TextButton(
+//             onPressed: () {
+//               print('❌ Delete cancelled');
+//               Get.back();
+//             },
+//             child: const Text('Cancel'),
+//           ),
+//           TextButton(
+//             onPressed: () {
+//               Get.back();
+//               print('✅ Delete confirmed for booking: $bookingId');
+//               // You can add API call to delete booking here
+//               // _deleteBooking(bookingId);
+//             },
+//             style: TextButton.styleFrom(
+//               foregroundColor: Colors.red,
+//             ),
+//             child: const Text('Remove'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+
+
+
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/core/config/app_sizes.dart';
+import 'package:manx_mate/features/home/controllers/home_top_bar_controller.dart';
+import 'package:manx_mate/features/booking/widgets/booking_card.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../core/config/app_sizes.dart';
-import '../widgets/booking_card.dart';
+// ============================================================================
+// CONTROLLER FOR PENDING BOOKINGS
+// ============================================================================
+class PendingBookingsController extends GetxController {
+  // Observable variables
+  var isLoading = false.obs;
+  var pendingBookings = <Map<String, dynamic>>[].obs;
+  var errorMessage = ''.obs;
 
+  final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+
+  // Get authorization token
+  Future<String?> _getAuthToken() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
+      print('🔐 Token retrieved: ${token != null ? '${token.substring(0, 20)}...' : 'null'}');
+      return token;
+    } catch (e) {
+      print('❌ Error getting auth token: $e');
+      return null;
+    }
+  }
+
+  // Fetch pending bookings from API
+  Future<void> fetchPendingBookings() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      pendingBookings.clear(); // Clear previous data
+
+      // Get authorization token
+      final token = await _getAuthToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required. Please login again.';
+        isLoading.value = false;
+        return;
+      }
+
+      // API endpoint for pending bookings
+      final url = Uri.parse('$baseUrl/booking/user?status=pending');
+      print('🌐 Fetching pending bookings from: $url');
+
+      // Make GET request with authorization
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📦 Response body: ${response.body}');
+
+      // Handle response
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        print('✅ Pending Bookings API Response: $jsonData');
+
+        if (jsonData['success'] == true) {
+          // Extract bookings from the correct path in response
+          final List<dynamic> bookingsData = jsonData['data']['data'] ?? [];
+          print('📋 Found ${bookingsData.length} pending bookings');
+
+          pendingBookings.value = bookingsData.cast<Map<String, dynamic>>();
+          print('🎯 Loaded ${pendingBookings.length} bookings into controller');
+        } else {
+          errorMessage.value = jsonData['message'] ?? 'Failed to load pending bookings';
+          print('❌ API Error: ${errorMessage.value}');
+        }
+      } else if (response.statusCode == 401) {
+        errorMessage.value = 'Unauthorized. Please login again.';
+        print('❌ Unauthorized access');
+      } else if (response.statusCode == 404) {
+        errorMessage.value = 'API endpoint not found';
+        print('❌ Endpoint not found');
+      } else {
+        errorMessage.value = 'Server error: ${response.statusCode}';
+        print('❌ Server error: ${response.statusCode} - ${response.body}');
+      }
+    } on http.ClientException catch (e) {
+      errorMessage.value = 'Network error. Please check your connection.';
+      print('❌ Network error: $e');
+    } on FormatException catch (e) {
+      errorMessage.value = 'Invalid response from server';
+      print('❌ Format error: $e');
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred: $e';
+      print('❌ Unexpected error: $e');
+      print('❌ Stack trace: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+      print('🏁 Loading completed. isLoading: ${isLoading.value}');
+    }
+  }
+}
+
+// ============================================================================
+// CONTROLLER FOR COMPLETED BOOKINGS
+// ============================================================================
+class CompletedBookingsController extends GetxController {
+  // Observable variables
+  var isLoading = false.obs;
+  var completedBookings = <Map<String, dynamic>>[].obs;
+  var errorMessage = ''.obs;
+
+  final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+
+  // Get authorization token
+  Future<String?> _getAuthToken() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
+      print('🔐 Token retrieved: ${token != null ? '${token.substring(0, 20)}...' : 'null'}');
+      return token;
+    } catch (e) {
+      print('❌ Error getting auth token: $e');
+      return null;
+    }
+  }
+
+  // Fetch completed bookings from API
+  Future<void> fetchCompletedBookings() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      completedBookings.clear(); // Clear previous data
+
+      // Get authorization token
+      final token = await _getAuthToken();
+      if (token == null) {
+        errorMessage.value = 'Authentication required. Please login again.';
+        isLoading.value = false;
+        return;
+      }
+
+      // API endpoint for completed bookings
+      final url = Uri.parse('$baseUrl/booking/user?status=completed');
+      print('🌐 Fetching completed bookings from: $url');
+
+      // Make GET request with authorization
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('📡 Response status: ${response.statusCode}');
+      print('📦 Response body: ${response.body}');
+
+      // Handle response
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        print('✅ Completed Bookings API Response: $jsonData');
+
+        if (jsonData['success'] == true) {
+          // Extract bookings from the correct path in response
+          final List<dynamic> bookingsData = jsonData['data']['data'] ?? [];
+          print('📋 Found ${bookingsData.length} completed bookings');
+
+          completedBookings.value = bookingsData.cast<Map<String, dynamic>>();
+          print('🎯 Loaded ${completedBookings.length} bookings into controller');
+        } else {
+          errorMessage.value = jsonData['message'] ?? 'Failed to load bookings';
+          print('❌ API Error: ${errorMessage.value}');
+        }
+      } else if (response.statusCode == 401) {
+        errorMessage.value = 'Unauthorized. Please login again.';
+        print('❌ Unauthorized access');
+      } else if (response.statusCode == 404) {
+        errorMessage.value = 'API endpoint not found';
+        print('❌ Endpoint not found');
+      } else {
+        errorMessage.value = 'Server error: ${response.statusCode}';
+        print('❌ Server error: ${response.statusCode} - ${response.body}');
+      }
+    } on http.ClientException catch (e) {
+      errorMessage.value = 'Network error. Please check your connection.';
+      print('❌ Network error: $e');
+    } on FormatException catch (e) {
+      errorMessage.value = 'Invalid response from server';
+      print('❌ Format error: $e');
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred: $e';
+      print('❌ Unexpected error: $e');
+      print('❌ Stack trace: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+      print('🏁 Loading completed. isLoading: ${isLoading.value}');
+    }
+  }
+}
+
+// ============================================================================
+// BOOKING SCREEN
+// ============================================================================
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
 
@@ -17,285 +723,286 @@ class BookingScreen extends StatefulWidget {
 
 class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final PendingBookingsController pendingBookingsController = Get.put(PendingBookingsController());
+  final CompletedBookingsController completedBookingsController = Get.put(CompletedBookingsController());
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this); // Initialize TabController with 3 tabs
+    _tabController = TabController(length: 3, vsync: this);
+
+    // Add listener to fetch data when tab changes
+    _tabController.addListener(_handleTabChange);
+
+    // Fetch initial data for first tab
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('🚀 Initializing booking screen...');
+      pendingBookingsController.fetchPendingBookings();
+      completedBookingsController.fetchCompletedBookings();
+    });
+  }
+
+  void _handleTabChange() {
+    print('🔁 Tab changed to index: ${_tabController.index}');
+    if (_tabController.index == 1) {
+      // Fetch pending bookings when switching to Ongoing Slot tab
+      print('📥 Fetching pending bookings for Ongoing Slot...');
+      pendingBookingsController.fetchPendingBookings();
+    } else if (_tabController.index == 2) {
+      // Fetch completed bookings when switching to Past Slot tab
+      print('📥 Fetching completed bookings for Past Slot...');
+      completedBookingsController.fetchCompletedBookings();
+    }
   }
 
   @override
   void dispose() {
-    _tabController.dispose(); // Dispose the TabController when done
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
+  // Helper method to build booking card from API data
+  Widget _buildBookingCard(Map<String, dynamic> booking, String status, VoidCallback? onTap) {
+    final service = booking['service'] ?? {};
+    final subCategory = service['subCategory'] ?? {};
+
+    print('🎴 Building card for booking: ${booking['_id']}');
+    print('🛠️ Service data: $service');
+    print('📁 Subcategory data: $subCategory');
+
+    // Construct full image URL - FIXED as per requirement
+    String imageUrl;
+    final imagePath = service['image'];
+
+    if (imagePath != null && imagePath.toString().isNotEmpty) {
+      // Check if image URL is already complete
+      if (imagePath.toString().startsWith('http')) {
+        imageUrl = imagePath;
+      } else {
+        // Remove any leading slash and construct URL as: https://d7001.sobhoy.com/{image data}
+        String cleanPath = imagePath.toString().replaceFirst(RegExp(r'^/'), '');
+        imageUrl = 'https://d7001.sobhoy.com/$cleanPath';
+      }
+    } else {
+      // Fallback image
+      imageUrl = 'https://images.unsplash.com/photo-1494790108755-2616b772390e?w=400&h=300&fit=crop';
+    }
+
+    print('🖼️ Image URL: $imageUrl');
+
+    // Format date
+    String formattedDate = 'Unknown date';
+    try {
+      final createdAt = booking['createdAt'];
+      if (createdAt != null) {
+        final dateTime = DateTime.parse(createdAt);
+        formattedDate = '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      }
+    } catch (e) {
+      print('❌ Error parsing date: $e');
+    }
+
+    return HorizontalServiceCard(
+      imageUrl: imageUrl,
+      title: service['name'] ?? 'Unknown Service',
+      subtitle: subCategory['name'] ?? 'General',
+      description: service['description'] ?? 'No description available',
+      rating: "4.8", // Default rating
+      onTap: onTap ?? () {
+        print('👆 Card tapped for booking: ${booking['_id']}');
+      },
+      onDelete: () {
+        _showDeleteConfirmation(booking['_id'], status);
+      },
+      status: status,
+    );
+  }
+
+  // Helper method to build API data list view
+  Widget _buildApiListView({
+    required RxList<Map<String, dynamic>> bookings,
+    required RxBool isLoading,
+    required RxString errorMessage,
+    required String emptyMessage,
+    required String status,
+    required VoidCallback onRetry,
+    VoidCallback? onCardTap,
+  }) {
+    print('📱 Building $status list view');
+    print('📊 Bookings count: ${bookings.length}');
+    print('🔄 Loading: ${isLoading.value}');
+    print('❌ Error: ${errorMessage.value}');
+
+    // LOADING STATE
+    if (isLoading.value) {
+      print('⏳ Showing loading indicator for $status');
+      return const Center(
         child: Column(
-          children: <Widget>[
-            // Top Container (Profile Avatar and Bell Icon)
-            Card(
-              elevation: 2,
-              color: AppColors.whiteColor,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: AppSizes.lg),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundImage: NetworkImage(
-                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.whiteColor,
-                        border: Border.all(color: AppColors.primaryColor),
-                        borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          Get.toNamed(AppRoutes.notificationPage);
-                        },
-                        icon: const Icon(CupertinoIcons.bell, color: AppColors.primaryColor),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: AppColors.primaryColor,
             ),
-
-            // TabBar
-            PreferredSize(
-              preferredSize: const Size.fromHeight(50.0),
-              child: Container(
-                color: Colors.white,
-                child: TabBar(
-                  controller: _tabController,
-                  dividerColor: Colors.transparent,
-                  isScrollable: true,
-                  indicatorColor: AppColors.primaryColor,
-                  indicatorWeight: 5,
-                  tabAlignment: TabAlignment.center,
-                  labelColor: Colors.black87,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
-                  tabs: const <Widget>[
-                    Tab(text: "Active Slot"),
-                    Tab(text: "Ongoing Slot"),
-                    Tab(text: "Past Slot"),
-                  ],
-                ),
-              ),
-            ),
-
-            // Divider
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-              child: Divider(thickness: 1, color: Colors.grey.withValues(alpha: 0.3)),
-            ),
-
-            // TabBarView with the same controller
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: <Widget>[
-                  ///----------------- Active Slot Tab
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    shrinkWrap: true,
-                    itemCount: 5,
-                    // Increased count for testing
-                    itemBuilder: (BuildContext context, int index) {
-                      return HorizontalServiceCard(
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        title: 'TutorPro Academy $index',
-                        subtitle: 'Children & Education',
-                        location: 'Cork, Ireland',
-                        rating: "4.9",
-                        onTap: () {
-                          // print('Active card $index tapped');
-                        },
-
-                        onDelete: () {
-                          // print('Respond to active card $index');
-                        },
-                        status: 'Processing',
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const Column(
-                        children: <Widget>[
-                          Divider(),
-                          SizedBox(height: AppSizes.md),
-                        ],
-                      );
-                    },
-                  ),
-
-                  ///------------- Ongoing Slot Tab
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    itemCount: 3,
-                    itemBuilder: (BuildContext context, int index) {
-                      return HorizontalServiceCard(
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop',
-                        title: 'Ongoing Service $index',
-                        subtitle: 'Math & Science',
-                        location: 'Dublin, Ireland',
-                        rating: "4.7",
-                        onTap: () {
-                          // print('Ongoing card $index tapped');
-                        },
-
-                        onDelete: () {
-                          // print('View ongoing card $index');
-                        },
-                        status: "Requested",
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const Column(
-                        children: <Widget>[
-                          Divider(),
-                          SizedBox(height: AppSizes.md),
-                        ],
-                      );
-                    },
-                  ),
-
-                  ///----------- Past Slot Tab
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    itemCount: 8,
-                    itemBuilder: (BuildContext context, int index) {
-                      return HorizontalServiceCard(
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1494790108755-2616b772390e?w=400&h=300&fit=crop',
-                        title: 'Past Service $index',
-                        subtitle: 'Language & Arts',
-                        location: 'Galway, Ireland',
-                        rating: "4.8",
-                        onTap: () {
-                          Get.toNamed(AppRoutes.reviewPage);
-                        },
-
-                        onDelete: () {
-                          // print('Review past card $index');
-                        },
-                        status: 'Completed',
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const Column(
-                        children: <Widget>[
-                          Divider(),
-                          SizedBox(height: AppSizes.md),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+            SizedBox(height: 16),
+            Text(
+              'Loading bookings...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black54,
               ),
             ),
           ],
         ),
+      );
+    }
+
+    // ERROR STATE
+    if (errorMessage.isNotEmpty) {
+      print('🚨 Showing error state for $status: ${errorMessage.value}');
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.lg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 60,
+                color: Colors.red.shade300,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                errorMessage.value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // EMPTY STATE
+    if (bookings.isEmpty) {
+      print('📭 Showing empty state for $status');
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.history,
+              size: 60,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              emptyMessage,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your $status bookings will appear here',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // SUCCESS STATE - Display bookings
+    print('✅ Showing ${bookings.length} $status bookings');
+    return RefreshIndicator(
+      onRefresh: () async {
+        print('🔄 Pull to refresh triggered for $status');
+        onRetry();
+      },
+      color: AppColors.primaryColor,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.md,
+          vertical: AppSizes.lg,
+        ),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: bookings.length,
+        itemBuilder: (BuildContext context, int index) {
+          print('📦 Building item $index for $status');
+          return _buildBookingCard(bookings[index], status, onCardTap);
+        },
+        separatorBuilder: (BuildContext context, int index) {
+          return const Column(
+            children: <Widget>[
+              Divider(),
+              SizedBox(height: AppSizes.md),
+            ],
+          );
+        },
       ),
     );
-  }
-}
-*/
-
-
-
-
-
-
-
-///
-///
-/// todo::: showign the user image
-///
-///
-///
-///
-
-
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:manx_mate/core/config/app_colors.dart';
-import 'package:manx_mate/core/routes/app_routes.dart';
-import '../../../core/config/app_sizes.dart';
-import '../../home/controllers/home_top_bar_controller.dart';
-import '../widgets/booking_card.dart';
-
-class BookingScreen extends StatefulWidget {
-  const BookingScreen({super.key});
-
-  @override
-  State<BookingScreen> createState() => _BookingScreenState();
-}
-
-class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this); // Initialize TabController with 3 tabs
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose(); // Dispose the TabController when done
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Initialize the HomeTopBarController to manage profile image
     final HomeTopBarController controller = Get.put(HomeTopBarController());
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: <Widget>[
-            // Top Container (Profile Avatar and Bell Icon)
+            // ================================================================
+            // TOP BAR - Profile Avatar and Bell Icon
+            // ================================================================
             Card(
               elevation: 2,
               color: AppColors.whiteColor,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: AppSizes.lg),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.md,
+                  vertical: AppSizes.lg,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     // Profile Image - Dynamically get image from controller
                     Obx(() {
-                      final imageUrl = controller.getImageUrl(); // Get image URL from the controller
+                      final imageUrl = controller.getImageUrl();
                       return CircleAvatar(
                         radius: 30,
                         backgroundImage: imageUrl.isNotEmpty
-                            ? NetworkImage(imageUrl) // Use network image if available
+                            ? NetworkImage(imageUrl)
                             : null,
                         child: imageUrl.isEmpty
                             ? const Icon(
@@ -307,6 +1014,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                       );
                     }),
 
+                    // Bell Icon Button
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.whiteColor,
@@ -317,7 +1025,10 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                         onPressed: () {
                           Get.toNamed(AppRoutes.notificationPage);
                         },
-                        icon: const Icon(CupertinoIcons.bell, color: AppColors.primaryColor),
+                        icon: const Icon(
+                          CupertinoIcons.bell,
+                          color: AppColors.primaryColor,
+                        ),
                       ),
                     ),
                   ],
@@ -325,7 +1036,9 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
               ),
             ),
 
-            // TabBar
+            // ================================================================
+            // TAB BAR
+            // ================================================================
             PreferredSize(
               preferredSize: const Size.fromHeight(50.0),
               child: Container(
@@ -338,8 +1051,14 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                   indicatorWeight: 5,
                   tabAlignment: TabAlignment.center,
                   labelColor: Colors.black87,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                  ),
                   tabs: const <Widget>[
                     Tab(text: "Active Slot"),
                     Tab(text: "Ongoing Slot"),
@@ -352,15 +1071,22 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
             // Divider
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-              child: Divider(thickness: 1, color: Colors.grey.withOpacity(0.3)),
+              child: Divider(
+                thickness: 1,
+                color: Colors.grey.withOpacity(0.3),
+              ),
             ),
 
-            // TabBarView with the same controller
+            // ================================================================
+            // TAB BAR VIEW - Content for each tab
+            // ================================================================
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: <Widget>[
-                  ///----------------- Active Slot Tab
+                  // ============================================================
+                  // TAB 1: ACTIVE SLOT (Sample Static Data)
+                  // ============================================================
                   ListView.separated(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSizes.md,
@@ -370,17 +1096,16 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     itemCount: 5,
                     itemBuilder: (BuildContext context, int index) {
                       return HorizontalServiceCard(
-                        imageUrl:
-                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
                         title: 'TutorPro Academy $index',
                         subtitle: 'Children & Education',
-                        location: 'Cork, Ireland',
+                        description: 'Cork, Ireland',
                         rating: "4.9",
                         onTap: () {
-                          // print('Active card $index tapped');
+                          print('👆 Active slot card $index tapped');
                         },
                         onDelete: () {
-                          // print('Respond to active card $index');
+                          _showDeleteConfirmation('active_$index', 'Processing');
                         },
                         status: 'Processing',
                       );
@@ -395,78 +1120,81 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     },
                   ),
 
-                  ///------------- Ongoing Slot Tab
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-                    itemCount: 3,
-                    itemBuilder: (BuildContext context, int index) {
-                      return HorizontalServiceCard(
-                        imageUrl:
-                        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop',
-                        title: 'Ongoing Service $index',
-                        subtitle: 'Math & Science',
-                        location: 'Dublin, Ireland',
-                        rating: "4.7",
-                        onTap: () {
-                          // print('Ongoing card $index tapped');
-                        },
-                        onDelete: () {
-                          // print('View ongoing card $index');
-                        },
-                        status: "Requested",
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const Column(
-                        children: <Widget>[
-                          Divider(),
-                          SizedBox(height: AppSizes.md),
-                        ],
-                      );
-                    },
-                  ),
+                  // ============================================================
+                  // TAB 2: ONGOING SLOT (API INTEGRATED - PENDING BOOKINGS)
+                  // ============================================================
+                  Obx(() {
+                    print('🔄 Rebuilding Ongoing Slot tab');
+                    return _buildApiListView(
+                      bookings: pendingBookingsController.pendingBookings,
+                      isLoading: pendingBookingsController.isLoading,
+                      errorMessage: pendingBookingsController.errorMessage,
+                      emptyMessage: 'No ongoing bookings yet',
+                      status: 'Pending',
+                      onRetry: () {
+                        pendingBookingsController.fetchPendingBookings();
+                      },
+                      onCardTap: () {
+                        // Get.toNamed(AppRoutes.bookingDetails);
+                      },
+                    );
+                  }),
 
-                  ///----------- Past Slot Tab
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-                    itemCount: 8,
-                    itemBuilder: (BuildContext context, int index) {
-                      return HorizontalServiceCard(
-                        imageUrl:
-                        'https://images.unsplash.com/photo-1494790108755-2616b772390e?w=400&h=300&fit=crop',
-                        title: 'Past Service $index',
-                        subtitle: 'Language & Arts',
-                        location: 'Galway, Ireland',
-                        rating: "4.8",
-                        onTap: () {
-                          Get.toNamed(AppRoutes.reviewPage);
-                        },
-                        onDelete: () {
-                          // print('Review past card $index');
-                        },
-                        status: 'Completed',
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const Column(
-                        children: <Widget>[
-                          Divider(),
-                          SizedBox(height: AppSizes.md),
-                        ],
-                      );
-                    },
-                  ),
+                  // ============================================================
+                  // TAB 3: PAST SLOT (API INTEGRATED - COMPLETED BOOKINGS)
+                  // ============================================================
+                  Obx(() {
+                    print('🔄 Rebuilding Past Slot tab');
+                    return _buildApiListView(
+                      bookings: completedBookingsController.completedBookings,
+                      isLoading: completedBookingsController.isLoading,
+                      errorMessage: completedBookingsController.errorMessage,
+                      emptyMessage: 'No completed bookings yet',
+                      status: 'Completed',
+                      onRetry: () {
+                        completedBookingsController.fetchCompletedBookings();
+                      },
+                      onCardTap: () {
+                        Get.toNamed(AppRoutes.reviewPage);
+                      },
+                    );
+                  }),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(String bookingId, String status) {
+    print('🗑️ Delete confirmation for $status booking: $bookingId');
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Remove Booking'),
+        content: Text('Are you sure you want to remove this $status booking from your history?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              print('❌ Delete cancelled');
+              Get.back();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              print('✅ Delete confirmed for booking: $bookingId');
+              // You can add API call to delete booking here
+              // _deleteBooking(bookingId);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
       ),
     );
   }

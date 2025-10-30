@@ -40,6 +40,7 @@ class ImageSlider extends StatefulWidget {
   State<ImageSlider> createState() => _ImageSliderState();
 }
 
+
 class _ImageSliderState extends State<ImageSlider> {
   final ImageSliderController _controller = Get.put(ImageSliderController());
   final PageController _pageController = PageController();
@@ -107,25 +108,19 @@ class _ImageSliderState extends State<ImageSlider> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Expanded(
-                            child: CustomCachedImage(
-                              imageUrl: widget.imgList[index],
+                            child: Image.asset(
+                              widget.imgList[index],  // Use Image.asset for local assets
+                              fit: BoxFit.cover,
                               height: widget.height,
                               width: context.screenWidth,
                             ),
                           ),
                         ],
                       ),
-
-                      // CustomNetworkImage(
-                      //   imageUrl: widget.imgList[index],
-                      //   boxShape: BoxShape.rectangle,
-                      //   height: widget.height,
-                      //   width: context.screenWidth,
-                      // ),
                     ),
                   ),
                   Positioned(
-                    left: 20,
+                    left: 50,
                     bottom: 50,
                     child: Obx(() {
                       return Column(
@@ -134,8 +129,8 @@ class _ImageSliderState extends State<ImageSlider> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List<AnimatedContainer>.generate(widget.imgList.length, (
-                              int index,
-                            ) {
+                                int index,
+                                ) {
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 500),
                                 width: _controller.currentIndex.value == index
@@ -162,7 +157,6 @@ class _ImageSliderState extends State<ImageSlider> {
             },
           ),
         ),
-
         const SizedBox(height: 12),
       ],
     );
