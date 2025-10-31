@@ -1,11 +1,11 @@
-
-import 'dart:convert';
-
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// ============================================================================
+// CONTROLLER FOR PENDING BOOKINGS
+// ============================================================================
 class PendingBookingsController extends GetxController {
   // Observable variables
   var isLoading = false.obs;
@@ -101,8 +101,10 @@ class PendingBookingsController extends GetxController {
   }
 }
 
-
-
+/// ============================================================================
+///
+/// CONTROLLER FOR COMPLETED BOOKINGS
+/// ============================================================================
 class CompletedBookingsController extends GetxController {
   // Observable variables
   var isLoading = false.obs;

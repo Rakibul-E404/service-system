@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -291,7 +292,7 @@ class ProfileInformationController extends GetxController {
       isLoading.value = true;
 
       debugPrint('═══════════════════════════════════════');
-      debugPrint('✏️ UPDATING USER PROFILE WITH MULTIPART');
+      debugPrint('✏️ UPDATING USER PROFILE (Partial Update)');
       debugPrint('═══════════════════════════════════════');
 
       final String? token = await SecureStorageService().read(AppConstants.authToken);
@@ -309,22 +310,43 @@ class ProfileInformationController extends GetxController {
         return;
       }
 
-      // Prepare multipart form data
-      dio.FormData formData = dio.FormData.fromMap({
-        'name': nameController.text.trim(),
-        'location': locationController.text.trim().toLowerCase(),
-      });
+      // Build dynamic form data map
+      final Map<String, dynamic> updateFields = {};
 
-      // Add image file if selected
-      if (selectedImageFile.value != null) {
-        String fileName = selectedImageFile.value!.path.split('/').last;
-        formData.files.add(MapEntry(
-          'image', // This key depends on backend - check API documentation
-          await dio.MultipartFile.fromFile(selectedImageFile.value!.path, filename: fileName),
-        ));
+      // Compare only changed fields
+      if (nameController.text.trim() != name.value.trim()) {
+        updateFields['name'] = nameController.text.trim();
       }
 
+      if (locationController.text.trim().toLowerCase() != location.value.trim().toLowerCase()) {
+        updateFields['location'] = locationController.text.trim().toLowerCase();
+      }
+
+      // Add image if changed
+      if (selectedImageFile.value != null) {
+        String fileName = selectedImageFile.value!.path.split('/').last;
+        updateFields['image'] = await dio.MultipartFile.fromFile(
+          selectedImageFile.value!.path,
+          filename: fileName,
+        );
+      }
+
+      if (updateFields.isEmpty) {
+        isLoading.value = false;
+        Get.snackbar(
+          'No Changes',
+          'There is nothing to update',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+        return;
+      }
+
+      dio.FormData formData = dio.FormData.fromMap(updateFields);
+
       debugPrint('📤 Sending multipart request to ${AppUrl.updateSelfProfileUrl}');
+      debugPrint('📝 Fields to update: $updateFields');
 
       final response = await _dio.put(
         AppUrl.updateSelfProfileUrl,
@@ -347,20 +369,18 @@ class ProfileInformationController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
-
         final bool success = data['success'] ?? false;
         final String message = data['message'] ?? 'Profile updated successfully';
 
         if (success) {
-          // Update state
-          name.value = nameController.text;
-          location.value = locationController.text;
-          if (data['data']?['image'] != null) {
-            profileImage.value = data['data']['image'];
+          // Update reactive values only for changed fields
+          if (updateFields.containsKey('name')) name.value = nameController.text;
+          if (updateFields.containsKey('location')) location.value = locationController.text;
+          if (updateFields.containsKey('image')) {
+            profileImage.value = data['data']?['image'] ?? profileImage.value;
           }
 
           selectedImageFile.value = null;
-
           isEditing.value = false;
 
           Get.snackbar(
@@ -372,10 +392,8 @@ class ProfileInformationController extends GetxController {
             icon: const Icon(Icons.check_circle, color: Colors.white),
           );
 
-          // Refresh profile data
           await fetchUserProfile();
-
-          debugPrint('✅ Profile updated successfully');
+          debugPrint('✅ Profile updated successfully (partial)');
         } else {
           Get.snackbar(
             'Error',
@@ -387,7 +405,6 @@ class ProfileInformationController extends GetxController {
         }
       } else {
         final String errorMessage = response.data['message'] ?? 'Failed to update profile';
-
         debugPrint('❌ Update Failed: $errorMessage');
 
         Get.snackbar(
@@ -414,6 +431,8 @@ class ProfileInformationController extends GetxController {
       );
     }
   }
+
+
 
   void toggleEdit() {
     if (isEditing.value) {
@@ -451,3 +470,7 @@ class ProfileInformationController extends GetxController {
     return selectedImageFile.value != null;
   }
 }
+
+
+
+

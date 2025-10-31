@@ -138,8 +138,6 @@
 //   }
 // }
 
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -153,7 +151,8 @@ class HorizontalServiceCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String description;
-  final String rating;
+
+  // final String rating;
   final String status;
   final VoidCallback? onTap;
   final VoidCallback? onDelete; // For "Respond" button
@@ -167,7 +166,7 @@ class HorizontalServiceCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.description,
-    required this.rating,
+    // required this.rating,
     this.onTap,
     this.onDelete,
     this.width,
@@ -207,6 +206,7 @@ class HorizontalServiceCard extends StatelessWidget {
               ),
             ),
             // Adjust text and other content based on screen width
+            const SizedBox(width: 8),
             Expanded(
               flex: 4,
               child: Column(
@@ -231,18 +231,20 @@ class HorizontalServiceCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           description,
-                          overflow: TextOverflow.ellipsis, // Truncate the text with an ellipsis when it overflows
+                          overflow: TextOverflow.ellipsis,
+                          // Truncate the text with an ellipsis when it overflows
                           style: context.txtTheme.bodyMedium?.copyWith(
                             color: Colors.grey,
                             fontSize: screenWidth * 0.03, // Adjust based on screen size
                           ),
-                          maxLines: 2, // Optional: Limit the number of lines to 2 if the text is too long
+                          maxLines:
+                              2, // Optional: Limit the number of lines to 2 if the text is too long
                         ),
                       ),
                     ],
                   ),
                   // Rating with icon
-                  Row(
+                  /*Row(
                     children: <Widget>[
                       const Icon(
                         Icons.star,
@@ -250,7 +252,7 @@ class HorizontalServiceCard extends StatelessWidget {
                       ),
                       Text(rating),
                     ],
-                  ),
+                  ),*/
                 ],
               ),
             ),
@@ -265,14 +267,15 @@ class HorizontalServiceCard extends StatelessWidget {
                       showModalBottomSheet(
                         context: context,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(24),
-                          ),
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                         ),
                         builder: (BuildContext context) {
                           return AppDeleteModal(
                             onTap: () {
                               Get.back();
+                              if (onDelete != null) {
+                                onDelete!();
+                              }
                             },
                           );
                         },
@@ -284,14 +287,10 @@ class HorizontalServiceCard extends StatelessWidget {
                       size: screenWidth * 0.07, // Adjust icon size dynamically
                     ),
                   ),
-                  if (showStatus)
-                    Spacer(),
+                  if (showStatus) const Spacer(),
                   if (showStatus)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 2,
-                        horizontal: 6,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         color: status == "Requested"
@@ -303,7 +302,8 @@ class HorizontalServiceCard extends StatelessWidget {
                       child: Text(
                         status,
                         style: TextStyle(
-                          fontSize: screenWidth * 0.03, // Adjust text size dynamically
+                          fontSize: screenWidth * 0.03,
+                          // Adjust text size dynamically
                           fontWeight: FontWeight.w700,
                           color: status == "Requested"
                               ? AppColors.primaryColor
