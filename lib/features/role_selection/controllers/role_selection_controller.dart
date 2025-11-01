@@ -20,7 +20,8 @@ class RoleSelectionController extends GetxController {
 
     /// Navigate to signup and pass the role
     Get.toNamed(
-      AppRoutes.signUpRoute,
+      // AppRoutes.signUpRoute,
+      AppRoutes.loginRoute,
       arguments: {'role': selectedRole.value},
     );
   }
