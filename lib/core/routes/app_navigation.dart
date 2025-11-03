@@ -37,7 +37,9 @@ import '../../features/auth/screens/reset_password.dart';
 import '../../features/auth/screens/sign_in_page.dart';
 import '../../features/auth/screens/sign_up_page.dart';
 import '../../features/auth/screens/verify_mail.dart';
+import '../../features/home/controllers/sub_categories_controller.dart';
 import '../../features/home/screens/search_screen.dart';
+import '../../features/home/screens/service_page.dart';
 import '../../features/profile/controllers/privacy_policy_screen_controller.dart';
 import '../../features/provider/screens/provider_profile_page.dart';
 import 'app_routes.dart';
@@ -46,6 +48,15 @@ class AppNavigation {
   AppNavigation._();
 
   static final List<GetPage<dynamic>> routes = <GetPage<dynamic>>[
+
+    GetPage(
+      name: AppRoutes.servicesRoute, // ✅ Correct
+      page: () => ServicesPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<SubCategoriesController>(() => SubCategoriesController());
+      }),
+    ),
+
     GetPage<dynamic>(
       name: AppRoutes.initialRoute,
       page: () => const SignInScreen(),
@@ -100,6 +111,7 @@ class AppNavigation {
       transition: Transition.noTransition,
       binding: HomeBinding(),
     ),
+
     GetPage<dynamic>(
       name: AppRoutes.homeSubCategoriesPage,
       page: () => SubCategoriesPage(),

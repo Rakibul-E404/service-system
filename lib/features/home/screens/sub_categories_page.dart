@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:manx_mate/features/home/screens/service_page.dart';
 import '../../../core/config/app_sizes.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../auth/widgets/service_card.dart';
@@ -137,15 +139,36 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                         rating: 0.0, // Not needed for subcategories
                         showFavorite: false, // Hide favorite button for subcategories
                         showLocationAndRating: false, // Hide location and rating for subcategories
+                        // onTap: () {
+                        //   Get.toNamed(
+                        //     AppRoutes.homeServiceDetailsRoute,
+                        //     arguments: {
+                        //       'subCategoryId': subCategory.id,
+                        //       'subCategoryName': subCategory.name,
+                        //     },
+                        //   );
+                        // },
+
+
+                        // Update the onTap in your SubCategoriesPage
+                        // In your SubCategoriesPage onTap
                         onTap: () {
+                          controller.fetchServicesBySubCategory(
+                              subCategory.id,
+                              subCategory.name
+                          );
+
                           Get.toNamed(
-                            AppRoutes.homeServiceDetailsRoute,
+                            AppRoutes.servicesRoute, // ✅ Use AppRoutes prefix
                             arguments: {
                               'subCategoryId': subCategory.id,
                               'subCategoryName': subCategory.name,
                             },
                           );
+
                         },
+
+
                       ),
                     );
                   },
@@ -158,3 +181,18 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
     );
   }
 }
+
+
+
+
+///
+///
+///
+/// todo::: addign the list screen for the service
+///
+///
+///
+
+
+
+

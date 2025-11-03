@@ -4,6 +4,8 @@ class AppRoutes {
   // Initial routes
   static const String initialRoute = "/";
 
+  static const String servicesRoute = '/services';
+  static const String serviceDetailsRoute = '/service-details';
 
   // Splash Screen routes
   static const String splashRoute = "/splash-screen";
