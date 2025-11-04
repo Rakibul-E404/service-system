@@ -146,7 +146,7 @@ class AppNavigation {
       name: AppRoutes.favoritePage,
       page: () => FavoriteScreen(),
       transition: Transition.leftToRightWithFade,
-      binding: FavoriteBinding(),
+      binding: FavoritesBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.messagePage,

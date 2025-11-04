@@ -212,3 +212,19 @@ class ServicesPage extends GetView<ServicesController> {
     );
   }
 }
+
+
+
+
+///
+///
+///
+///
+/// todo::: addign teh fab button api
+///
+///
+///
+
+
+
+

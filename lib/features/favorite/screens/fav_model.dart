@@ -1,3 +1,6 @@
+
+
+
 class FavoriteModel {
   final String id;
   final String? userId;
@@ -5,6 +8,7 @@ class FavoriteModel {
   final ProviderService? providerService;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  bool isDeleted;  // <-- Add this field
 
   FavoriteModel({
     required this.id,
@@ -13,6 +17,7 @@ class FavoriteModel {
     this.providerService,
     this.createdAt,
     this.updatedAt,
+    this.isDeleted = false,  // Initialize as false by default
   });
 
   factory FavoriteModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +34,7 @@ class FavoriteModel {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
+      isDeleted: json['isDeleted'] ?? false,  // Deserialize isDeleted if available
     );
   }
 
@@ -40,6 +46,7 @@ class FavoriteModel {
       'providerService': providerService?.toJson(),
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'isDeleted': isDeleted,  // Serialize isDeleted to JSON
     };
   }
 }
@@ -72,12 +79,10 @@ class ProviderService {
   factory ProviderService.fromJson(Map<String, dynamic> json) {
     return ProviderService(
       id: json['_id'] ?? '',
-      // API uses 'name' but we need 'title' for the UI
       title: json['name'] ?? json['title'] ?? 'No Title',
       description: json['description'] ?? '',
       image: json['image'],
       location: json['location'] ?? 'Unknown Location',
-      // API uses 'averageRating' instead of 'rating'
       rating: json['averageRating'] != null
           ? (json['averageRating'] as num).toDouble()
           : (json['rating'] != null ? (json['rating'] as num).toDouble() : null),
@@ -140,3 +145,20 @@ class Provider {
     };
   }
 }
+
+
+
+
+
+///
+///
+///
+///
+/// todo::: adding the fav add api
+///
+///
+///
+///
+
+
+

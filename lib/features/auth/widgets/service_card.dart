@@ -147,7 +147,7 @@ class ServiceCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.star, size: 14, color: Colors.amber[600]),
+                          Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
                           const SizedBox(width: 2),
                           Text(
                             rating.toString(),
@@ -169,3 +169,25 @@ class ServiceCard extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+///
+///
+///
+///todo::: addign the fab-button funciton
+///
+///
+///
+
+
+
+
+
+
+
+

@@ -1,8 +1,11 @@
-import 'package:get/get.dart';
-import 'package:manx_mate/core/utils/logger_utils.dart';
+
+
+import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/logger_utils.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 import '../screens/fav_model.dart';
 
@@ -24,7 +27,9 @@ class FavoriteController extends GetxController {
       hasMoreData.value = true;
     }
 
-    if (!hasMoreData.value || isLoading.value) return;
+    if (!hasMoreData.value || isLoading.value) {
+      return;
+    }
 
     try {
       isLoading.value = true;
@@ -46,7 +51,6 @@ class FavoriteController extends GetxController {
       LoggerUtils.debug(response.jsonResponse);
 
       if (response.isSuccess && response.jsonResponse != null) {
-        // FIXED: Access nested data object
         final Map<String, dynamic>? dataObject = response.jsonResponse!['data'];
 
         if (dataObject == null) {
@@ -77,7 +81,7 @@ class FavoriteController extends GetxController {
     }
   }
 
-  /// Remove favorite by ID
+  /// Remove favorite by ID and update UI instantly
   Future<bool> removeFavorite(String favoriteId) async {
     try {
       final String? accessToken = await _sharedPrefService.getAccessToken();
@@ -93,7 +97,12 @@ class FavoriteController extends GetxController {
       final NetworkResponse response = await _networkCaller.deleteRequest(url, headers: headers);
 
       if (response.isSuccess) {
-        favorites.removeWhere((fav) => fav.id == favoriteId);
+        // Find and mark the favorite as deleted
+        final int index = favorites.indexWhere((fav) => fav.id == favoriteId);
+        if (index != -1) {
+          favorites[index].isDeleted = true; // Update the isDeleted status
+          favorites.refresh(); // This will notify listeners (UI)
+        }
         return true;
       }
       return false;
@@ -119,3 +128,9 @@ class FavoriteController extends GetxController {
     super.dispose();
   }
 }
+
+
+
+
+
+

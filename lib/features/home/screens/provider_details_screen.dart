@@ -140,3 +140,20 @@ class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
     );
   }
 }
+
+
+
+
+
+///
+///
+///
+///
+/// todo:: addin the fab adding api
+///
+///
+///
+///
+
+
+

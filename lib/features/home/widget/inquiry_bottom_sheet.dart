@@ -51,7 +51,9 @@ class InquiryBottomSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.md),
-        Container(
+
+///--------------- todo:: client asked to remove it.
+/*        Container(
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.primaryColor, width: 2),
             borderRadius: BorderRadius.circular(AppSizes.borderRadiusLg),
@@ -61,6 +63,7 @@ class InquiryBottomSheet extends StatelessWidget {
             hintText: 'Select the Date',
           ),
         ),
+        const SizedBox(height: AppSizes.md),
 
         TimePickerWidget(
           label: 'Pick a time',
@@ -69,7 +72,8 @@ class InquiryBottomSheet extends StatelessWidget {
           // Show the time icon (optional)
           showBorder: true,
           // Show the border (optional)
-        ),
+        ),*/
+
         AppCustomContainerField(
           containerChild: MyTextFormFieldWithIcon(
             formHintText: "Location",
@@ -250,3 +254,9 @@ class AddServiceBottomSheet extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
