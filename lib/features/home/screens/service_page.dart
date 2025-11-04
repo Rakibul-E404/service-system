@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../auth/widgets/service_card.dart';
-import '../controllers/sub_categories_controller.dart';
+import '../controllers/service_controller.dart';
 
-class ServicesPage extends GetView<SubCategoriesController> {
+class ServicesPage extends GetView<ServicesController> {
   const ServicesPage({super.key});
 
   @override
@@ -102,7 +102,7 @@ class ServicesPage extends GetView<SubCategoriesController> {
                   ElevatedButton(
                     onPressed: () {
                       debugPrint('🔄 Retry button pressed');
-                      controller.retryServices(subCategoryId, subCategoryName);
+                      controller.retryServicesWithParams(subCategoryId, subCategoryName);
                     },
                     child: const Text('Retry'),
                   ),
@@ -139,6 +139,14 @@ class ServicesPage extends GetView<SubCategoriesController> {
                     fontSize: 14,
                     color: Colors.black,
                   ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    debugPrint('🔄 Retry button pressed from empty state');
+                    controller.fetchServicesBySubCategory(subCategoryId, subCategoryName);
+                  },
+                  child: const Text('Try Again'),
                 ),
               ],
             ),
@@ -193,12 +201,12 @@ class ServicesPage extends GetView<SubCategoriesController> {
                     },
                   )
               );
-              } catch (e, stackTrace) {
-                debugPrint('❌ Error building card at index $index: $e');
-                debugPrint('📚 StackTrace: $stackTrace');
-                return const SizedBox.shrink();
-              }
-            },
+            } catch (e, stackTrace) {
+              debugPrint('❌ Error building card at index $index: $e');
+              debugPrint('📚 StackTrace: $stackTrace');
+              return const SizedBox.shrink();
+            }
+          },
         );
       }),
     );

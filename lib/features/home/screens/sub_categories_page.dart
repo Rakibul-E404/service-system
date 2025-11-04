@@ -1,10 +1,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/features/home/screens/service_page.dart';
 import '../../../core/config/app_sizes.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../auth/widgets/service_card.dart';
+import '../controllers/service_controller.dart';
 import '../controllers/sub_categories_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -18,6 +18,7 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
   SubCategoriesPage({super.key});
 
   final TextEditingController _searchTEController = TextEditingController();
+  final ServicesController servicesController = Get.put(ServicesController()); // Add ServicesController
 
   @override
   Widget build(BuildContext context) {
@@ -139,36 +140,22 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                         rating: 0.0, // Not needed for subcategories
                         showFavorite: false, // Hide favorite button for subcategories
                         showLocationAndRating: false, // Hide location and rating for subcategories
-                        // onTap: () {
-                        //   Get.toNamed(
-                        //     AppRoutes.homeServiceDetailsRoute,
-                        //     arguments: {
-                        //       'subCategoryId': subCategory.id,
-                        //       'subCategoryName': subCategory.name,
-                        //     },
-                        //   );
-                        // },
 
-
-                        // Update the onTap in your SubCategoriesPage
-                        // In your SubCategoriesPage onTap
                         onTap: () {
-                          controller.fetchServicesBySubCategory(
+                          // Use servicesController instead of subCategoriesController
+                          servicesController.fetchServicesBySubCategory(
                               subCategory.id,
                               subCategory.name
                           );
 
                           Get.toNamed(
-                            AppRoutes.servicesRoute, // ✅ Use AppRoutes prefix
+                            AppRoutes.servicesRoute,
                             arguments: {
                               'subCategoryId': subCategory.id,
                               'subCategoryName': subCategory.name,
                             },
                           );
-
                         },
-
-
                       ),
                     );
                   },
@@ -181,18 +168,3 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
     );
   }
 }
-
-
-
-
-///
-///
-///
-/// todo::: addign the list screen for the service
-///
-///
-///
-
-
-
-
