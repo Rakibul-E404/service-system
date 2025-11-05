@@ -60,7 +60,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     super.dispose();
   }
 
-  // Helper method to build booking card from API data
+  ///==================== Helper method to build booking card from API data
   Widget _buildBookingCard(Map<String, dynamic> booking, String status, VoidCallback? onTap) {
     final service = booking['service'] ?? {};
     final subCategory = service['subCategory'] ?? {};

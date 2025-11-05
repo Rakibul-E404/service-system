@@ -1,21 +1,23 @@
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/core/common/components/custom_network_image.dart';
-import 'package:manx_mate/core/common/widgets/reusable_button.dart';
-import 'package:manx_mate/core/config/app_colors.dart';
-import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/extensions/widget_extensions.dart';
-import 'package:manx_mate/core/routes/app_routes.dart';
-import 'package:manx_mate/features/home/controllers/home_service_details_controller.dart';
 
+import '../../../core/common/components/custom_network_image.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
+import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
+import '../../../core/config/app_colors.dart';
+import '../../../core/config/app_sizes.dart';
+import '../../../core/routes/app_routes.dart';
+import '../controllers/home_service_details_controller.dart';
 import '../widget/inquiry_bottom_sheet.dart';
 import '../widget/one_row_calander.dart';
 import '../widget/time_selection_widget.dart';
+
 
 class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
   HomeServiceDetailsPage({super.key});
@@ -28,12 +30,19 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
 
   @override
   Widget build(BuildContext context) {
+    // Extract service data from arguments
+    final Map<String, dynamic> serviceData = Get.arguments ?? {};
+    final String serviceImage = serviceData['serviceImage'] ?? '';
+    final String serviceTitle = serviceData['serviceName'] ?? 'No Name';
+    final String serviceSubtitle = serviceData['serviceDescription'] ?? 'No Description';
+    final String serviceLocation = serviceData['serviceLocation'] ?? 'No Location';
+    final double serviceRating = serviceData['serviceRating'] ?? 0.0;
+
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: SizedBox(
         width: context.screenWidth * 0.9,
         height: 50,
-
         child: ReusableButton(
           onTap: () {
             CustomModalBottomSheet.show(
@@ -79,36 +88,35 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
               ///====================> Main Body ================>
               const SizedBox(height: AppSizes.md),
               CustomCachedImage(
-                imageUrl: 'imageUrl',
+                imageUrl: serviceImage,
                 width: context.screenWidth,
                 height: context.screenHeight * 0.4,
               ),
               const SizedBox(height: AppSizes.md),
-              Text('Tutor Pro Academy', style: context.txtTheme.titleLarge),
+              Text(serviceTitle, style: context.txtTheme.titleLarge),
               const SizedBox(height: AppSizes.sm),
-              const Text('Children and Educcation'),
-              const Row(
+              Text(serviceSubtitle),
+              Row(
                 spacing: 8,
                 children: <Widget>[
                   Icon(Icons.location_on_outlined, size: 18),
-                  Text("Cork, Ireland"),
+                  Text(serviceLocation),
                 ],
               ),
-              const Row(
+              Row(
                 spacing: 8,
-                children: <Widget>[Icon(Icons.phone_outlined, size: 18), Text("0-5680684657")],
-              ),
-              const Row(
-                spacing: 8,
-                children: <Widget>[Icon(Icons.star_outline, size: 18), Text("4.9(200 Ratings)")],
+                children: <Widget>[
+                  Icon(Icons.star_outline, size: 18),
+                  Text(serviceRating.toString()),
+                ],
               ),
               const SizedBox(height: AppSizes.md),
               Text('Available Date & Time', style: context.txtTheme.titleLarge),
               const SizedBox(height: AppSizes.sm),
 
-              /// ==============> Calender Widget
+              /// ==============> Calendar Widget
               Obx(
-                () => OneRowCalendar(
+                    () => OneRowCalendar(
                   selectedDate: controller.dateTimePick.value,
                   onDateSelected: (DateTime time) {
                     controller.dateTimePick.value = time;
@@ -196,3 +204,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
     );
   }
 }
+
+
+
+

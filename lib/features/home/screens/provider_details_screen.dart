@@ -283,6 +283,28 @@ class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
                   return Obx(() {
                     final bool isFavorited = favoriteController.isFavorited(serviceId);
                     final bool isLoadingFav = favoriteController.isFavoriteLoading(serviceId);
+                     ///----------todo:: it's ok
+                    /*return ServiceCard(
+                      height: context.screenHeight * 0.25,
+                      width: double.infinity,
+                      imageUrl:
+                      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                      title: 'TutorPro Academy',
+                      subtitle: 'Experts in Math & Science',
+                      location: 'Cork, Ireland',
+                      rating: 4.9,
+                      isFavorited: isFavorited,
+                      onTap: () {
+                        Get.toNamed(AppRoutes.homeServiceDetailsRoute);
+                      },
+                      onFavorite: isLoadingFav
+                          ? null // Disable while loading
+                          : () {
+                        debugPrint('❤️ Favorite tapped for service: $serviceId');
+                        favoriteController.toggleFavorite(serviceId);
+                      },
+                    );*/
+
 
                     return ServiceCard(
                       height: context.screenHeight * 0.25,
@@ -304,6 +326,8 @@ class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
                         favoriteController.toggleFavorite(serviceId);
                       },
                     );
+
+
                   });
                 },
                 separatorBuilder: (BuildContext context, int index) {
