@@ -203,8 +203,11 @@ class AppUrl {
   static String getFavoritesUrl(int page) {
     return '$baseUrl/favorite/?page=$page&limit=10';
   }
-
-  static String toggleFavoriteUrl(String serviceId) {
+  /// Toggle favorite (add/remove) - Dynamic service ID
+  static String addFavoriteUrl(String serviceId) {
+    return '$baseUrl/favorite/$serviceId';
+  }
+  static String deleteFavoriteUrl(String serviceId) {
     return '$baseUrl/favorite/$serviceId';
   }
 
