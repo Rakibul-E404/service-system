@@ -1,4 +1,5 @@
 /**
+
 import 'package:flutter/foundation.dart';
 import '../../../core/utils/api/app_url.dart';
 
@@ -105,8 +106,8 @@ class ServiceModel {
     return 'ServiceModel{id: $id, name: $name, location: $location, rating: $rating, ratingCount: $ratingCount}';
   }
 }
-*/
 
+*/
 
 
 
@@ -126,6 +127,7 @@ class ServiceModel {
 
 
 
+// lib/.../service_model.dart
 
 import 'package:flutter/foundation.dart';
 import '../../../core/utils/api/app_url.dart';
@@ -139,7 +141,7 @@ class ServiceModel {
   final String location;
   final double rating;
   final int ratingCount;
-  final String author; // Added 'author' field
+  final String? authorId;
 
   ServiceModel({
     required this.id,
@@ -150,58 +152,49 @@ class ServiceModel {
     required this.location,
     required this.rating,
     required this.ratingCount,
-    required this.author, // Updated constructor to accept 'author'
+    this.authorId,
   });
 
-  // Make fullImageUrl a getter that returns non-nullable String
   String get fullImageUrl {
     if (image.isEmpty) return '';
 
-    // If image already contains http/https, return as is
     if (image.startsWith('http://') || image.startsWith('https://')) {
       return image;
     }
 
-    // Use AppUrl.baseUrl for the base URL
     return '${AppUrl.imageBaseUrl}/$image';
   }
 
-  factory ServiceModel.fromJson(Map<String, dynamic> json) {
-    debugPrint('🔍 Parsing ServiceModel from JSON:');
-    debugPrint('   - Full JSON: $json');
-    debugPrint('   - _id: ${json['_id']}');
-    debugPrint('   - name: ${json['name']}');
-    debugPrint('   - description: ${json['description']}');
-    debugPrint('   - image: ${json['image']}');
-    debugPrint('   - subCategory: ${json['subCategory']}');
-    debugPrint('   - location: ${json['location']}');
-    debugPrint('   - rating: ${json['rating']} (type: ${json['rating']?.runtimeType})');
-    debugPrint('   - ratingCount: ${json['ratingCount']} (type: ${json['ratingCount']?.runtimeType})');
-    debugPrint('   - author: ${json['author']}');
-
-    try {
-      final model = ServiceModel(
-        id: json['_id']?.toString() ?? '',
-        name: json['name']?.toString() ?? 'Unnamed Service',
-        description: json['description']?.toString() ?? 'No description',
-        image: json['image']?.toString() ?? '',
-        subCategory: json['subCategory']?.toString() ?? '',
-        location: json['location']?.toString() ?? 'Unknown location',
-        rating: _parseDouble(json['rating']),
-        ratingCount: _parseInt(json['ratingCount']),
-        author: json['author']?.toString() ?? 'Unknown author', // Parse 'author' field
-      );
-
-      debugPrint('✅ Successfully created ServiceModel: ${model.name}');
-      return model;
-    } catch (e, stackTrace) {
-      debugPrint('❌ Error parsing ServiceModel: $e');
-      debugPrint('📚 StackTrace: $stackTrace');
-      rethrow;
-    }
+  Map<String, dynamic>? get author {
+    if (authorId == null || authorId!.isEmpty) return null;
+    return {'_id': authorId};
   }
 
-  // Helper method to safely parse double
+  factory ServiceModel.fromJson(Map<String, dynamic> json) {
+    debugPrint('🔍 Parsing ServiceModel from JSON: ${json['_id']}');
+
+    String? extractedAuthorId;
+    final dynamic authorField = json['author'];
+
+    if (authorField is String) {
+      extractedAuthorId = authorField;
+    } else if (authorField is Map<String, dynamic>) {
+      extractedAuthorId = authorField['_id']?.toString();
+    }
+
+    return ServiceModel(
+      id: json['_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unnamed Service',
+      description: json['description']?.toString() ?? 'No description',
+      image: json['image']?.toString() ?? '',
+      subCategory: json['subCategory']?.toString() ?? '',
+      location: json['location']?.toString() ?? 'Unknown location',
+      rating: _parseDouble(json['rating']),
+      ratingCount: _parseInt(json['ratingCount']),
+      authorId: extractedAuthorId,
+    );
+  }
+
   static double _parseDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is double) return value;
@@ -210,7 +203,6 @@ class ServiceModel {
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
-  // Helper method to safely parse int
   static int _parseInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;
@@ -229,12 +221,12 @@ class ServiceModel {
       'location': location,
       'rating': rating,
       'ratingCount': ratingCount,
-      'author': author, // Include 'author' in toJson
+      'author': authorId,
     };
   }
 
   @override
   String toString() {
-    return 'ServiceModel{id: $id, name: $name, location: $location, rating: $rating, ratingCount: $ratingCount, author: $author}';
+    return 'ServiceModel{id: $id, name: $name, authorId: $authorId}';
   }
 }

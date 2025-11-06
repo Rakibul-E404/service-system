@@ -198,8 +198,29 @@ class ServicesPage extends GetView<ServicesController> {
                       showLocationAndRating: true,
                       isFavorited: isFavorited,
                       ///----perfect
+                      // onTap: () {
+                      //   debugPrint('👆 Tapped: ${service.name}');
+                      //   Get.toNamed(
+                      //     AppRoutes.homeServiceDetailsRoute,
+                      //     arguments: {
+                      //       'serviceId': service.id,
+                      //       'serviceName': service.name,
+                      //       'serviceDescription': service.description,
+                      //       'serviceLocation': service.location,
+                      //       'serviceRating': service.rating,
+                      //       'serviceImage': service.fullImageUrl,
+                      //     },
+                      //   );
+                      // },
+
+                      // Replace your onTap in services_page.dart with this:
+
                       onTap: () {
                         debugPrint('👆 Tapped: ${service.name}');
+                        debugPrint('📦 Service author data:');
+                        debugPrint('   - authorId: ${service.authorId}');
+                        debugPrint('   - author map: ${service.author}');
+
                         Get.toNamed(
                           AppRoutes.homeServiceDetailsRoute,
                           arguments: {
@@ -209,12 +230,11 @@ class ServicesPage extends GetView<ServicesController> {
                             'serviceLocation': service.location,
                             'serviceRating': service.rating,
                             'serviceImage': service.fullImageUrl,
-                            'author': service.author,
+                            'authorId': service.authorId ?? '', // Pass the author ID directly
+                            'author': service.author, // Also pass as map for backward compatibility
                           },
                         );
                       },
-
-
 
 
                       onFavorite: isLoadingFav
