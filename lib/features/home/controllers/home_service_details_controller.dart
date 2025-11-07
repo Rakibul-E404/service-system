@@ -1,214 +1,7 @@
-/**
-
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-class HomeServiceDetailsController extends GetxController {
-  Rx<DateTime> dateTimePick = DateTime.now().obs;
-}
-*/
-
-
-
-///
-///
-///
-///
-/// todo::: adding the author info
-///
-///
-///
-///
-///
-
-
-
-
-// import 'package:flutter/cupertino.dart';
-// import 'package:get/get.dart';
-// import '../../../core/network/network_caller.dart';
-// import '../../../core/network/network_response.dart';
-// import '../../../core/utils/api/app_url.dart';
-// import '../../../core/utils/token_service/token_storage_service.dart';
-// import '../../../provider_model.dart';
-//
-// class HomeServiceDetailsController extends GetxController {
-//   final NetworkCaller _networkCaller = NetworkCaller();
-//   final SharedPrefService _sharedPrefService = SharedPrefService();
-//
-//   Rx<DateTime> dateTimePick = DateTime.now().obs;
-//
-//   // Provider data
-//   final Rx<ProviderModel?> providerData = Rx<ProviderModel?>(null);
-//   final RxBool isLoadingProvider = false.obs;
-//   final RxString providerErrorMessage = ''.obs;
-//
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     _initializeWithArguments();
-//   }
-//
-//   void _initializeWithArguments() {
-//     final dynamic args = Get.arguments;
-//
-//     debugPrint('🔍 HomeServiceDetailsController - Received arguments type: ${args.runtimeType}');
-//     debugPrint('🔍 HomeServiceDetailsController - Arguments value: $args');
-//
-//     if (args != null && args is Map<String, dynamic>) {
-//       // Get authorId from either 'author' map or direct 'authorId' field
-//       final dynamic authorData = args['author'];
-//       final String? authorId = authorData is Map<String, dynamic>
-//           ? authorData['_id']?.toString()
-//           : args['authorId']?.toString();
-//
-//       debugPrint('🔍 Extracted authorId: $authorId');
-//       debugPrint('🔍 authorData type: ${authorData.runtimeType}');
-//       debugPrint('🔍 authorData value: $authorData');
-//
-//       if (authorId != null && authorId.isNotEmpty) {
-//         debugPrint('✅ Found authorId: $authorId - Calling fetchProviderDetails');
-//         fetchProviderDetails(authorId);
-//       } else {
-//         debugPrint('⚠️ No authorId found in arguments');
-//         providerErrorMessage.value = 'No provider information available';
-//       }
-//     } else {
-//       debugPrint('⚠️ Arguments are null or not a Map');
-//       providerErrorMessage.value = 'Invalid navigation data';
-//     }
-//   }
-//
-//   /// Fetch provider/business profile details
-//   Future<void> fetchProviderDetails(String authorId) async {
-//     debugPrint('🎯 ========== FETCH PROVIDER DETAILS STARTED ==========');
-//     debugPrint('📥 authorId: $authorId');
-//
-//     isLoadingProvider.value = true;
-//     providerErrorMessage.value = '';
-//     providerData.value = null;
-//
-//     try {
-//       final String url = AppUrl.getBusinessProfileUrl(authorId);
-//       debugPrint('🌐 API URL: $url');
-//
-//       final String? accessToken = await _sharedPrefService.getAccessToken();
-//       debugPrint('🔑 Access Token: ${accessToken != null ? 'Available (${accessToken.length} chars)' : 'NULL'}');
-//
-//       if (accessToken == null || accessToken.isEmpty) {
-//         providerErrorMessage.value = 'Authentication required';
-//         debugPrint('❌ No access token available');
-//         isLoadingProvider.value = false;
-//         return;
-//       }
-//
-//       final NetworkResponse response = await _networkCaller.getRequest(
-//         url,
-//         headers: <String, String>{
-//           'Authorization': 'Bearer $accessToken',
-//         },
-//       );
-//
-//       debugPrint('📡 API Response:');
-//       debugPrint('   - isSuccess: ${response.isSuccess}');
-//       debugPrint('   - statusCode: ${response.statusCode}');
-//       debugPrint('   - Full Response: ${response.jsonResponse}');
-//
-//       if (response.isSuccess && response.jsonResponse != null) {
-//         try {
-//           final Map<String, dynamic> responseData = response.jsonResponse!;
-//
-//           debugPrint('🔍 Response structure:');
-//           debugPrint('   - success: ${responseData['success']}');
-//           debugPrint('   - code: ${responseData['code']}');
-//           debugPrint('   - message: ${responseData['message']}');
-//           debugPrint('   - data exists: ${responseData.containsKey('data')}');
-//
-//           if (!responseData.containsKey('data')) {
-//             providerErrorMessage.value = 'Invalid response format: missing "data" key';
-//             debugPrint('❌ Missing "data" key in response');
-//             debugPrint('   - Available keys: ${responseData.keys.toList()}');
-//             return;
-//           }
-//
-//           final dynamic providerDataField = responseData['data'];
-//           debugPrint('   - data type: ${providerDataField.runtimeType}');
-//           debugPrint('   - data content: $providerDataField');
-//
-//           if (providerDataField is! Map<String, dynamic>) {
-//             providerErrorMessage.value = 'Invalid provider data format';
-//             debugPrint('❌ Provider data is not a Map, it is: ${providerDataField.runtimeType}');
-//             return;
-//           }
-//
-//           debugPrint('🎨 Parsing provider data...');
-//           debugPrint('   - _id: ${providerDataField['_id']}');
-//           debugPrint('   - name: "${providerDataField['name']}"');
-//           debugPrint('   - name length: ${providerDataField['name']?.toString().length}');
-//           debugPrint('   - phone: ${providerDataField['phone']}');
-//           debugPrint('   - location: ${providerDataField['location']}');
-//           debugPrint('   - rating: ${providerDataField['rating']}');
-//
-//           final provider = ProviderModel.fromJson(providerDataField);
-//           providerData.value = provider;
-//
-//           debugPrint('✅ Successfully loaded provider:');
-//           debugPrint('   - ID: ${provider.id}');
-//           debugPrint('   - Name: "${provider.name}"');
-//           debugPrint('   - Location: ${provider.location}');
-//           debugPrint('   - Rating: ${provider.rating}');
-//           debugPrint('   - Phone: ${provider.phone}');
-//           debugPrint('   - Description: ${provider.description}');
-//           debugPrint('   - Image: ${provider.image}');
-//           debugPrint('   - Full Image URL: ${provider.fullImageUrl}');
-//
-//         } catch (parseError, stackTrace) {
-//           providerErrorMessage.value = 'Failed to parse provider data: ${parseError.toString()}';
-//           debugPrint('💥 Parse Error: $parseError');
-//           debugPrint('📚 StackTrace: $stackTrace');
-//         }
-//       } else {
-//         providerErrorMessage.value = response.errorMessage ?? 'Failed to load provider details';
-//         debugPrint('❌ API request failed');
-//         debugPrint('   - Status: ${response.statusCode}');
-//         debugPrint('   - Error: ${response.errorMessage}');
-//       }
-//     } catch (e, stackTrace) {
-//       providerErrorMessage.value = 'Network error: ${e.toString()}';
-//       debugPrint('💥 Network Exception: $e');
-//       debugPrint('📚 StackTrace: $stackTrace');
-//     } finally {
-//       isLoadingProvider.value = false;
-//       debugPrint('🏁 ========== FETCH PROVIDER COMPLETED ==========');
-//       debugPrint('   - isLoadingProvider: ${isLoadingProvider.value}');
-//       debugPrint('   - providerData name: ${providerData.value?.name ?? 'NULL'}');
-//       debugPrint('   - errorMessage: "${providerErrorMessage.value}"');
-//       debugPrint('==========================================\n');
-//     }
-//   }
-//
-//   /// Retry fetching provider details
-//   void retryFetchProvider(String authorId) {
-//     debugPrint('🔄 Retrying fetch for authorId: $authorId');
-//     fetchProviderDetails(authorId);
-//   }
-//
-//   @override
-//   void onClose() {
-//     providerData.value = null;
-//     super.onClose();
-//   }
-// }
-
-
-
-///-------todo:: upper is sightly working,
-///
-///
-
-
-
-import 'package:flutter/cupertino.dart';
-import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
@@ -226,11 +19,56 @@ class HomeServiceDetailsController extends GetxController {
   final RxBool isLoadingProvider = false.obs;
   final RxString providerErrorMessage = ''.obs;
 
+  // Favorite functionality properties
+  final RxBool isFavorite = false.obs;
+  final RxBool isLoadingFavorite = false.obs;
+  String? serviceId;
+
   @override
   void onInit() {
     super.onInit();
     _initializeWithArguments();
   }
+
+  // void _initializeWithArguments() {
+  //   final dynamic args = Get.arguments;
+  //
+  //   debugPrint('🔍 HomeServiceDetailsController - Received arguments type: ${args.runtimeType}');
+  //   debugPrint('🔍 HomeServiceDetailsController - Arguments value: $args');
+  //
+  //   if (args != null && args is Map<String, dynamic>) {
+  //     // Retrieve serviceId for favorite functionality
+  //     serviceId = args['serviceId']?.toString();
+  //
+  //     // Get authorId from either 'author' map or direct 'authorId' field
+  //     final dynamic authorData = args['author'];
+  //     final String? authorId = authorData is Map<String, dynamic>
+  //         ? authorData['_id']?.toString()
+  //         : args['authorId']?.toString();
+  //
+  //     debugPrint('🔍 Extracted authorId: $authorId');
+  //     debugPrint('🔍 authorData type: ${authorData.runtimeType}');
+  //     debugPrint('🔍 authorData value: $authorData');
+  //
+  //     if (authorId != null && authorId.isNotEmpty) {
+  //       debugPrint('✅ Found authorId: $authorId - Calling fetchProviderDetails');
+  //       fetchProviderDetails(authorId);
+  //
+  //       // Also check initial favorite status if serviceId exists
+  //       if (serviceId != null && serviceId!.isNotEmpty) {
+  //         checkFavoriteStatus(serviceId!);
+  //       }
+  //     } else {
+  //       debugPrint('⚠️ No authorId found in arguments');
+  //       providerErrorMessage.value = 'No provider information available';
+  //     }
+  //   } else {
+  //     debugPrint('⚠️ Arguments are null or not a Map');
+  //     providerErrorMessage.value = 'Invalid navigation data';
+  //   }
+  // }
+
+
 
   void _initializeWithArguments() {
     final dynamic args = Get.arguments;
@@ -239,6 +77,9 @@ class HomeServiceDetailsController extends GetxController {
     debugPrint('🔍 HomeServiceDetailsController - Arguments value: $args');
 
     if (args != null && args is Map<String, dynamic>) {
+      // Retrieve serviceId for favorite functionality
+      serviceId = args['serviceId']?.toString() ?? args['_id']?.toString();
+
       // Get authorId from either 'author' map or direct 'authorId' field
       final dynamic authorData = args['author'];
       final String? authorId = authorData is Map<String, dynamic>
@@ -246,12 +87,18 @@ class HomeServiceDetailsController extends GetxController {
           : args['authorId']?.toString();
 
       debugPrint('🔍 Extracted authorId: $authorId');
+      debugPrint('🔍 Extracted serviceId: $serviceId');
       debugPrint('🔍 authorData type: ${authorData.runtimeType}');
       debugPrint('🔍 authorData value: $authorData');
 
       if (authorId != null && authorId.isNotEmpty) {
         debugPrint('✅ Found authorId: $authorId - Calling fetchProviderDetails');
         fetchProviderDetails(authorId);
+
+        // REMOVE THIS LINE - favorite status will be checked from the page
+        // if (serviceId != null && serviceId!.isNotEmpty) {
+        //   checkFavoriteStatus(serviceId!);
+        // }
       } else {
         debugPrint('⚠️ No authorId found in arguments');
         providerErrorMessage.value = 'No provider information available';
@@ -262,7 +109,7 @@ class HomeServiceDetailsController extends GetxController {
     }
   }
 
-  /// Fetch provider/business profile details
+
   /// Fetch provider/business profile details
   Future<void> fetchProviderDetails(String authorId) async {
     debugPrint('🎯 ========== FETCH PROVIDER DETAILS STARTED ==========');
@@ -334,11 +181,197 @@ class HomeServiceDetailsController extends GetxController {
     }
   }
 
+  /// Check if service is already favorited
+  Future<void> checkFavoriteStatus(String serviceId) async {
+    if (serviceId.isEmpty) return;
+
+    try {
+      debugPrint('🔍 Checking favorite status for: $serviceId');
+
+      // Check if user is logged in first
+      final bool isLoggedIn = await _sharedPrefService.isLoggedIn();
+      if (!isLoggedIn) {
+        debugPrint('   - User not logged in, skipping favorite status check');
+        isFavorite.value = false;
+        return;
+      }
+
+      final String url = '${AppUrl.baseUrl}/favorite/$serviceId/status';
+      final String? accessToken = await _sharedPrefService.getAccessToken();
+
+      if (accessToken == null || accessToken.isEmpty) {
+        debugPrint('   - No access token, skipping favorite status check');
+        isFavorite.value = false;
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      debugPrint('   - Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        bool isFav = false;
+        if (responseData['data'] != null && responseData['data'] is Map) {
+          isFav = responseData['data']['isFavorite'] ?? false;
+        } else if (responseData['isFavorite'] != null) {
+          isFav = responseData['isFavorite'];
+        } else {
+          isFav = responseData['success'] == true;
+        }
+
+        isFavorite.value = isFav;
+        debugPrint('   - Favorite status: $isFav');
+      } else if (response.statusCode == 404) {
+        isFavorite.value = false;
+        debugPrint('   - Service not favorited (404)');
+      } else {
+        debugPrint('   - Failed to check favorite status: ${response.statusCode}');
+        isFavorite.value = false;
+      }
+    } catch (e) {
+      debugPrint('   - Error checking favorite status: $e');
+      isFavorite.value = false;
+    }
+  }
+
+  /// Toggle favorite status for a service
+  Future<void> toggleFavorite(Map<String, dynamic> serviceData) async {
+    if (isLoadingFavorite.value) return;
+
+    final String localServiceId = serviceData['_id']?.toString() ??
+        serviceData['serviceId']?.toString() ??
+        this.serviceId ?? '';
+
+    debugPrint('❤️ ========== TOGGLE FAVORITE STARTED ==========');
+    debugPrint('   - Service ID: $localServiceId');
+    debugPrint('   - Service Data: $serviceData');
+
+    if (localServiceId.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Service ID not found',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final bool isLoggedIn = await _sharedPrefService.isLoggedIn();
+    if (!isLoggedIn) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to add favorites',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    isLoadingFavorite.value = true;
+
+    try {
+      final String url = '${AppUrl.baseUrl}/favorite/$localServiceId';
+
+      final String? accessToken = await _sharedPrefService.getAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        Get.snackbar(
+          'Authentication Error',
+          'Please login again',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        isLoadingFavorite.value = false;
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+      ).timeout(const Duration(seconds: 30));
+
+      debugPrint('📡 API Response:');
+      debugPrint('   - Status Code: ${response.statusCode}');
+      debugPrint('   - Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData['success'] == true ||
+            responseData['status'] == 'success' ||
+            responseData['isFavorite'] != null) {
+
+          isFavorite.value = !isFavorite.value;
+
+          Get.snackbar(
+            'Success',
+            isFavorite.value ? 'Added to favorites' : 'Removed from favorites',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
+
+          debugPrint('✅ Favorite updated successfully');
+          debugPrint('   - New favorite status: ${isFavorite.value}');
+        } else {
+          final String errorMsg = responseData['message'] ??
+              responseData['error'] ??
+              'Unknown error occurred';
+          throw Exception(errorMsg);
+        }
+      } else if (response.statusCode == 401) {
+        await _sharedPrefService.clearAll();
+        throw Exception('Session expired. Please login again.');
+      } else if (response.statusCode == 404) {
+        throw Exception('Service not found.');
+      } else if (response.statusCode == 500) {
+        throw Exception('Server error. Please try again later.');
+      } else {
+        final Map<String, dynamic>? errorData = json.decode(response.body);
+        final String errorMsg = errorData?['message'] ??
+            errorData?['error'] ??
+            'Failed with status code: ${response.statusCode}';
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      debugPrint('❌ Favorite API Error: $e');
+
+      String errorMessage = 'Failed to update favorite';
+      if (e is Exception) {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      }
+
+      Get.snackbar(
+        'Error',
+        errorMessage,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } finally {
+      isLoadingFavorite.value = false;
+      debugPrint('🏁 Toggle favorite completed');
+    }
+  }
+
   /// Handle restricted access (403) - Create a limited provider object
   void _handleRestrictedAccess(String authorId) {
     debugPrint('🛡️ Creating limited provider data for restricted access');
 
-    // Create a basic provider model with limited information
     final limitedProvider = ProviderModel(
       id: authorId,
       name: 'Service Provider',
@@ -365,7 +398,6 @@ class HomeServiceDetailsController extends GetxController {
     debugPrint('   - Status: ${response.statusCode}');
     debugPrint('   - Error: ${response.errorMessage}');
 
-    // Specific handling for common status codes
     if (response.statusCode == 404) {
       providerErrorMessage.value = 'Provider not found';
     } else if (response.statusCode == 401) {
@@ -444,12 +476,10 @@ class HomeServiceDetailsController extends GetxController {
     debugPrint('   - Profile Complete: ${provider.isProfileComplete}');
   }
 
-
-
   /// Handle unauthorized access (401)
   void _handleUnauthorized() {
     debugPrint('🚨 Unauthorized access - clearing tokens');
-    // You can optionally clear tokens here or redirect to login
+    // Optionally clear tokens or navigate to login screen
     // _sharedPrefService.clearAll();
   }
 
@@ -478,3 +508,7 @@ class HomeServiceDetailsController extends GetxController {
     super.onClose();
   }
 }
+
+
+
+

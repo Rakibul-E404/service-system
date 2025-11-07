@@ -1,8 +1,6 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/core/utils/logger_utils.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_sizes.dart';
 import '../../../core/extensions/context_extensions.dart';
@@ -254,19 +252,6 @@ class FavoriteScreen extends GetView<FavoriteController> {
 
 
 
-
-
-
-///
-///
-///
-///
-/// todo::: adding the fav add function
-///
-///
-///
-///
-///
 
 
 
