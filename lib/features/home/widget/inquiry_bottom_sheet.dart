@@ -17,10 +17,10 @@ class InquiryBottomSheet extends StatelessWidget {
     required this.timeController,
     required TextEditingController locationTEController,
     required TextEditingController additionalNoteTEController,
-  })  : _serviceNameTEController = serviceNameTEController,
-        _dateTEController = dateTEController,
-        _locationTEController = locationTEController,
-        _additionalNoteTEController = additionalNoteTEController;
+  }) : _serviceNameTEController = serviceNameTEController,
+       _dateTEController = dateTEController,
+       _locationTEController = locationTEController,
+       _additionalNoteTEController = additionalNoteTEController;
 
   final TextEditingController _serviceNameTEController;
   final TextEditingController _dateTEController;
@@ -35,32 +35,78 @@ class InquiryBottomSheet extends StatelessWidget {
       children: <Widget>[
         AppCustomContainerField(
           containerChild: MyTextFormFieldWithIcon(
-            formHintText: "Service Name",
+            formHintText: "Category",
             controller: _serviceNameTEController,
             validator: (String? value) {
               if (value?.isEmpty ?? true) {
-                return '${AppStrings.pleaseEnterYour} Service Name!!';
+                return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
               }
               return null;
             },
+            onChanged: (String value) {
+              // print("Email Input: $value");
+            },
           ),
         ),
-        const SizedBox(height: AppSizes.sm),
-
-
-        // LOCATION DROPDOWN - FIXED
-        LocationDropdown(
-          initialValue: _locationTEController.text.isNotEmpty
-              ? _normalizeLocation(_locationTEController.text)
-              : null,
-          onChanged: (value) {
-            _locationTEController.text = value ?? '';
-          },
+        const SizedBox(height: AppSizes.md),
+        AppCustomContainerField(
+          containerChild: MyTextFormFieldWithIcon(
+            formHintText: "Sub Category Name",
+            controller: _serviceNameTEController,
+            validator: (String? value) {
+              if (value?.isEmpty ?? true) {
+                return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
+              }
+              return null;
+            },
+            onChanged: (String value) {
+              // print("Email Input: $value");
+            },
+          ),
         ),
+        const SizedBox(height: AppSizes.md),
 
-        const SizedBox(height: AppSizes.sm),
+///--------------- todo:: client asked to remove it.
+//         Container(
+//           decoration: BoxDecoration(
+//             border: Border.all(color: AppColors.primaryColor, width: 2),
+//             borderRadius: BorderRadius.circular(AppSizes.borderRadiusLg),
+//           ),
+//           child: ReusableDatePickerField(
+//             controller: _dateTEController,
+//             hintText: 'Select the Date',
+//           ),
+//         ),
+//         const SizedBox(height: AppSizes.md),
+//
+//         TimePickerWidget(
+//           label: 'Pick a time',
+//           controller: timeController,
+//           showTimeIcon: true,
+//           // Show the time icon (optional)
+//           showBorder: true,
+//           // Show the border (optional)
+//         ),
+
+        AppCustomContainerField(
+          containerChild: MyTextFormFieldWithIcon(
+            formHintText: "Location",
+            controller: _locationTEController,
+            validator: (String? value) {
+              if (value?.isEmpty ?? true) {
+                return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
+              }
+              return null;
+            },
+            onChanged: (String value) {
+              // print("Email Input: $value");
+            },
+          ),
+        ),
+        const SizedBox(height: AppSizes.md),
 
         Container(
+          // padding: EdgeInsets.symmetric(vertical: 12,horizontal: 8),
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.whiteColor,
@@ -69,24 +115,22 @@ class InquiryBottomSheet extends StatelessWidget {
           ),
           child: TextFormField(
             controller: _additionalNoteTEController,
-            textInputAction: TextInputAction.newline,
+            textInputAction: TextInputAction.next,
             maxLines: 5,
-            decoration: const InputDecoration(
-              hintText: "Additional note",
-              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              border: InputBorder.none,
+            decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(18)),
-                borderSide: BorderSide(color: Colors.transparent),
+                borderRadius: BorderRadius.circular(18),
+                // Same borderRadius for consistency
+                borderSide: const BorderSide(
+                  color: Colors.transparent, // Apply the primary color
+                ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(18)),
-                borderSide: BorderSide(color: Colors.transparent),
-              ),
+              hintText: "Additional note",
+              // border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             ),
           ),
         ),
-
         const SizedBox(height: AppSizes.md),
       ],
     );
@@ -102,11 +146,11 @@ class AddServiceBottomSheet extends StatelessWidget {
     required this.timeController,
     required TextEditingController locationTEController,
     required TextEditingController additionalNoteTEController,
-  })  : _serviceNameTEController = serviceNameTEController,
-        _dateTEController = dateTEController,
-        _typeNameTEController = typeTEController,
-        _locationTEController = locationTEController,
-        _additionalNoteTEController = additionalNoteTEController;
+  }) : _serviceNameTEController = serviceNameTEController,
+       _dateTEController = dateTEController,
+       _typeNameTEController = typeTEController,
+       _locationTEController = locationTEController,
+       _additionalNoteTEController = additionalNoteTEController;
 
   final TextEditingController _serviceNameTEController;
   final TextEditingController _typeNameTEController;
@@ -126,28 +170,32 @@ class AddServiceBottomSheet extends StatelessWidget {
             controller: _serviceNameTEController,
             validator: (String? value) {
               if (value?.isEmpty ?? true) {
-                return '${AppStrings.pleaseEnterYour} Service Name!!';
+                return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
               }
               return null;
+            },
+            onChanged: (String value) {
+              // print("Email Input: $value");
             },
           ),
         ),
         const SizedBox(height: AppSizes.md),
-
         AppCustomContainerField(
           containerChild: MyTextFormFieldWithIcon(
             formHintText: "Type",
             controller: _typeNameTEController,
             validator: (String? value) {
               if (value?.isEmpty ?? true) {
-                return '${AppStrings.pleaseEnterYour} Type!!';
+                return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
               }
               return null;
+            },
+            onChanged: (String value) {
+              // print("Email Input: $value");
             },
           ),
         ),
         const SizedBox(height: AppSizes.md),
-
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: AppColors.primaryColor, width: 2),
@@ -158,29 +206,34 @@ class AddServiceBottomSheet extends StatelessWidget {
             hintText: 'Select the Date',
           ),
         ),
-        const SizedBox(height: AppSizes.md),
 
         TimePickerWidget(
           label: 'Pick a time',
           controller: timeController,
           showTimeIcon: true,
+          // Show the time icon (optional)
           showBorder: true,
+          // Show the border (optional)
         ),
-        const SizedBox(height: AppSizes.md),
-
-        // LOCATION DROPDOWN - FIXED
-        LocationDropdown(
-          initialValue: _locationTEController.text.isNotEmpty
-              ? _normalizeLocation(_locationTEController.text)
-              : null,
-          onChanged: (value) {
-            _locationTEController.text = value ?? '';
-          },
+        AppCustomContainerField(
+          containerChild: MyTextFormFieldWithIcon(
+            formHintText: "Location",
+            controller: _locationTEController,
+            validator: (String? value) {
+              if (value?.isEmpty ?? true) {
+                return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
+              }
+              return null;
+            },
+            onChanged: (String value) {
+              // print("Email Input: $value");
+            },
+          ),
         ),
-
         const SizedBox(height: AppSizes.md),
 
         Container(
+          // padding: EdgeInsets.symmetric(vertical: 12,horizontal: 8),
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.whiteColor,
@@ -189,142 +242,35 @@ class AddServiceBottomSheet extends StatelessWidget {
           ),
           child: TextFormField(
             controller: _additionalNoteTEController,
-            textInputAction: TextInputAction.newline,
+            textInputAction: TextInputAction.next,
             maxLines: 5,
-            decoration: const InputDecoration(
-              hintText: "Additional note",
-              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              border: InputBorder.none,
+            decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(18)),
-                borderSide: BorderSide(color: Colors.transparent),
+                borderRadius: BorderRadius.circular(18),
+                // Same borderRadius for consistency
+                borderSide: const BorderSide(
+                  color: Colors.transparent, // Apply the primary color
+                ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(18)),
-                borderSide: BorderSide(color: Colors.transparent),
-              ),
+              hintText: "Additional note",
+              // border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             ),
           ),
         ),
-
         const SizedBox(height: AppSizes.md),
-
         ImagePickerWidget(
           onImageSelected: (File file) {
             print('Image selected: ${file.path}');
           },
         ),
-
-        const SizedBox(height: AppSizes.md),
       ],
     );
   }
 }
 
-// Helper to normalize case
-String _normalizeLocation(String location) {
-  switch (location.toLowerCase()) {
-    case 'north':
-      return 'North';
-    case 'south':
-      return 'South';
-    case 'east':
-      return 'East';
-    case 'west':
-      return 'West';
-    default:
-      return 'North'; // fallback
-  }
-}
 
-// REUSABLE LOCATION DROPDOWN - FIXED & BULLETPROOF
-// REUSABLE LOCATION DROPDOWN - WITH VISIBLE BORDER (FIXED & BEAUTIFUL)
-class LocationDropdown extends StatefulWidget {
-  final String? initialValue;
-  final ValueChanged<String?> onChanged;
 
-  const LocationDropdown({
-    super.key,
-    this.initialValue,
-    required this.onChanged,
-  });
 
-  @override
-  State<LocationDropdown> createState() => _LocationDropdownState();
-}
 
-class _LocationDropdownState extends State<LocationDropdown> {
-  late String? _selectedLocation;
-  final List<String> _locations = ['North', 'South', 'East', 'West'];
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedLocation = widget.initialValue != null
-        ? _normalizeLocation(widget.initialValue!)
-        : null;
-  }
-
-  @override
-  void didUpdateWidget(covariant LocationDropdown oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialValue != oldWidget.initialValue) {
-      _selectedLocation = widget.initialValue != null
-          ? _normalizeLocation(widget.initialValue!)
-          : null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(AppSizes.borderRadiusLg),
-        border: Border.all(
-          color: AppColors.primaryColor,
-          width: 2.0, // Same as your other fields
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0), // Optional: inner padding
-        child: DropdownButtonFormField<String>(
-          value: _selectedLocation,
-          hint: const Text(
-            "Select Location",
-            style: TextStyle(color: Colors.grey),
-          ),
-          isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-          dropdownColor: Colors.white,
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 16),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            errorBorder: InputBorder.none,
-            disabledBorder: InputBorder.none,
-          ),
-          items: _locations.map((location) {
-            return DropdownMenuItem<String>(
-              value: location,
-              child: Text(location),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedLocation = newValue;
-            });
-            widget.onChanged(newValue);
-          },
-          validator: (value) {
-            if (value == null) {
-              return 'Please select a location';
-            }
-            return null;
-          },
-        ),
-      ),
-    );
-  }
-}

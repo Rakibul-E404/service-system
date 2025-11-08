@@ -1,11 +1,8 @@
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/extensions/widget_extensions.dart';
-
 import '../../../core/common/components/custom_network_image.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/reusable_button.dart';
@@ -61,8 +58,8 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
         child: ReusableButton(
           onTap: () {
             CustomModalBottomSheet.show(
-              title: 'Immediate Help',
-              height: context.screenHeight * 0.6,
+              title: 'Quote',
+              height: context.screenHeight,
               context: context,
               buttonText: 'Send',
               onButtonPressed: () {
@@ -218,15 +215,16 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                   debugPrint('Selected Time: $time');
                 },
               ).centered,
+
               const SizedBox(height: AppSizes.lg),
               Text('Service Provider', style: context.txtTheme.titleLarge),
               const SizedBox(height: AppSizes.sm),
 
               ///=================> Service Provider Card =====================>
               Obx(() {
-                final isLoading = controller.isLoadingProvider.value;
-                final errorMsg = controller.providerErrorMessage.value;
-                final provider = controller.providerData.value;
+                final bool isLoading = controller.isLoadingProvider.value;
+                final String errorMsg = controller.providerErrorMessage.value;
+                final ProviderModel? provider = controller.providerData.value;
 
                 // Check if we have limited provider data (403 case)
                 final bool hasLimitedData = provider != null &&
@@ -297,7 +295,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
     );
   }
 
-  // ============ HELPER WIDGET METHODS ============
+  /// ============ HELPER WIDGET METHODS ============
 
   Widget _buildProviderLoadingCard() {
     return Container(

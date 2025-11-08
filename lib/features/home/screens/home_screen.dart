@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
@@ -10,6 +11,7 @@ import '../../../core/common/components/image_carousel.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/config/app_images.dart';
+import '../../profile/controllers/profile_controller.dart';
 import '../controllers/home_controller.dart';
 import '../widget/home_top_bar.dart';
 import '../widget/inquiry_bottom_sheet.dart';
@@ -169,7 +171,7 @@ class HomeScreen extends StatelessWidget {
                           onTap: () {
                             CustomModalBottomSheet.show(
 
-                              title: 'Immediate Help',
+                              title: 'Quote',
                               height: context.screenHeight,
                               context: context,
                               buttonText: 'Send',
@@ -201,3 +203,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
+

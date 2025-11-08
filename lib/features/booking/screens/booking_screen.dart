@@ -9,9 +9,9 @@ import 'package:manx_mate/features/booking/widgets/booking_card.dart';
 import 'booking_screen_controller.dart';
 
 
-// ============================================================================
-// BOOKING SCREEN
-// ============================================================================
+/// ============================================================================
+/// BOOKING SCREEN
+/// ============================================================================
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
 
@@ -101,6 +101,21 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
       print('❌ Error parsing date: $e');
     }
 
+    // return HorizontalServiceCard(
+    //   imageUrl: imageUrl,
+    //   title: service['name'] ?? 'Unknown Service',
+    //   subtitle: subCategory['name'] ?? 'General',
+    //   description: service['description'] ?? 'No description available',
+    //   // rating: "4.8", // Default rating
+    //   onTap: onTap ?? () {
+    //     print('👆 Card tapped for booking: ${booking['_id']}');
+    //   },
+    //   onDelete: () {
+    //     _showDeleteConfirmation(booking['_id'], status);
+    //   },
+    //   status: status,
+    // );
+
     return HorizontalServiceCard(
       imageUrl: imageUrl,
       title: service['name'] ?? 'Unknown Service',
@@ -114,7 +129,10 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
         _showDeleteConfirmation(booking['_id'], status);
       },
       status: status,
+      tabIndex: _tabController.index,  // Pass the current tab index here
     );
+
+
   }
 
   // Helper method to build API data list view
@@ -334,9 +352,9 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
               ),
             ),
 
-            // ================================================================
-            // TAB BAR
-            // ================================================================
+            /// ================================================================
+            /// TAB BAR
+            /// ================================================================
             PreferredSize(
               preferredSize: const Size.fromHeight(50.0),
               child: Container(
@@ -375,52 +393,36 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
               ),
             ),
 
-            // ================================================================
-            // TAB BAR VIEW - Content for each tab
-            // ================================================================
+            /// ================================================================
+            /// TAB BAR VIEW - Content for each tab
+            /// ================================================================
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: <Widget>[
-                  // ============================================================
-                  // TAB 1: ACTIVE SLOT (Sample Static Data)
-                  // ============================================================
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-                    shrinkWrap: true,
-                    itemCount: 5,
-                    itemBuilder: (BuildContext context, int index) {
-                      return HorizontalServiceCard(
-                        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        title: 'TutorPro Academy $index',
-                        subtitle: 'Children & Education',
-                        description: 'Cork, Ireland',
-                        // rating: "4.9",
-                        onTap: () {
-                          print('👆 Active slot card $index tapped');
-                        },
-                        onDelete: () {
-                          _showDeleteConfirmation('active_$index', 'Processing');
-                        },
-                        status: 'Processing',
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const Column(
-                        children: <Widget>[
-                          Divider(),
-                          SizedBox(height: AppSizes.md),
-                        ],
-                      );
-                    },
-                  ),
+                  /// ============================================================
+                  /// TAB 1: ACTIVE SLOT (Sample Static Data)
+                  /// ============================================================
+                  Obx(() {
+                    print('🔄 Rebuilding Ongoing Slot tab');
+                    return _buildApiListView(
+                      bookings: pendingBookingsController.pendingBookings,
+                      isLoading: pendingBookingsController.isLoading,
+                      errorMessage: pendingBookingsController.errorMessage,
+                      emptyMessage: 'No ongoing bookings yet',
+                      status: 'Active',
+                      onRetry: () {
+                        pendingBookingsController.fetchPendingBookings();
+                      },
+                      onCardTap: () {
+                        // Get.toNamed(AppRoutes.bookingDetails);
+                      },
+                    );
+                  }),
 
-                  // ============================================================
-                  // TAB 2: ONGOING SLOT (API INTEGRATED - PENDING BOOKINGS)
-                  // ============================================================
+                  /// ============================================================
+                  /// TAB 2: ONGOING SLOT (API INTEGRATED - PENDING BOOKINGS)
+                  /// ============================================================
                   Obx(() {
                     print('🔄 Rebuilding Ongoing Slot tab');
                     return _buildApiListView(
@@ -438,9 +440,9 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     );
                   }),
 
-                  // ============================================================
-                  // TAB 3: PAST SLOT (API INTEGRATED - COMPLETED BOOKINGS)
-                  // ============================================================
+                  /// ============================================================
+                  /// TAB 3: PAST SLOT (API INTEGRATED - COMPLETED BOOKINGS)
+                  /// ============================================================
                   Obx(() {
                     print('🔄 Rebuilding Past Slot tab');
                     return _buildApiListView(
