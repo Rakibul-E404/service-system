@@ -89,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                       );
                     }
 
-                    // Show empty state
+                    /// Show empty state
                     if (controller.categories.isEmpty) {
                       return const Center(
                         child: Padding(

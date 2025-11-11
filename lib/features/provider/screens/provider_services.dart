@@ -283,6 +283,7 @@ import 'package:manx_mate/features/provider/widgets/provider_service_secondary_c
 import 'package:manx_mate/features/provider/widgets/provider_top_card.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
+import '../../home/widget/add_service_bottomsheet.dart';
 import '../../home/widget/inquiry_bottom_sheet.dart';
 
 /// ===================================================================

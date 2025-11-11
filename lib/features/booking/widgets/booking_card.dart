@@ -445,7 +445,7 @@ class HorizontalServiceCard extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'active':
       case 'accepted':
-        return Colors.green.withOpacity(0.1);
+        return Colors.orange.withOpacity(0.1);
       case 'pending':
       case 'requested':
         return AppColors.primaryColor.withOpacity(0.1);
@@ -465,7 +465,7 @@ class HorizontalServiceCard extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'active':
       case 'accepted':
-        return Colors.green;
+        return Colors.deepOrange;
       case 'pending':
       case 'requested':
         return AppColors.primaryColor;
@@ -484,11 +484,11 @@ class HorizontalServiceCard extends StatelessWidget {
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
       case 'active':
-        return 'Active';
+        return 'Pending';
       case 'accepted':
         return 'Accepted';
       case 'pending':
-        return 'Pending';
+        return 'Accepted';
       case 'processing':
         return 'Processing';
       case 'completed':

@@ -444,7 +444,9 @@ class HomeServiceDetailsController extends GetxController {
     }
   }
 
+  /// ---------------------------
   /// Parse and set provider data
+  /// ---------------------------
   void _parseProviderData(Map<String, dynamic> providerDataField) {
     debugPrint('🎨 Parsing provider data...');
     debugPrint('   - _id: ${providerDataField['_id']}');
@@ -459,7 +461,7 @@ class HomeServiceDetailsController extends GetxController {
     debugPrint('   - isAvailable: ${providerDataField['isAvailable']}');
     debugPrint('   - isProfileComplete: ${providerDataField['isProfileComplete']}');
 
-    final provider = ProviderModel.fromJson(providerDataField);
+    final ProviderModel provider = ProviderModel.fromJson(providerDataField);
     providerData.value = provider;
 
     debugPrint('✅ Successfully loaded provider:');

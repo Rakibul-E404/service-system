@@ -7,6 +7,9 @@ import '../../../core/utils/token_service/token_storage_service.dart';
 import '../model/sub_category_model.dart';
 
 class SubCategoriesController extends GetxController {
+
+
+
  final NetworkCaller _networkCaller = NetworkCaller();
  final SharedPrefService _sharedPrefService = SharedPrefService();
 

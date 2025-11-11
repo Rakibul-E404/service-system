@@ -358,6 +358,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
           AppRoutes.providerDetailsPage,
           arguments: {
             'provider': provider.toJson(),
+            'authId': provider.id,
           },
         );
       },
@@ -473,7 +474,9 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                   ),
                   const SizedBox(height: 4),
 
-                  // Availability Badge
+                  ///---------------------------
+                  ///======== Availability Badge
+                  ///---------------------------
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
