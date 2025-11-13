@@ -645,6 +645,7 @@ class ActiveSlotBookingsController extends GetxController {
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:manx_mate/core/utils/api/app_url.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
@@ -655,7 +656,7 @@ class ActiveSlotBookingsController extends GetxController {
   var errorMessage = ''.obs;
   var isCancelling = false.obs;
 
-  final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  final String baseUrl = AppUrl.baseUrl;
 
   Future<String?> _getAuthToken() async {
     try {

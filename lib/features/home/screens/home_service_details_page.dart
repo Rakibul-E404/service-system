@@ -61,7 +61,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
               title: 'Quote',
               height: context.screenHeight,
               context: context,
-              buttonText: 'Send',
+              buttonText: 'Book',
               onButtonPressed: () {
                 Navigator.pop(context);
               },
