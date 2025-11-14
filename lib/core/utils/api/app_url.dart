@@ -20,6 +20,8 @@ class AppUrl {
   static const String updateSelfProfileUrl = '$baseUrl/user/update-profile';
   static const String getUserProfileUrl = '$baseUrl/user/profile';
   static const String searchQuoteUrl = '$baseUrl/service/search';
+  static const String bookingUrl = '$baseUrl/booking';
+  static const String notificationUrl = '$baseUrl/notification';
 
   static String getUserProfileImageUrl(String imagePath) {
     if (imagePath.startsWith('/')) {
@@ -37,6 +39,7 @@ class AppUrl {
 
   // Home screens URLs
   static const String allCategory = '$baseUrl/category';
+  static const String allService = '$baseUrl/service/all';
 
   static String getSubCategoriesUrl(String categoryId) {
     return '$baseUrl/category/$categoryId/subcategories';

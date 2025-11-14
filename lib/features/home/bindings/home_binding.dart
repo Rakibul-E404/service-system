@@ -1,5 +1,6 @@
 
 import 'package:get/get.dart';
+import '../controllers/notification_controller.dart';
 import '../controllers/provider_details_controller.dart';
 import '../controllers/sub_categories_controller.dart';
 import '../controllers/home_controller.dart';
@@ -14,6 +15,9 @@ class HomeBinding extends Bindings {
     Get.lazyPut<HomeServiceDetailsController>(() => HomeServiceDetailsController());
     Get.lazyPut<SubCategoriesController>(() => SubCategoriesController());
     Get.lazyPut<ProviderDetailsController>(() => ProviderDetailsController());
+    Get.lazyPut(() => NotificationController());
+
+
   }
 }
 

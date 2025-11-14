@@ -87,34 +87,42 @@ class HomeSearchScreen extends GetView<HomeSearchController> {
               Text('Your Search Result', style: context.txtTheme.labelLarge),
               const SizedBox(height: AppSizes.md),
 
-              MasonryGridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 18,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 10,
-                itemBuilder: (BuildContext context, int index) {
-                  return SizedBox(
-                    height: 250,
-                    child: ServiceCard(
-                      imageUrl:
-                          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                      title: 'TutorPro Academy',
-                      subtitle: 'Experts in Math & Science',
-                      location: 'Cork, Ireland',
-                      rating: 4.9,
-                      isFavorited: isFavorited,
-                      onTap: () {
-                        Get.toNamed(AppRoutes.homeServiceDetailsRoute);
-                      },
-                      onFavorite: () {
-                        isFavorited = false;
-                      },
-                    ),
-                  );
-                },
-              ),
+              Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (controller.error.isNotEmpty) {
+                  return Center(child: Text(controller.error.value, style: const TextStyle(color: Colors.red)));
+                }
+                if (controller.services.isEmpty) {
+                  return const Center(child: Text('No services found.'));
+                }
+                return MasonryGridView.count(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 18,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: controller.services.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final item = controller.services[index];
+                    return SizedBox(
+                      height: 250,
+                      child: ServiceCard(
+                        imageUrl: 'https://your.domain/${item['image']}', // adapt as per your image URI needs
+                        title: item['name'] ?? '',
+                        subtitle: item['description'] ?? '',
+                        location: item['location'] ?? '',
+                        rating: item['rating']?.toDouble() ?? 0.0,
+                        isFavorited: false,
+                        onTap: () {
+                          Get.toNamed(AppRoutes.homeServiceDetailsRoute);
+                        },
+                      ),
+                    );
+                  },
+                );
+              }),
             ],
           ),
         ),
@@ -122,30 +130,3 @@ class HomeSearchScreen extends GetView<HomeSearchController> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-///
-///
-///
-///
-///
-/// todo:::addding the fab button and it's api
-///
-///
-///
-///
-///
-
-
-
