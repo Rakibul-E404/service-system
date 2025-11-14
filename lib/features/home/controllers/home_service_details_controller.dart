@@ -30,43 +30,6 @@ class HomeServiceDetailsController extends GetxController {
     _initializeWithArguments();
   }
 
-  // void _initializeWithArguments() {
-  //   final dynamic args = Get.arguments;
-  //
-  //   debugPrint('🔍 HomeServiceDetailsController - Received arguments type: ${args.runtimeType}');
-  //   debugPrint('🔍 HomeServiceDetailsController - Arguments value: $args');
-  //
-  //   if (args != null && args is Map<String, dynamic>) {
-  //     // Retrieve serviceId for favorite functionality
-  //     serviceId = args['serviceId']?.toString();
-  //
-  //     // Get authorId from either 'author' map or direct 'authorId' field
-  //     final dynamic authorData = args['author'];
-  //     final String? authorId = authorData is Map<String, dynamic>
-  //         ? authorData['_id']?.toString()
-  //         : args['authorId']?.toString();
-  //
-  //     debugPrint('🔍 Extracted authorId: $authorId');
-  //     debugPrint('🔍 authorData type: ${authorData.runtimeType}');
-  //     debugPrint('🔍 authorData value: $authorData');
-  //
-  //     if (authorId != null && authorId.isNotEmpty) {
-  //       debugPrint('✅ Found authorId: $authorId - Calling fetchProviderDetails');
-  //       fetchProviderDetails(authorId);
-  //
-  //       // Also check initial favorite status if serviceId exists
-  //       if (serviceId != null && serviceId!.isNotEmpty) {
-  //         checkFavoriteStatus(serviceId!);
-  //       }
-  //     } else {
-  //       debugPrint('⚠️ No authorId found in arguments');
-  //       providerErrorMessage.value = 'No provider information available';
-  //     }
-  //   } else {
-  //     debugPrint('⚠️ Arguments are null or not a Map');
-  //     providerErrorMessage.value = 'Invalid navigation data';
-  //   }
-  // }
 
 
 
@@ -108,6 +71,10 @@ class HomeServiceDetailsController extends GetxController {
       providerErrorMessage.value = 'Invalid navigation data';
     }
   }
+
+
+
+
 
 
   /// Fetch provider/business profile details

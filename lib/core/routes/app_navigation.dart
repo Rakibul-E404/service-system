@@ -5,7 +5,7 @@ import 'package:manx_mate/features/booking/screens/review_for_service.dart';
 import 'package:manx_mate/features/favorite/bindings/favorite_binding.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/bindings/home_binding.dart';
-import 'package:manx_mate/features/home/screens/home_screen.dart';
+import 'package:manx_mate/features/home/screens/home_screen.dart' hide HomeSearchScreen;
 import 'package:manx_mate/features/home/screens/home_service_details_page.dart';
 import 'package:manx_mate/features/home/screens/notification_page.dart';
 import 'package:manx_mate/features/home/screens/provider_details_screen.dart';
