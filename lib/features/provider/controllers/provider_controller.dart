@@ -1,3 +1,4 @@
+
 import 'package:get/get.dart';
 
 class ProviderController extends GetxController {
@@ -28,3 +29,13 @@ class ProviderController extends GetxController {
     count.value = 0;
   }
 }
+
+
+
+
+
+
+
+
+
+
