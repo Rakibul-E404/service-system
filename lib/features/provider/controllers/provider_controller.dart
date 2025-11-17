@@ -1,54 +1,3 @@
-/**
-
-import 'package:get/get.dart';
-
-class ProviderController extends GetxController {
-
-  final RxInt count = 0.obs;
-
-  void increment() => count.value++;
-
-
-  
-  /// [onInit] Lifecycle method called when the controller is initialized.
-  ///
-  /// Resets loading states, clears existing data, and triggers and more..
-  /// initial fetch
-  /// 
-  @override
-  void onInit() {
-    super.onInit();
-    count.value = 0;
-  }
-
-  /// [dispose] Lifecycle method called when the controller is destroyed.
-  ///
-  /// Cleans up by resetting loading states and clearing lists and more...
-  @override
-  void dispose() {
-    super.dispose();
-    count.value = 0;
-  }
-}
-
-
-
-
-
- */
-
-
-
-
-///
-///
-///
-/// todo::: addign teh api
-///
-///
-///
-
-
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -132,8 +81,6 @@ class ProviderController extends GetxController {
 
 
 
-
-
 class BusinessProfile {
   final String id;
   final String name;
@@ -143,8 +90,8 @@ class BusinessProfile {
   final String image;
   final bool isAvailable;
   final bool isProfileComplete;
-  final DateTime createdAt;
-  final double rating;
+  final String createdAt;
+  final int rating;
   final int ratingCount;
 
   BusinessProfile({
@@ -161,38 +108,20 @@ class BusinessProfile {
     required this.ratingCount,
   });
 
-  // Factory constructor to create a BusinessProfile from JSON
+  // Factory method to create a BusinessProfile from JSON
   factory BusinessProfile.fromJson(Map<String, dynamic> json) {
     return BusinessProfile(
-      id: json['_id'] as String,
-      name: json['name'] as String,
-      phone: json['phone'] as String,
-      description: json['description'] as String,
-      location: json['location'] as String,
-      image: json['image'] as String,
-      isAvailable: json['isAvailable'] as bool,
-      isProfileComplete: json['isProfileComplete'] as bool,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      rating: (json['rating'] as num).toDouble(),
-      ratingCount: json['ratingCount'] as int,
+      id: json['_id'],
+      name: json['name'],
+      phone: json['phone'],
+      description: json['description'],
+      location: json['location'],
+      image: json['image'],
+      isAvailable: json['isAvailable'],
+      isProfileComplete: json['isProfileComplete'],
+      createdAt: json['createdAt'],
+      rating: json['rating'],
+      ratingCount: json['ratingCount'],
     );
   }
-
-  // Method to convert a BusinessProfile to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-      'phone': phone,
-      'description': description,
-      'location': location,
-      'image': image,
-      'isAvailable': isAvailable,
-      'isProfileComplete': isProfileComplete,
-      'createdAt': createdAt.toIso8601String(),
-      'rating': rating,
-      'ratingCount': ratingCount,
-    };
-  }
 }
-
