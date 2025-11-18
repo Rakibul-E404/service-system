@@ -39,7 +39,7 @@ class ProviderDashboardScreen extends GetView<ProviderController> {
                       const SizedBox(height: AppSizes.md),
 
                       // Availability Switch
-                      AvailabilitySwitch(label: 'Set Availability'),
+                      const AvailabilitySwitch(label: 'Set Availability'),
 
                       const SizedBox(height: AppSizes.md),
 
@@ -48,7 +48,7 @@ class ProviderDashboardScreen extends GetView<ProviderController> {
                         onTap: () {
                           Get.toNamed(AppRoutes.providerProfileRoute);
                         },
-                        leadingIcon: Icon(
+                        leadingIcon: const Icon(
                           CupertinoIcons.profile_circled,
                           color: Colors.grey,
                         ),

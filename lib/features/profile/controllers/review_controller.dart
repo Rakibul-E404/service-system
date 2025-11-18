@@ -27,7 +27,7 @@ class MyReviewController extends GetxController {
       errorMessage('');
 
       // Step 1: Fetch all services
-      final servicesUrl = AppUrl.baseUrl + "/service/all"; // Use correct URL for all services
+      final servicesUrl = AppUrl.baseUrl + "/service/all";
 
       final String? token = await _sharedPrefService.getAccessToken();
       Map<String, String>? headers;
