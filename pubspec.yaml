@@ -48,6 +48,7 @@ dependencies:
   flutter_secure_storage:
   dio: ^5.9.0
   shared_preferences: ^2.5.3
+  carousel_slider: ^5.1.1
 
 
 dev_dependencies:

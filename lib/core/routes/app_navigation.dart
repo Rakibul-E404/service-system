@@ -27,6 +27,7 @@ import 'package:manx_mate/features/profile/screens/profile_screen.dart';
 import 'package:manx_mate/features/provider/bindings/provider_binding.dart';
 import 'package:manx_mate/features/provider/screens/availablity_page.dart';
 import 'package:manx_mate/features/provider/screens/provider_dashboard_screen.dart';
+import 'package:manx_mate/features/provider/screens/subscription_page.dart';
 import 'package:manx_mate/features/role_selection/bindings/role_selection_binding.dart';
 import 'package:manx_mate/features/role_selection/screens/role_selection_screen.dart';
 import 'package:manx_mate/features/splash_screen/bindings/splash_screen_binding.dart';
@@ -234,6 +235,12 @@ class AppNavigation {
     GetPage<dynamic>(
       name: AppRoutes.providerAvailabilityRoute,
       page: () => const ProviderAvailabilityPage(),
+      transition: Transition.rightToLeft,
+      binding: ProviderBinding(),
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.subscriptionPageRoute,
+      page: () => const SubscriptionPage(),
       transition: Transition.rightToLeft,
       binding: ProviderBinding(),
     ),
