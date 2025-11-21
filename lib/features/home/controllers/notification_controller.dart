@@ -1,18 +1,3 @@
-/**
-import 'package:get/get.dart';
-
-class NotificationController extends GetxController {}*/
-
-
-
-
-
-
-
-
-
-
-
 import 'package:get/get.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
