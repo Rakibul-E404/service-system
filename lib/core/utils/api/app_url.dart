@@ -5,6 +5,7 @@ class AppUrl {
 
   static const String baseUrl = 'https://d7001.sobhoy.com/api/v1';
   static const String imageBaseUrl = 'https://d7001.sobhoy.com';
+  static const String socketBaseUrl = 'https://d7002.sobhoy.com';
 
   // Auth URLs
   static const String signUpUrl = '$baseUrl/auth/signup';

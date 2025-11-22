@@ -1688,7 +1688,7 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
     final serviceImage = _getFullImageUrl(serviceImagePath);
 
     // Extract provider info
-    String providerName = 'Service Provider';
+    String providerName = 'Service Providerrr';
     String providerImagePath = '';
     String providerLocation = serviceLocation;
     String providerPhone = '';

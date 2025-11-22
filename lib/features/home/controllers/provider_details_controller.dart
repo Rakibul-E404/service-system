@@ -1,8 +1,3 @@
-// import 'package:get/get.dart';
-//
-// class ProviderDetailsController extends GetxController {
-//
-// }
 
 
 import 'package:flutter/material.dart';
@@ -37,36 +32,36 @@ class ProviderDetailsController extends GetxController {
     debugPrint('🔍 ProviderDetailsController - Arguments value: $args');
 
     if (args != null && args is Map<String, dynamic>) {
-      // Check if provider data is already provided
-      if (args.containsKey('provider') && args['provider'] != null) {
-        final providerJson = args['provider'];
-        if (providerJson is Map<String, dynamic>) {
-          debugPrint('✅ Provider data found in arguments - Using directly');
-          _parseProviderData(providerJson);
-
-          // Extract authId for potential refresh
-          authId = args['authId']?.toString() ??
-              providerJson['_id']?.toString() ??
-              providerJson['id']?.toString();
-
-          debugPrint('✅ Provider loaded from arguments: ${providerData.value?.name}');
-          return; // Don't make API call if we have the data
-        }
-      }
-
-      // If no provider data in arguments, get authId and fetch from API
+      // Extract authId first
       authId = args['authId']?.toString() ??
           args['authorId']?.toString() ??
           args['_id']?.toString();
 
-      debugPrint('🔍 Extracted authId: $authId');
+      // Check if provider data is already provided (use as fallback/cache)
+      if (args.containsKey('provider') && args['provider'] != null) {
+        final providerJson = args['provider'];
+        if (providerJson is Map<String, dynamic>) {
+          debugPrint('✅ Provider data found in arguments - Using as initial/fallback data');
+          _parseProviderData(providerJson);
 
+          // Also try to extract authId from provider data if not already set
+          authId ??= providerJson['_id']?.toString() ??
+              providerJson['id']?.toString() ??
+              providerJson['author']?.toString();
+        }
+      }
+
+      debugPrint('🔍 Final authId: $authId');
+
+      // ALWAYS fetch fresh data from API if we have authId
       if (authId != null && authId!.isNotEmpty) {
-        debugPrint('✅ Found authId: $authId - Calling fetchProviderDetails');
+        debugPrint('🔄 Fetching fresh provider details from API for authId: $authId');
         fetchProviderDetails(authId!);
       } else {
-        debugPrint('⚠️ No authId found in arguments');
-        providerErrorMessage.value = 'No provider information available';
+        debugPrint('⚠️ No authId found - using cached data only');
+        if (providerData.value == null) {
+          providerErrorMessage.value = 'No provider information available';
+        }
       }
     } else {
       debugPrint('⚠️ Arguments are null or not a Map');
@@ -81,7 +76,8 @@ class ProviderDetailsController extends GetxController {
 
     isLoadingProvider.value = true;
     providerErrorMessage.value = '';
-    providerData.value = null;
+    // Don't clear providerData here - keep cached data while loading
+    // providerData.value = null;
 
     try {
       // Check if user is logged in first
@@ -125,13 +121,7 @@ class ProviderDetailsController extends GetxController {
       if (response.isSuccess && response.jsonResponse != null) {
         _handleSuccessResponse(response.jsonResponse!);
       } else {
-        // Special handling for 403 - show limited provider info
-        if (response.statusCode == 403) {
-          debugPrint('🚫 403 Forbidden - Provider details are restricted');
-          _handleRestrictedAccess(authId);
-        } else {
-          _handleErrorResponse(response);
-        }
+        _handleErrorResponse(response);
       }
     } catch (e, stackTrace) {
       _handleException(e, stackTrace);
@@ -142,52 +132,6 @@ class ProviderDetailsController extends GetxController {
       debugPrint('   - providerData name: ${providerData.value?.name ?? 'NULL'}');
       debugPrint('   - errorMessage: "${providerErrorMessage.value}"');
       debugPrint('==========================================\n');
-    }
-  }
-
-  /// Handle restricted access (403) - Create a limited provider object
-  void _handleRestrictedAccess(String authId) {
-    debugPrint('🛡️ Creating limited provider data for restricted access');
-
-    final limitedProvider = ProviderModel(
-      id: authId,
-      name: 'Service Provider',
-      description: 'Professional service provider. Contact for more details.',
-      location: 'Location not specified',
-      phone: 'Contact for phone number',
-      image: '',
-      rating: 0.0,
-      ratingCount: 0,
-      isAvailable: true,
-      isProfileComplete: false,
-      createdAt: DateTime.now().toString(),
-    );
-
-    providerData.value = limitedProvider;
-    providerErrorMessage.value = 'Limited provider information available. Some details are restricted.';
-
-    debugPrint('✅ Limited provider data created for ID: $authId');
-  }
-
-  /// Handle API error response
-  void _handleErrorResponse(NetworkResponse response) {
-    debugPrint('❌ API request failed');
-    debugPrint('   - Status: ${response.statusCode}');
-    debugPrint('   - Error: ${response.errorMessage}');
-
-    if (response.statusCode == 404) {
-      providerErrorMessage.value = 'Provider not found';
-    } else if (response.statusCode == 401) {
-      providerErrorMessage.value = 'Authentication failed - please login again';
-      _handleUnauthorized();
-    } else if (response.statusCode == 400) {
-      // Handle validation errors from backend
-      providerErrorMessage.value = 'Invalid provider data on server. Please contact support.';
-      debugPrint('⚠️ Server validation error (400) - Provider data has issues');
-    } else if (response.statusCode == 500) {
-      providerErrorMessage.value = 'Server error - please try again later';
-    } else {
-      providerErrorMessage.value = response.errorMessage ?? 'Failed to load provider details';
     }
   }
 
@@ -218,6 +162,10 @@ class ProviderDetailsController extends GetxController {
       }
 
       _parseProviderData(providerDataField);
+
+      // Clear any previous error messages on success
+      providerErrorMessage.value = '';
+      debugPrint('✅ Provider data updated successfully from API');
     } catch (parseError, stackTrace) {
       providerErrorMessage.value = 'Failed to parse provider data: ${parseError.toString()}';
       debugPrint('💥 Parse Error: $parseError');
@@ -232,18 +180,55 @@ class ProviderDetailsController extends GetxController {
     debugPrint('   - name: "${providerDataField['name']}"');
     debugPrint('   - phone: ${providerDataField['phone']}');
     debugPrint('   - location: ${providerDataField['location']}');
+    debugPrint('   - description: ${providerDataField['description']}');
+    debugPrint('   - image: ${providerDataField['image']}');
+    debugPrint('   - isAvailable: ${providerDataField['isAvailable']}');
+    debugPrint('   - isProfileComplete: ${providerDataField['isProfileComplete']}');
     debugPrint('   - rating: ${providerDataField['rating']}');
     debugPrint('   - ratingCount: ${providerDataField['ratingCount']}');
 
-    final ProviderModel provider = ProviderModel.fromJson(providerDataField);
-    providerData.value = provider;
+    try {
+      final ProviderModel provider = ProviderModel.fromJson(providerDataField);
+      providerData.value = provider;
 
-    debugPrint('✅ Successfully loaded provider:');
-    debugPrint('   - ID: ${provider.id}');
-    debugPrint('   - Name: "${provider.name}"');
-    debugPrint('   - Location: ${provider.location}');
-    debugPrint('   - Rating: ${provider.rating}');
-    debugPrint('   - Full Image URL: ${provider.fullImageUrl}');
+      debugPrint('✅ Successfully loaded provider:');
+      debugPrint('   - ID: ${provider.id}');
+      debugPrint('   - Name: "${provider.name}"');
+      debugPrint('   - Phone: "${provider.phone}"');
+      debugPrint('   - Description: "${provider.description}"');
+      debugPrint('   - Location: "${provider.location}"');
+      debugPrint('   - Rating: ${provider.rating}');
+      debugPrint('   - Rating Count: ${provider.ratingCount}');
+      debugPrint('   - Available: ${provider.isAvailable}');
+      debugPrint('   - Profile Complete: ${provider.isProfileComplete}');
+      debugPrint('   - Full Image URL: ${provider.fullImageUrl}');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error creating ProviderModel: $e');
+      debugPrint('📚 StackTrace: $stackTrace');
+      providerErrorMessage.value = 'Failed to create provider model: ${e.toString()}';
+    }
+  }
+
+  /// Handle API error response
+  void _handleErrorResponse(NetworkResponse response) {
+    debugPrint('❌ API request failed');
+    debugPrint('   - Status: ${response.statusCode}');
+    debugPrint('   - Error: ${response.errorMessage}');
+
+    if (response.statusCode == 404) {
+      providerErrorMessage.value = 'Provider not found';
+    } else if (response.statusCode == 401) {
+      providerErrorMessage.value = 'Authentication failed - please login again';
+      _handleUnauthorized();
+    } else if (response.statusCode == 403) {
+      providerErrorMessage.value = 'Access denied - you cannot view this provider';
+    } else if (response.statusCode == 400) {
+      providerErrorMessage.value = 'Invalid request data';
+    } else if (response.statusCode == 500) {
+      providerErrorMessage.value = 'Server error - please try again later';
+    } else {
+      providerErrorMessage.value = response.errorMessage ?? 'Failed to load provider details';
+    }
   }
 
   /// Handle unauthorized access (401)

@@ -1,370 +1,3 @@
-/**
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:manx_mate/core/config/app_colors.dart';
-import 'package:manx_mate/core/extensions/context_extensions.dart';
-import '../../../core/common/components/custom_network_image.dart';
-import '../../../core/config/app_sizes.dart';
-import '../../../core/routes/app_routes.dart';
-import '../../auth/widgets/service_card.dart';
-import '../controllers/provider_details_controller.dart';
-import '../../favorite/controllers/favorite_controller.dart';
-
-class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
-  const ProviderDetailsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Initialize FavoriteController
-    final favoriteController = Get.put(FavoriteController());
-
-    return Scaffold(
-      body: SafeArea(
-        child: Obx(() {
-          // Show loading state
-          if (controller.isLoadingProvider.value) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: AppSizes.md),
-                  Text('Loading provider details...'),
-                ],
-              ),
-            );
-          }
-
-          // Show error state
-          if (controller.providerErrorMessage.value.isNotEmpty &&
-              controller.providerData.value == null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.lg),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: AppSizes.md),
-                    Text(
-                      controller.providerErrorMessage.value,
-                      textAlign: TextAlign.center,
-                      style: context.txtTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-                    ElevatedButton.icon(
-                      onPressed: () => controller.retryFetchProvider(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                    const SizedBox(height: AppSizes.sm),
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text('Go Back'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          // Show provider details
-          final provider = controller.providerData.value;
-          if (provider == null) {
-            return const Center(
-              child: Text('No provider data available'),
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                // Back button
-                IconButton(
-                  onPressed: () => Get.back(),
-                  icon: const Icon(CupertinoIcons.back),
-                ),
-
-                // Main Body
-                const SizedBox(height: AppSizes.md),
-
-                // Provider Image
-                CustomCachedImage(
-                  imageUrl: provider.fullImageUrl,
-                  width: context.screenWidth,
-                  height: context.screenHeight * 0.4,
-                ),
-
-                const SizedBox(height: AppSizes.md),
-
-                // Provider Name and Message Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            provider.name,
-                            style: context.txtTheme.labelLarge,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (provider.rating != null && provider.rating! > 0)
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${provider.rating} (${provider.ratingCount} reviews)',
-                                  style: context.txtTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                        color: AppColors.primaryColor,
-                      ),
-                      child: const Row(
-                        children: <Widget>[
-                          Text("Message"),
-                          SizedBox(width: 4),
-                          Icon(CupertinoIcons.chat_bubble_text),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Availability Status
-                if (!provider.isAvailable)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.sm,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.orange),
-                        SizedBox(width: 4),
-                        Text(
-                          'Currently Unavailable',
-                          style: TextStyle(color: Colors.orange),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Description
-                Text(
-                  provider.description,
-                  style: context.txtTheme.bodyMedium,
-                ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Location
-                Row(
-                  children: <Widget>[
-                    const Icon(Icons.location_on_outlined),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        provider.location,
-                        style: context.txtTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Phone
-                if (provider.phone.isNotEmpty)
-                  Row(
-                    children: <Widget>[
-                      const Icon(Icons.phone_outlined),
-                      const SizedBox(width: 4),
-                      Text(
-                        provider.phone,
-                        style: context.txtTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-
-                const SizedBox(height: AppSizes.md),
-
-                // Profile Completion Status
-                if (!provider.isProfileComplete)
-                  Container(
-                    padding: const EdgeInsets.all(AppSizes.sm),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'This provider is still completing their profile',
-                            style: TextStyle(color: Colors.blue),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: AppSizes.md),
-
-                // Provided Services Section
-                Text("Provided Services", style: context.txtTheme.titleLarge),
-                const SizedBox(height: AppSizes.sm),
-                Row(
-                  spacing: 8,
-                  children: <Widget>[
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppSizes.borderRadiusLg),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.md,
-                          vertical: AppSizes.md,
-                        ),
-                        child: const Column(
-                          children: <Widget>[
-                            CustomCachedImage(
-                              imageUrl: '',
-                              height: 100,
-                              fit: BoxFit.contain,
-                            ),
-                            Text("Service 1"),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppSizes.borderRadiusLg),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.md,
-                          vertical: AppSizes.md,
-                        ),
-                        child: const Column(
-                          children: <Widget>[
-                            CustomCachedImage(
-                              imageUrl: '',
-                              height: 100,
-                              fit: BoxFit.contain,
-                            ),
-                            Text("Service 2"),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSizes.md),
-
-                // Past Services Section
-                Text("Past Services", style: context.txtTheme.titleLarge),
-                const SizedBox(height: AppSizes.sm),
-                ListView.separated(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: 10,
-                  itemBuilder: (BuildContext context, int index) {
-                    final String serviceId = 'demo_service_$index';
-
-                    return Obx(() {
-                      final bool isFavorited = favoriteController.isFavorited(serviceId);
-                      final bool isLoadingFav =
-                      favoriteController.isFavoriteLoading(serviceId);
-
-                      return ServiceCard(
-                        height: context.screenHeight * 0.25,
-                        width: double.infinity,
-                        imageUrl:
-                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        title: 'Service ${index + 1}',
-                        subtitle: 'Professional service',
-                        location: provider.location,
-                        rating: 4.5,
-                        isFavorited: isFavorited,
-                        onTap: () {
-                          Get.toNamed(AppRoutes.homeServiceDetailsRoute);
-                        },
-                        onFavorite: isLoadingFav
-                            ? null
-                            : () {
-                          debugPrint('❤️ Favorite tapped for service: $serviceId');
-                          favoriteController.toggleFavorite(serviceId);
-                        },
-                      );
-                    });
-                  },
-                  separatorBuilder: (BuildContext context, int index) {
-                    return const SizedBox(height: AppSizes.md);
-                  },
-                ),
-                const SizedBox(height: AppSizes.lg),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}*/
-
-
-
-
-///
-///
-///
-///
-/// todo::: only the data form the api
-///
-///
-///
-///
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -374,12 +7,16 @@ import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import '../controllers/provider_details_controller.dart';
 
-class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
+class ProviderDetailsScreen extends StatelessWidget {
   const ProviderDetailsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Initialize the controller
+    final ProviderDetailsController controller = Get.put(ProviderDetailsController());
+
     return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
       body: SafeArea(
         child: Obx(() {
           // Show loading state
@@ -414,7 +51,9 @@ class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
                     Text(
                       controller.providerErrorMessage.value,
                       textAlign: TextAlign.center,
-                      style: context.txtTheme.bodyLarge,
+                      style: context.txtTheme.bodyLarge?.copyWith(
+                        color: AppColors.errorColor,
+                      ),
                     ),
                     const SizedBox(height: AppSizes.lg),
                     ElevatedButton.icon(
@@ -437,176 +76,327 @@ class ProviderDetailsScreen extends GetView<ProviderDetailsController> {
           final provider = controller.providerData.value;
           if (provider == null) {
             return const Center(
-              child: Text('No provider data available'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_off, size: 64, color: Colors.grey),
+                  SizedBox(height: AppSizes.md),
+                  Text('No provider data available'),
+                ],
+              ),
             );
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                // Back button
-                IconButton(
+          return CustomScrollView(
+            slivers: [
+              // App Bar with back button
+              SliverAppBar(
+                backgroundColor: AppColors.backgroundColor,
+                leading: IconButton(
                   onPressed: () => Get.back(),
-                  icon: const Icon(CupertinoIcons.back),
+                  icon: const Icon(CupertinoIcons.back,
+                      color: AppColors.primaryColor),
                 ),
-
-                const SizedBox(height: AppSizes.md),
-
-                // Provider Image
-                CustomCachedImage(
-                  imageUrl: provider.fullImageUrl,
-                  width: context.screenWidth,
-                  height: context.screenHeight * 0.4,
+                expandedHeight: context.screenHeight * 0.35,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: provider.fullImageUrl.isNotEmpty
+                      ? CustomCachedImage(
+                    imageUrl: provider.fullImageUrl,
+                    width: context.screenWidth,
+                    height: context.screenHeight * 0.35,
+                    fit: BoxFit.cover,
+                  )
+                      : Container(
+                    color: Colors.grey[200],
+                    child: const Icon(
+                      Icons.person,
+                      size: 80,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ),
+              ),
 
-                const SizedBox(height: AppSizes.md),
+              // Provider Details
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.screenHorizontal),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const SizedBox(height: AppSizes.lg),
 
-                // Provider Name and Message Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
+                      // Provider Name and Status
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            provider.name,
-                            style: context.txtTheme.labelLarge,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (provider.rating != null && provider.rating! > 0)
-                            Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
                                 Text(
-                                  '${provider.rating} (${provider.ratingCount} reviews)',
-                                  style: context.txtTheme.bodySmall,
+                                  provider.name,
+                                  style: context.txtTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textBlackColor,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: AppSizes.xs),
+                                // Rating (if available)
+                                if (provider.rating > 0)
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${provider.rating.toStringAsFixed(1)} (${provider.ratingCount} reviews)',
+                                        style: context.txtTheme.bodyMedium?.copyWith(
+                                          color: AppColors.textBlackColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                // Show "No reviews yet" if rating is 0
+                                if (provider.rating == 0)
+                                  Text(
+                                    'No reviews yet',
+                                    style: context.txtTheme.bodyMedium?.copyWith(
+                                      color: AppColors.textBlackColor,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          // Message Button
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              borderRadius:
+                              BorderRadius.circular(AppSizes.borderRadiusMd),
+                              color: AppColors.primaryColor,
+                            ),
+                            child: const Row(
+                              children: <Widget>[
+                                Text(
+                                  "Message",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(width: 6),
+                                Icon(
+                                  CupertinoIcons.chat_bubble_text,
+                                  color: Colors.white,
+                                  size: 16,
                                 ),
                               ],
                             ),
+                          ),
                         ],
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                        color: AppColors.primaryColor,
-                      ),
-                      child: const Row(
-                        children: <Widget>[
-                          Text("Message"),
-                          SizedBox(width: 4),
-                          Icon(CupertinoIcons.chat_bubble_text),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: AppSizes.sm),
+                      const SizedBox(height: AppSizes.md),
 
-                // Availability Status
-                if (!provider.isAvailable)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.sm,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.orange),
-                        SizedBox(width: 4),
-                        Text(
-                          'Currently Unavailable',
-                          style: TextStyle(color: Colors.orange),
+                      // Availability Status
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.md,
+                          vertical: 8,
                         ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Description
-                Text(
-                  provider.description,
-                  style: context.txtTheme.bodyMedium,
-                ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Location
-                Row(
-                  children: <Widget>[
-                    const Icon(Icons.location_on_outlined),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        provider.location,
-                        style: context.txtTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSizes.sm),
-
-                // Phone
-                if (provider.phone.isNotEmpty)
-                  Row(
-                    children: <Widget>[
-                      const Icon(Icons.phone_outlined),
-                      const SizedBox(width: 4),
-                      Text(
-                        provider.phone,
-                        style: context.txtTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-
-                const SizedBox(height: AppSizes.md),
-
-                // Profile Completion Status
-                if (!provider.isProfileComplete)
-                  Container(
-                    padding: const EdgeInsets.all(AppSizes.sm),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'This provider is still completing their profile',
-                            style: TextStyle(color: Colors.blue),
+                        decoration: BoxDecoration(
+                          color: provider.isAvailable
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
+                          borderRadius:
+                          BorderRadius.circular(AppSizes.borderRadiusMd),
+                          border: Border.all(
+                              color: provider.isAvailable
+                                  ? Colors.green.withOpacity(0.3)
+                                  : Colors.orange.withOpacity(0.3)
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              provider.isAvailable
+                                  ? Icons.check_circle_outline
+                                  : Icons.info_outline,
+                              size: 18,
+                              color: provider.isAvailable ? Colors.green : Colors.orange,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              provider.isAvailable
+                                  ? 'Currently Available'
+                                  : 'Currently Unavailable',
+                              style: TextStyle(
+                                color: provider.isAvailable ? Colors.green : Colors.orange,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                const SizedBox(height: AppSizes.lg),
-              ],
-            ),
+                      const SizedBox(height: AppSizes.lg),
+
+                      // Description Section
+                      if (provider.description.isNotEmpty) ...[
+                        Text(
+                          'About',
+                          style: context.txtTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textBlackColor,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.sm),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSizes.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.greyColor,
+                            borderRadius:
+                            BorderRadius.circular(AppSizes.borderRadiusMd),
+                          ),
+                          child: Text(
+                            provider.description,
+                            style: context.txtTheme.bodyMedium?.copyWith(
+                              color: AppColors.textBlackColor,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.lg),
+                      ],
+
+                      // Contact Information Section
+                      Text(
+                        'Contact Information',
+                        style: context.txtTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textBlackColor,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.md),
+
+                      Container(
+                        padding: const EdgeInsets.all(AppSizes.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.greyColor,
+                          borderRadius:
+                          BorderRadius.circular(AppSizes.borderRadiusMd),
+                        ),
+                        child: Column(
+                          children: [
+                            // Location
+                            _buildInfoRow(
+                              icon: Icons.location_on_outlined,
+                              title: 'Location',
+                              value: provider.location,
+                            ),
+                            const SizedBox(height: AppSizes.md),
+
+                            // Phone
+                            if (provider.phone.isNotEmpty)
+                              _buildInfoRow(
+                                icon: Icons.phone_outlined,
+                                title: 'Phone',
+                                value: provider.phone,
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSizes.lg),
+
+                      // Profile Status
+                      if (!provider.isProfileComplete)
+                        Container(
+                          padding: const EdgeInsets.all(AppSizes.md),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius:
+                            BorderRadius.circular(AppSizes.borderRadiusMd),
+                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  color: Colors.blue[700], size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'This provider is still completing their profile. More information will be available soon.',
+                                  style: TextStyle(
+                                    color: Colors.blue[700],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      const SizedBox(height: AppSizes.xl),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           );
         }),
       ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          color: AppColors.primaryColor,
+          size: 20,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Get.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textBlackColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: Get.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textBlackColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

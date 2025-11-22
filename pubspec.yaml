@@ -50,6 +50,7 @@ dependencies:
   shared_preferences: ^2.5.3
   carousel_slider: ^5.1.1
   http_parser: ^4.1.2
+  socket_io_client: ^3.1.2
 
 
 dev_dependencies:

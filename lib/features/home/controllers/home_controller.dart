@@ -328,6 +328,7 @@ class HomeController extends GetxController {
 
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:manx_mate/core/service/socket_service.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
@@ -588,6 +589,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    SocketServices().init();
     fetchCategories();
     fetchAdvertisements(); // Fetch ads on init
   }

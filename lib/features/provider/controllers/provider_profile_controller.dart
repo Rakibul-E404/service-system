@@ -1,4 +1,5 @@
 
+/**
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -615,6 +616,7 @@ class ProviderProfileController extends GetxController {
     await fetchBusinessProfile();
   }
 }
+*/
 
 
 
@@ -628,7 +630,7 @@ class ProviderProfileController extends GetxController {
 ///
 ///
 ///
-/// todo:::::
+/// todo::::: accept the null value
 ///
 ///
 ///
@@ -637,3 +639,659 @@ class ProviderProfileController extends GetxController {
 
 
 
+
+
+
+
+
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
+import '../../../core/network/network_caller.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
+
+class ProviderProfileController extends GetxController {
+  final NetworkCaller _networkCaller = NetworkCaller();
+  final SharedPrefService _sharedPrefService = SharedPrefService();
+
+  RxBool isEditing = false.obs;
+  RxBool isLoading = false.obs;
+  RxBool isUploadingImage = false.obs;
+  Rx<File?> selectedImage = Rx<File?>(null);
+  RxString providerId = ''.obs;
+
+  // Business information - Initialize with empty strings instead of placeholders
+  RxString businessName = ''.obs;
+  RxString location = ''.obs;
+  RxString contactDetails = ''.obs;
+  RxString description = ''.obs;
+  RxString businessImage = ''.obs;
+
+  // Text controllers for editing
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController locationController = TextEditingController();
+  final TextEditingController contactController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchBusinessProfile();
+  }
+
+  @override
+  void onClose() {
+    nameController.dispose();
+    locationController.dispose();
+    contactController.dispose();
+    descriptionController.dispose();
+    super.onClose();
+  }
+
+  // Helper method to get full image URL
+  String getFullImageUrl() {
+    if (businessImage.value.isEmpty) {
+      return '';
+    }
+
+    // If the image already has a full URL, return it as is
+    if (businessImage.value.startsWith('http')) {
+      return businessImage.value;
+    }
+
+    // Remove 'public/' prefix if present
+    String cleanPath = businessImage.value;
+    if (cleanPath.startsWith('public/')) {
+      cleanPath = cleanPath.substring(7);
+    }
+
+    // Remove leading slash if present
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+
+    String fullUrl = 'https://d7001.sobhoy.com/$cleanPath';
+    debugPrint('🖼️ Constructed image URL: $fullUrl');
+
+    return fullUrl;
+  }
+
+  // Extract provider ID from JWT token
+  String? getProviderIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        debugPrint('❌ Invalid token format');
+        return null;
+      }
+
+      final payload = parts[1];
+      // Add padding if needed
+      String normalized = base64Url.normalize(payload);
+      // Decode base64url
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final payloadMap = json.decode(decoded);
+
+      debugPrint('🔍 Token payload: $payloadMap');
+
+      // Try different possible keys for provider ID
+      return payloadMap['_id'] ??
+          payloadMap['id'] ??
+          payloadMap['providerId'] ??
+          payloadMap['userId'] ??
+          payloadMap['sub'];
+    } catch (e) {
+      debugPrint('❌ Error decoding token: $e');
+      return null;
+    }
+  }
+
+  // Helper method to safely get string values (handles null, empty, "null")
+  String _getSafeString(dynamic value) {
+    if (value == null || value == 'null' || (value is String && value.trim().isEmpty)) {
+      return '';
+    }
+    return value.toString().trim();
+  }
+
+  // Fetch business profile from API
+  Future<void> fetchBusinessProfile() async {
+    try {
+      isLoading.value = true;
+
+      // Try multiple ways to get provider ID
+      String? providerIdValue = await _sharedPrefService.getProviderId();
+
+      // If not found in SharedPreferences, try to get from token
+      if (providerIdValue == null || providerIdValue.isEmpty) {
+        debugPrint('🔄 Provider ID not found in SharedPreferences, trying token...');
+        final accessToken = await _sharedPrefService.getAccessToken();
+        if (accessToken != null && accessToken.isNotEmpty) {
+          providerIdValue = getProviderIdFromToken(accessToken);
+          if (providerIdValue != null) {
+            debugPrint('✅ Found provider ID in token: $providerIdValue');
+            await _sharedPrefService.saveProviderId(providerIdValue);
+          }
+        }
+      }
+
+      if (providerIdValue == null || providerIdValue.isEmpty) {
+        Get.snackbar(
+          'Authentication Error',
+          'Unable to identify your account. Please login again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+        isLoading.value = false;
+        return;
+      }
+
+      final providerAccessToken = await _sharedPrefService.getAccessToken();
+
+      if (providerAccessToken == null || providerAccessToken.isEmpty) {
+        throw Exception('Access token not found. Please login again.');
+      }
+
+      debugPrint('🌐 Fetching business profile for provider: $providerIdValue');
+
+      final response = await _networkCaller.getRequest(
+        'https://d7001.sobhoy.com/api/v1/business_profile/$providerIdValue',
+        headers: {'Authorization': 'Bearer $providerAccessToken'},
+      );
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final data = response.jsonResponse!['data'];
+
+        final String responseProviderId = data['_id'] ?? providerIdValue;
+        providerId.value = responseProviderId;
+
+        if (responseProviderId != providerIdValue) {
+          await _sharedPrefService.saveProviderId(responseProviderId);
+        }
+
+        businessName.value = _getSafeString(data['name']);
+        location.value = _getSafeString(data['location']);
+        contactDetails.value = _getSafeString(data['phone']);
+        description.value = _getSafeString(data['description']);
+        businessImage.value = _getSafeString(data['image']);
+
+        _initializeControllers();
+        debugPrint('✅ Business profile fetched successfully');
+      } else {
+        throw Exception(response.errorMessage ?? 'Failed to fetch business profile');
+      }
+    } catch (e) {
+      debugPrint('❌ Error fetching business profile: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to load business profile: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _initializeControllers() {
+    nameController.text = businessName.value;
+    locationController.text = location.value;
+    contactController.text = contactDetails.value;
+    descriptionController.text = description.value;
+  }
+
+  // Image Picker Methods
+  Future<void> pickImageFromGallery() async {
+    try {
+      final XFile? image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        selectedImage.value = File(image.path);
+        debugPrint('✅ Image selected from gallery: ${image.path}');
+        Get.back(); // Close the picker dialog
+
+        // Show preview with confirmation
+        _showImagePreviewDialog();
+      }
+    } catch (e) {
+      debugPrint('❌ Error picking image from gallery: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> pickImageFromCamera() async {
+    try {
+      final XFile? image = await ImagePicker().pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        selectedImage.value = File(image.path);
+        debugPrint('✅ Image taken from camera: ${image.path}');
+        Get.back(); // Close the picker dialog
+
+        // Show preview with confirmation
+        _showImagePreviewDialog();
+      }
+    } catch (e) {
+      debugPrint('❌ Error taking photo: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to take photo: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void _showImagePreviewDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Confirm Image Upload'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selectedImage.value != null)
+              Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    selectedImage.value!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
+            const Text('Upload this image as your business image?'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              selectedImage.value = null;
+              Get.back();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              uploadBusinessImage();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber[600],
+              foregroundColor: Colors.black,
+            ),
+            child: const Text('Upload'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showImagePickerDialog() {
+    if (!isEditing.value) {
+      Get.snackbar(
+        'Edit Mode Required',
+        'Please tap the Edit button first to change the business image',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+      return;
+    }
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text(
+              'Change Business Image',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Select a new image to replace the current one',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                _buildImagePickerOption(
+                  icon: Icons.photo_library,
+                  label: 'Gallery',
+                  onTap: pickImageFromGallery,
+                ),
+                _buildImagePickerOption(
+                  icon: Icons.camera_alt,
+                  label: 'Camera',
+                  onTap: pickImageFromCamera,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildImagePickerOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 30, color: Colors.blue),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  // Get MIME type for the image file
+  String _getMimeType(String filePath) {
+    final mimeType = lookupMimeType(filePath);
+    debugPrint('🔍 Detected MIME type: $mimeType for file: $filePath');
+    return mimeType ?? 'image/jpeg';
+  }
+
+  // Upload image using PUT /business_profile with multipart/form-data
+  Future<void> uploadBusinessImage() async {
+    try {
+      if (selectedImage.value == null) {
+        debugPrint('ℹ️ No image selected for upload');
+        return;
+      }
+
+      isUploadingImage.value = true;
+      debugPrint('🌐 Starting image upload via PUT /business_profile...');
+
+      final providerAccessToken = await _sharedPrefService.getAccessToken();
+
+      if (providerAccessToken == null || providerAccessToken.isEmpty) {
+        throw Exception('Access token not found. Please login again.');
+      }
+
+      // Check file size (25 MB limit)
+      final file = selectedImage.value!;
+      final fileSize = await file.length();
+      const maxSize = 25 * 1024 * 1024;
+
+      if (fileSize > maxSize) {
+        throw Exception('Image size exceeds 25 MB limit. Please choose a smaller image.');
+      }
+
+      // Get MIME type
+      final mimeType = _getMimeType(file.path);
+      final mimeTypeParts = mimeType.split('/');
+
+      debugPrint('📤 Uploading image: ${file.path}');
+      debugPrint('📊 File size: ${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
+      debugPrint('🎭 MIME type: $mimeType');
+
+      var request = http.MultipartRequest(
+        'PUT',
+        Uri.parse('https://d7001.sobhoy.com/api/v1/business_profile'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $providerAccessToken';
+
+      // Add the image file with proper MIME type
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          file.path,
+          contentType: MediaType(mimeTypeParts[0], mimeTypeParts[1]),
+        ),
+      );
+
+      // Add other fields if they have values
+      if (nameController.text.trim().isNotEmpty) {
+        request.fields['name'] = nameController.text.trim();
+      }
+      if (contactController.text.trim().isNotEmpty) {
+        request.fields['phone'] = contactController.text.trim();
+      }
+      if (locationController.text.trim().isNotEmpty) {
+        request.fields['location'] = locationController.text.trim();
+      }
+      if (descriptionController.text.trim().isNotEmpty) {
+        request.fields['description'] = descriptionController.text.trim();
+      }
+
+      debugPrint('🔄 Sending multipart PUT request...');
+      debugPrint('📋 Fields: ${request.fields}');
+      debugPrint('📋 Files: ${request.files.map((f) => '${f.field}: ${f.filename}').toList()}');
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      debugPrint('📥 Response status: ${response.statusCode}');
+      debugPrint('📥 Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+
+        if (responseData['success'] == true) {
+          final data = responseData['data'];
+
+          // Update all fields from response
+          businessName.value = _getSafeString(data['name']);
+          contactDetails.value = _getSafeString(data['phone']);
+          location.value = _getSafeString(data['location']);
+          description.value = _getSafeString(data['description']);
+          businessImage.value = _getSafeString(data['image']);
+
+          debugPrint('✅ Image uploaded successfully!');
+          debugPrint('🖼️ New image path: ${businessImage.value}');
+          debugPrint('🖼️ Full image URL: ${getFullImageUrl()}');
+
+          // Clear selected image
+          selectedImage.value = null;
+
+          // Update controllers
+          _initializeControllers();
+
+          Get.snackbar(
+            'Success',
+            'Business image updated successfully',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+        } else {
+          throw Exception(responseData['message'] ?? 'Upload failed');
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to upload image. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error uploading image: $e');
+      Get.snackbar(
+        'Upload Failed',
+        'Failed to upload image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    } finally {
+      isUploadingImage.value = false;
+    }
+  }
+
+  // Save/Update business profile
+  Future<void> toggleEdit() async {
+    if (isEditing.value) {
+      // If image is selected, upload it along with profile data
+      if (selectedImage.value != null) {
+        await uploadBusinessImage();
+      } else {
+        // Just update text fields
+        await _updateBusinessProfile();
+      }
+    } else {
+      // Enter edit mode
+      _initializeControllers();
+      isEditing.toggle();
+      debugPrint('✏️ Entered edit mode');
+    }
+  }
+
+  // Update business profile (text fields only)
+  Future<void> _updateBusinessProfile() async {
+    try {
+      isLoading.value = true;
+
+      final providerAccessToken = await _sharedPrefService.getAccessToken();
+
+      if (providerAccessToken == null || providerAccessToken.isEmpty) {
+        throw Exception('Access token not found. Please login again.');
+      }
+
+      final Map<String, dynamic> requestBody = {};
+
+      if (nameController.text.trim().isNotEmpty) {
+        requestBody['name'] = nameController.text.trim();
+      }
+      if (contactController.text.trim().isNotEmpty) {
+        requestBody['phone'] = contactController.text.trim();
+      }
+      if (locationController.text.trim().isNotEmpty) {
+        requestBody['location'] = locationController.text.trim();
+      }
+      if (descriptionController.text.trim().isNotEmpty) {
+        requestBody['description'] = descriptionController.text.trim();
+      }
+
+      debugPrint('🌐 Updating business profile...');
+      debugPrint('📦 Request Body: $requestBody');
+
+      final response = await _networkCaller.putRequest(
+        'https://d7001.sobhoy.com/api/v1/business_profile',
+        body: requestBody,
+        headers: {
+          'Authorization': 'Bearer $providerAccessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final data = response.jsonResponse!['data'];
+
+        businessName.value = _getSafeString(data['name']);
+        contactDetails.value = _getSafeString(data['phone']);
+        location.value = _getSafeString(data['location']);
+        description.value = _getSafeString(data['description']);
+
+        if (data['image'] != null) {
+          businessImage.value = _getSafeString(data['image']);
+        }
+
+        isEditing.value = false;
+
+        Get.snackbar(
+          'Success',
+          'Business profile updated successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        throw Exception(response.errorMessage ?? 'Failed to update profile');
+      }
+    } catch (e) {
+      debugPrint('❌ Error updating profile: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to update profile: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void cancelEdit() {
+    _initializeControllers();
+    selectedImage.value = null;
+    isEditing.value = false;
+    debugPrint('❌ Edit cancelled');
+    Get.snackbar(
+      'Cancelled',
+      'Changes discarded',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.orange,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  Future<void> forceRefresh() async {
+    debugPrint('🔄 Force refreshing...');
+    await fetchBusinessProfile();
+  }
+}

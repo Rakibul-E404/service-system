@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import '../../../core/network/network_caller.dart';
+import '../../../core/service/socket_service.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 
 class ProviderController extends GetxController {
@@ -37,6 +38,7 @@ class ProviderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    SocketServices().init();
     fetchBusinessProfile();
     fetchAds();
   }
