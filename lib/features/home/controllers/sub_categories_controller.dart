@@ -1,7 +1,4 @@
 
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import '../../../core/network/network_caller.dart';
