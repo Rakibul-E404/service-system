@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 
@@ -10,10 +11,11 @@ class ServiceCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onFavorite;
   final bool isFavorited;
-  final bool showFavorite; // Control favorite button visibility
-  final bool showLocationAndRating; // Control location and rating visibility
+  final bool showFavorite;
+  final bool showLocationAndRating;
   final double? width;
   final double? height;
+  final bool isGuestMode; // New parameter for guest mode
 
   const ServiceCard({
     super.key,
@@ -25,10 +27,11 @@ class ServiceCard extends StatelessWidget {
     this.onTap,
     this.onFavorite,
     this.isFavorited = false,
-    this.showFavorite = true, // Default to true (show favorite button)
-    this.showLocationAndRating = true, // Default to true (show location and rating)
+    this.showFavorite = true,
+    this.showLocationAndRating = true,
     this.width,
     this.height,
+    this.isGuestMode = false, // Default to false
   });
 
   @override
@@ -37,7 +40,7 @@ class ServiceCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: width ?? 200,
-        height: height ?? 250,  // Provide default height to avoid unbounded height
+        height: height ?? 250,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -77,7 +80,8 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   // Heart/Favorite Button (conditionally rendered)
-                  if (showFavorite)
+                  // Hide favorite button in guest mode or when showFavorite is false
+                  if (showFavorite && !isGuestMode)
                     Positioned(
                       top: 8,
                       left: 8,
@@ -103,12 +107,12 @@ class ServiceCard extends StatelessWidget {
 
             // Content Section
             Flexible(
-              fit: FlexFit.loose,  // Use Flexible instead of Expanded
+              fit: FlexFit.loose,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,  // Prevents infinite height
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     // Title
                     Text(
@@ -132,8 +136,9 @@ class ServiceCard extends StatelessWidget {
                     ),
                     const Spacer(),
 
-                    // Location and Rating Row (conditionally rendered)
-                    if (showLocationAndRating)
+                    // Location and Rating Row
+                    // Hide in guest mode OR when showLocationAndRating is false
+                    if (showLocationAndRating && !isGuestMode)
                       Row(
                         children: <Widget>[
                           Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[500]),
@@ -169,21 +174,4 @@ class ServiceCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
-///
-///
-///
-///todo::: passting the author info
-///
-///
-///
-
-
-
 

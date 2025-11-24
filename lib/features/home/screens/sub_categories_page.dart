@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/config/app_sizes.dart';
@@ -18,7 +17,7 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
   SubCategoriesPage({super.key});
 
   final TextEditingController _searchTEController = TextEditingController();
-  final ServicesController servicesController = Get.put(ServicesController()); // Add ServicesController
+  final ServicesController servicesController = Get.put(ServicesController());
 
   @override
   Widget build(BuildContext context) {
@@ -56,20 +55,14 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
 
               // Search Field
               MyTextFormFieldWithIcon(
-                formHintText: "Search",
+                formHintText: "Search Subcategories",
                 prefixIcon: const Icon(
                   CupertinoIcons.search,
                   color: AppColors.primaryColor,
                 ),
                 controller: _searchTEController,
-                validator: (String? value) {
-                  if (value?.isEmpty ?? true) {
-                    return '${AppStrings.pleaseEnterYour} ${AppStrings.email}!!';
-                  }
-                  return null;
-                },
                 onChanged: (String value) {
-                  // Implement search filtering if needed
+                  // Implement search filtering for subcategories if needed
                 },
               ),
               const SizedBox(height: AppSizes.md),
@@ -101,7 +94,13 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                           const SizedBox(height: AppSizes.md),
                           ElevatedButton(
                             onPressed: () => controller.retry(),
-                            child: const Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                            ),
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       ),
@@ -111,10 +110,26 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
 
                 // Empty State
                 if (controller.subCategories.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(AppSizes.xl),
-                      child: Text('No subcategories available'),
+                      padding: const EdgeInsets.all(AppSizes.xl),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.category_outlined,
+                            size: 60,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          Text(
+                            'No subcategories available',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
@@ -142,12 +157,9 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                         showLocationAndRating: false, // Hide location and rating for subcategories
 
                         onTap: () {
-                          // Use servicesController instead of subCategoriesController
-                          servicesController.fetchServicesBySubCategory(
-                              subCategory.id,
-                              subCategory.name
-                          );
+                          debugPrint('🎯 Navigating to services for subcategory: ${subCategory.name}');
 
+                          // Navigate to services page with subcategory info
                           Get.toNamed(
                             AppRoutes.servicesRoute,
                             arguments: {

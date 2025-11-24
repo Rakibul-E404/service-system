@@ -1,17 +1,15 @@
 
-
-
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
 import '../../../provider_model.dart';
 
 class HomeServiceDetailsController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
+  final SharedPrefService _sharedPrefService = SharedPrefService();
 
   Rx<DateTime> dateTimePick = DateTime.now().obs;
 
@@ -19,6 +17,10 @@ class HomeServiceDetailsController extends GetxController {
   final Rx<ProviderModel?> providerData = Rx<ProviderModel?>(null);
   final RxBool isLoadingProvider = false.obs;
   final RxString providerErrorMessage = ''.obs;
+
+  // Store service data from arguments
+  final Rx<Map<String, dynamic>> serviceData = Rx<Map<String, dynamic>>({});
+  bool _isInitialized = false;
 
   @override
   void onInit() {
@@ -30,6 +32,18 @@ class HomeServiceDetailsController extends GetxController {
     final dynamic args = Get.arguments;
 
     debugPrint('🔍 HomeServiceDetailsController - Received arguments: $args');
+
+    // Store service data immediately
+    if (args != null && args is Map<String, dynamic>) {
+      serviceData.value = Map<String, dynamic>.from(args);
+      debugPrint('✅ Service data stored: ${serviceData.value}');
+    }
+
+    // If we already have provider data, don't reinitialize
+    if (_isInitialized && providerData.value != null) {
+      debugPrint('✅ Already initialized with provider data, skipping reinitialization');
+      return;
+    }
 
     if (args != null && args is Map<String, dynamic>) {
       // Get authorId from either 'author' map or direct 'authorId' field
@@ -52,6 +66,64 @@ class HomeServiceDetailsController extends GetxController {
       debugPrint('⚠️ Arguments are null or not a Map');
       providerErrorMessage.value = 'No provider information available';
     }
+
+    _isInitialized = true;
+  }
+
+  /// Get service information for UI
+  Map<String, dynamic> get serviceInfo {
+    return serviceData.value;
+  }
+
+  String get serviceId {
+    return serviceData.value['serviceId']?.toString() ??
+        serviceData.value['_id']?.toString() ?? '';
+  }
+
+  String get serviceTitle {
+    return serviceData.value['serviceName']?.toString() ?? 'No Name';
+  }
+
+  String get serviceSubtitle {
+    return serviceData.value['serviceDescription']?.toString() ?? 'No Description';
+  }
+
+  String get serviceLocation {
+    return serviceData.value['serviceLocation']?.toString() ?? 'No Location';
+  }
+
+  double get serviceRating {
+    return (serviceData.value['serviceRating'] as num?)?.toDouble() ?? 0.0;
+  }
+
+  String get serviceImage {
+    final String serviceImagePath = serviceData.value['serviceImage']?.toString() ?? '';
+    return _getFullImageUrl(serviceImagePath);
+  }
+
+  String get authorId {
+    final dynamic authorData = serviceData.value['author'];
+    return authorData is Map<String, dynamic>
+        ? (authorData['_id']?.toString() ?? '')
+        : (serviceData.value['authorId']?.toString() ?? '');
+  }
+
+  // Helper method to construct full image URL
+  String _getFullImageUrl(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return '';
+
+    // If already a full URL
+    if (imagePath.startsWith('http')) return imagePath;
+
+    // Remove 'public/' prefix if present
+    String cleanPath = imagePath;
+    if (cleanPath.startsWith('public/')) {
+      cleanPath = cleanPath.substring(7);
+    }
+
+    // Construct full URL
+    final fullUrl = '${AppUrl.imageBaseUrl}/$cleanPath';
+    return fullUrl;
   }
 
   /// Create basic provider info from service data when authorId is not available
@@ -80,24 +152,44 @@ class HomeServiceDetailsController extends GetxController {
     debugPrint('✅ Basic provider created: ${basicProvider.name}');
   }
 
-  /// Fetch provider/business profile details (with fallback when no auth)
+  /// Fetch provider/business profile details (with authentication)
   Future<void> fetchProviderDetails(String authorId) async {
+    // Don't fetch if we already have data for this author
+    if (providerData.value != null && providerData.value!.id == authorId) {
+      debugPrint('✅ Already have provider data for: $authorId, skipping fetch');
+      return;
+    }
+
     debugPrint('🎯 FETCH PROVIDER DETAILS STARTED');
     debugPrint('📥 authorId: $authorId');
 
     isLoadingProvider.value = true;
     providerErrorMessage.value = '';
-    providerData.value = null;
 
     try {
+      // Check if user is logged in
+      final bool isLoggedIn = await _sharedPrefService.isLoggedIn();
+      debugPrint('🔐 User Login Status: $isLoggedIn');
+
       final String url = AppUrl.getBusinessProfileUrl(authorId);
       debugPrint('🌐 API URL: $url');
 
+      // Prepare headers with authentication if logged in
+      Map<String, String> headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+
+      if (isLoggedIn) {
+        final String? accessToken = await _sharedPrefService.getAccessToken();
+        if (accessToken != null && accessToken.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $accessToken';
+          debugPrint('🔑 Adding Authorization header with token');
+        }
+      }
+
       final NetworkResponse response = await _networkCaller.getRequest(
         url,
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
       );
 
       debugPrint('📡 API Response - Status: ${response.statusCode}, Success: ${response.isSuccess}');
@@ -105,13 +197,12 @@ class HomeServiceDetailsController extends GetxController {
       if (response.isSuccess && response.jsonResponse != null) {
         _handleSuccessResponse(response.jsonResponse!);
       } else {
-        // If API fails, create limited provider info
         debugPrint('❌ API call failed, creating limited provider info');
         _createLimitedProvider(authorId);
       }
     } catch (e, stackTrace) {
       debugPrint('💥 Exception occurred: $e');
-      // On exception, still create limited provider info
+      debugPrint('📚 StackTrace: $stackTrace');
       _createLimitedProvider(authorId);
     } finally {
       isLoadingProvider.value = false;
@@ -146,38 +237,129 @@ class HomeServiceDetailsController extends GetxController {
   /// Handle successful API response
   void _handleSuccessResponse(Map<String, dynamic> responseData) {
     try {
-      debugPrint('🔍 Response structure - success: ${responseData['success']}');
+      debugPrint('🎉 API Response Success - Processing data...');
 
-      if (!responseData.containsKey('data')) {
-        providerErrorMessage.value = 'Invalid response format';
-        debugPrint('❌ Missing "data" key in response');
-        return;
+      // Handle different response structures
+      dynamic dataToParse = responseData;
+
+      if (responseData.containsKey('data')) {
+        dataToParse = responseData['data'];
+        debugPrint('   - data type: ${dataToParse.runtimeType}');
+
+        // Handle nested data structure
+        if (dataToParse is Map<String, dynamic> && dataToParse.containsKey('data')) {
+          dataToParse = dataToParse['data'];
+        }
       }
 
-      final dynamic providerDataField = responseData['data'];
-      debugPrint('   - data type: ${providerDataField.runtimeType}');
-
-      if (providerDataField is! Map<String, dynamic>) {
-        providerErrorMessage.value = 'Invalid provider data format';
-        debugPrint('❌ Provider data is not a Map');
-        return;
+      if (dataToParse is Map<String, dynamic>) {
+        _parseProviderData(dataToParse);
+      } else if (dataToParse is List && dataToParse.isNotEmpty && dataToParse[0] is Map<String, dynamic>) {
+        _parseProviderData(dataToParse[0] as Map<String, dynamic>);
+      } else {
+        providerErrorMessage.value = 'Unexpected data format from API';
+        _createLimitedProvider('unknown');
       }
-
-      _parseProviderData(providerDataField);
     } catch (parseError, stackTrace) {
       providerErrorMessage.value = 'Failed to parse provider data';
-      debugPrint('💥 Parse Error: $parseError');
+      _createLimitedProvider('unknown');
     }
   }
 
-  /// Parse and set provider data
+  /// Parse and set provider data with comprehensive field mapping
   void _parseProviderData(Map<String, dynamic> providerDataField) {
-    debugPrint('🎨 Parsing provider data...');
+    debugPrint('🎨 Parsing provider data with fields:');
 
-    final ProviderModel provider = ProviderModel.fromJson(providerDataField);
-    providerData.value = provider;
+    try {
+      // Create a clean map with proper field mapping
+      final Map<String, dynamic> cleanData = {};
 
-    debugPrint('✅ Successfully loaded provider: ${provider.name}');
+      // Map all possible field names to standard ones
+      cleanData['_id'] = providerDataField['_id'] ??
+          providerDataField['id'] ??
+          providerDataField['author'] ??
+          providerDataField['authId'] ??
+          providerDataField['providerId'] ??
+          '';
+
+      cleanData['name'] = providerDataField['name'] ??
+          providerDataField['businessName'] ??
+          providerDataField['title'] ??
+          providerDataField['username'] ??
+          'Unknown Provider';
+
+      cleanData['phone'] = providerDataField['phone'] ??
+          providerDataField['phoneNumber'] ??
+          providerDataField['contact'] ??
+          providerDataField['mobile'] ??
+          '';
+
+      cleanData['location'] = providerDataField['location'] ??
+          providerDataField['address'] ??
+          providerDataField['city'] ??
+          providerDataField['area'] ??
+          '';
+
+      cleanData['description'] = providerDataField['description'] ??
+          providerDataField['bio'] ??
+          providerDataField['about'] ??
+          providerDataField['serviceDescription'] ??
+          '';
+
+      cleanData['image'] = providerDataField['image'] ??
+          providerDataField['profileImage'] ??
+          providerDataField['avatar'] ??
+          providerDataField['photo'] ??
+          '';
+
+      cleanData['isAvailable'] = providerDataField['isAvailable'] ??
+          providerDataField['available'] ??
+          providerDataField['status'] == 'available' ??
+          true;
+
+      cleanData['isProfileComplete'] = providerDataField['isProfileComplete'] ??
+          providerDataField['profileComplete'] ??
+          providerDataField['complete'] ??
+          false;
+
+      // Handle rating
+      dynamic rating = providerDataField['rating'] ??
+          providerDataField['rate'] ??
+          providerDataField['stars'] ??
+          0.0;
+
+      if (rating is String) {
+        cleanData['rating'] = double.tryParse(rating) ?? 0.0;
+      } else if (rating is int) {
+        cleanData['rating'] = rating.toDouble();
+      } else {
+        cleanData['rating'] = rating ?? 0.0;
+      }
+
+      // Handle rating count
+      dynamic ratingCount = providerDataField['ratingCount'] ??
+          providerDataField['reviewCount'] ??
+          providerDataField['totalRatings'] ??
+          providerDataField['reviews'] ??
+          0;
+
+      if (ratingCount is String) {
+        cleanData['ratingCount'] = int.tryParse(ratingCount) ?? 0;
+      } else {
+        cleanData['ratingCount'] = ratingCount ?? 0;
+      }
+
+      final ProviderModel provider = ProviderModel.fromJson(cleanData);
+      providerData.value = provider;
+      providerErrorMessage.value = '';
+
+      debugPrint('✅ Successfully created ProviderModel: ${provider.name}');
+
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error creating ProviderModel: $e');
+      providerErrorMessage.value = 'Failed to create provider model: ${e.toString()}';
+      _createLimitedProvider(providerDataField['_id']?.toString() ?? 'unknown');
+    }
   }
 
   /// Retry fetching provider details
@@ -186,29 +368,9 @@ class HomeServiceDetailsController extends GetxController {
     fetchProviderDetails(authorId);
   }
 
-  /// Clear provider data
-  void clearProviderData() {
-    providerData.value = null;
-    providerErrorMessage.value = '';
-  }
-
   @override
   void onClose() {
-    clearProviderData();
+    debugPrint('🔚 HomeServiceDetailsController onClose called');
     super.onClose();
   }
 }
-
-
-
-
-///
-///
-///
-/// todo::: fixing to show the provider image
-///
-///
-///
-
-
-

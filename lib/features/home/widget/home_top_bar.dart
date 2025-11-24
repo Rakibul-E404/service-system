@@ -145,6 +145,7 @@ class HomeTopBar extends StatelessWidget {
     // Use ProfileController instead of HomeTopBarController
     final ProfileController controller = Get.find<ProfileController>();
 
+
     return Stack(
       children: <Widget>[
         // Main Card

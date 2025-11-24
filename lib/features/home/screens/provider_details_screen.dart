@@ -265,7 +265,7 @@ class ProviderDetailsScreen extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(AppSizes.md),
                           decoration: BoxDecoration(
-                            color: AppColors.greyColor,
+                            color: AppColors.backgroundColor,
                             borderRadius:
                             BorderRadius.circular(AppSizes.borderRadiusMd),
                           ),
@@ -293,7 +293,7 @@ class ProviderDetailsScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(AppSizes.md),
                         decoration: BoxDecoration(
-                          color: AppColors.greyColor,
+                          color: AppColors.backgroundColor,
                           borderRadius:
                           BorderRadius.circular(AppSizes.borderRadiusMd),
                         ),
@@ -400,3 +400,8 @@ class ProviderDetailsScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
+

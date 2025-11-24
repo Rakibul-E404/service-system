@@ -1,3 +1,4 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,6 +12,7 @@ import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_sizes.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
 import '../../../provider_model.dart';
 import '../controllers/home_service_details_controller.dart';
 import '../widget/inquiry_bottom_sheet.dart';
@@ -19,7 +21,10 @@ import '../widget/time_selection_widget.dart';
 import '../../favorite/controllers/favorite_controller.dart';
 
 class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
-  HomeServiceDetailsPage({super.key});
+  HomeServiceDetailsPage({super.key}) {
+    // Initialize controller as permanent to maintain state
+    Get.put(HomeServiceDetailsController(), permanent: true);
+  }
 
   final TextEditingController _serviceNameTEController = TextEditingController();
   final TextEditingController _locationTEController = TextEditingController();
@@ -27,6 +32,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
   final TextEditingController _dateTEController = TextEditingController();
   final TimeController timeController = Get.put(TimeController());
   final FavoriteController favoriteController = Get.find<FavoriteController>();
+  final SharedPrefService sharedPrefService = SharedPrefService();
 
   final GlobalKey<InquiryBottomSheetState> inquirySheetKey = GlobalKey<InquiryBottomSheetState>();
 
@@ -50,46 +56,67 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
     return fullUrl;
   }
 
+  // Method to check if user is logged in and show login popup if not
+  Future<bool> _checkLoginAndShowPopup({String action = 'perform this action'}) async {
+    bool isLoggedIn = await sharedPrefService.isLoggedIn();
+    if (!isLoggedIn) {
+      _showLoginRequiredPopup(action);
+      return false;
+    }
+    return true;
+  }
+
+  // Show login required popup
+  void _showLoginRequiredPopup(String action) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Login Required'),
+        content: Text('Please login first to $action.'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back(); // Close the dialog
+              // Get.toNamed(AppRoutes.loginPage); // Navigate to login page
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+            ),
+            child: const Text(
+              'Login',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Extract service data from arguments
-    final Map<String, dynamic> serviceData = Get.arguments ?? <String, dynamic>{};
-    final String serviceId = serviceData['serviceId']?.toString() ??
-        serviceData['_id']?.toString() ?? '';
-
-    // Get service image with full URL
-    final String serviceImagePath = serviceData['serviceImage'] ?? '';
-    final String serviceImage = _getFullImageUrl(serviceImagePath);
-
-    final String serviceTitle = serviceData['serviceName'] ?? 'No Name';
-    final String serviceSubtitle = serviceData['serviceDescription'] ?? 'No Description';
-    final String serviceLocation = serviceData['serviceLocation'] ?? 'No Location';
-    final double serviceRating = (serviceData['serviceRating'] as num?)?.toDouble() ?? 0.0;
-
-    // Extract author ID for API call
-    final dynamic authorData = serviceData['author'];
-    final String authorId = authorData is Map<String, dynamic>
-        ? (authorData['_id']?.toString() ?? '')
-        : (serviceData['authorId']?.toString() ?? '');
-
-    debugPrint('🎯 HomeServiceDetailsPage - Service ID: $serviceId');
-    debugPrint('🎯 HomeServiceDetailsPage - Author ID: $authorId');
-    debugPrint('🖼️ Service Image: $serviceImage');
-
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: SizedBox(
         width: context.screenWidth * 0.9,
         height: 50,
         child: ReusableButton(
-          onTap: () {
+          onTap: () async {
+            // Check if user is logged in
+            bool isLoggedIn = await _checkLoginAndShowPopup(action: 'book a service slot');
+            if (!isLoggedIn) {
+              return;
+            }
+
             final DateTime selectedDate = controller.dateTimePick.value;
             final DateTime selectedDateTime = timeController.selectedTime.value;
             final String selectedTimeString = '${selectedDateTime.hour}:${selectedDateTime.minute.toString().padLeft(2, '0')}';
 
             debugPrint('📅 Selected Date: $selectedDate');
             debugPrint('⏰ Selected Time: $selectedTimeString');
-            debugPrint('🎯 Service ID: $serviceId');
+            debugPrint('🎯 Service ID: ${controller.serviceId}');
 
             CustomModalBottomSheet.show(
               title: 'Quote',
@@ -99,7 +126,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
               onButtonPressed: () {
                 debugPrint('🔘 Send button pressed');
                 inquirySheetKey.currentState?.submitInquiry(
-                  serviceId: serviceId,
+                  serviceId: controller.serviceId,
                   selectedDate: selectedDate,
                   selectedTime: selectedTimeString,
                 );
@@ -112,7 +139,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                 timeController: timeController,
                 locationTEController: _locationTEController,
                 additionalNoteTEController: _additionalNoteTEController,
-                preSelectedServiceId: serviceId,
+                preSelectedServiceId: controller.serviceId,
                 preSelectedDate: selectedDate,
                 preSelectedTime: selectedTimeString,
               ),
@@ -137,8 +164,8 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                     icon: const Icon(CupertinoIcons.back),
                   ),
                   Obx(() {
-                    final bool isFavorited = favoriteController.isFavorited(serviceId);
-                    final bool isLoadingFav = favoriteController.isFavoriteLoading(serviceId);
+                    final bool isFavorited = favoriteController.isFavorited(controller.serviceId);
+                    final bool isLoadingFav = favoriteController.isFavoriteLoading(controller.serviceId);
 
                     return Container(
                       decoration: BoxDecoration(
@@ -155,8 +182,8 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                       child: IconButton(
                         onPressed: isLoadingFav
                             ? null
-                            : () {
-                          if (serviceId.isEmpty) {
+                            : () async {
+                          if (controller.serviceId.isEmpty) {
                             Get.snackbar(
                               'Error',
                               'Service ID not found',
@@ -166,7 +193,14 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                             );
                             return;
                           }
-                          favoriteController.toggleFavorite(serviceId);
+
+                          // Check if user is logged in for favorite action
+                          bool isLoggedIn = await _checkLoginAndShowPopup(action: 'add to favorites');
+                          if (!isLoggedIn) {
+                            return;
+                          }
+
+                          favoriteController.toggleFavorite(controller.serviceId);
                         },
                         icon: isLoadingFav
                             ? const SizedBox(
@@ -196,11 +230,11 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
 
               // Service Image
               const SizedBox(height: AppSizes.md),
-              ClipRRect(
+              Obx(() => ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: serviceImage.isNotEmpty
+                child: controller.serviceImage.isNotEmpty
                     ? CustomCachedImage(
-                  imageUrl: serviceImage,
+                  imageUrl: controller.serviceImage,
                   width: context.screenWidth,
                   height: context.screenHeight * 0.4,
                   fit: BoxFit.cover,
@@ -215,29 +249,32 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                     color: Colors.grey,
                   ),
                 ),
-              ),
+              )),
 
               // Service Details
               const SizedBox(height: AppSizes.md),
-              Text(serviceTitle, style: context.txtTheme.titleLarge),
+              Obx(() => Text(
+                controller.serviceTitle,
+                style: context.txtTheme.titleLarge,
+              )),
               const SizedBox(height: AppSizes.sm),
-              Text(serviceSubtitle),
+              Obx(() => Text(controller.serviceSubtitle)),
               const SizedBox(height: AppSizes.xs),
-              Row(
+              Obx(() => Row(
                 children: <Widget>[
                   const Icon(Icons.location_on_outlined, size: 18),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(serviceLocation)),
+                  Expanded(child: Text(controller.serviceLocation)),
                 ],
-              ),
+              )),
               const SizedBox(height: AppSizes.xs),
-              Row(
+              Obx(() => Row(
                 children: <Widget>[
                   const Icon(Icons.star, size: 18, color: Colors.amber),
                   const SizedBox(width: 8),
-                  Text(serviceRating.toStringAsFixed(1)),
+                  Text(controller.serviceRating.toStringAsFixed(1)),
                 ],
-              ),
+              )),
 
               // Date & Time
               const SizedBox(height: AppSizes.md),
@@ -286,7 +323,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                 }
 
                 if (errorMsg.isNotEmpty) {
-                  return _buildProviderErrorCard(errorMsg, authorId);
+                  return _buildProviderErrorCard(errorMsg, controller.authorId);
                 }
 
                 return _buildNoProviderCard();
@@ -315,7 +352,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                   return _buildProviderAboutSection(provider);
                 }
 
-                return _buildFallbackAboutSection(serviceSubtitle);
+                return _buildFallbackAboutSection(controller.serviceSubtitle);
               }),
               const SizedBox(height: 100),
             ],
@@ -380,7 +417,13 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
     debugPrint('🖼️ Displaying Provider Image: $providerImageUrl');
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        // Check if user is logged in before navigating to provider details
+        bool isLoggedIn = await _checkLoginAndShowPopup(action: 'view provider details');
+        if (!isLoggedIn) {
+          return;
+        }
+
         Get.toNamed(
           AppRoutes.providerDetailsPage,
           arguments: {

@@ -263,6 +263,7 @@ import '../../../core/common/components/image_carousel.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/config/app_images.dart';
+import '../../profile/controllers/profile_controller.dart';
 import '../controllers/home_controller.dart';
 import '../widget/home_top_bar.dart';
 import '../widget/inquiry_bottom_sheet.dart';
@@ -273,6 +274,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Get.lazyPut(()=>ProfileController());
     final HomeController controller = Get.put(HomeController());
     final TimeController timeController = Get.put(TimeController());
     final TextEditingController serviceNameTEController = TextEditingController();

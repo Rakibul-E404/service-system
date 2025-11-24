@@ -1,17 +1,16 @@
+
+
+
+
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
-import '../../../core/utils/token_service/token_storage_service.dart';
 import '../model/sub_category_model.dart';
 
 class SubCategoriesController extends GetxController {
-
-
-
  final NetworkCaller _networkCaller = NetworkCaller();
- final SharedPrefService _sharedPrefService = SharedPrefService();
 
  // Observable lists
  final RxList<SubCategoryModel> subCategories = <SubCategoryModel>[].obs;
@@ -57,7 +56,7 @@ class SubCategoriesController extends GetxController {
   }
  }
 
- /// Fetch subcategories for the given category ID
+ /// Fetch subcategories for the given category ID (No authentication required)
  Future<void> fetchSubCategories() async {
   isLoadingSubCategories.value = true;
   errorMessage.value = '';
@@ -70,18 +69,10 @@ class SubCategoriesController extends GetxController {
    final String url = AppUrl.getSubCategoriesUrl(categoryId.value);
    debugPrint('📍 URL: $url');
 
-   final String? accessToken = await _sharedPrefService.getAccessToken();
-
-   if (accessToken == null || accessToken.isEmpty) {
-    errorMessage.value = 'No access token available';
-    debugPrint('❌ No access token found');
-    return;
-   }
-
    final NetworkResponse response = await _networkCaller.getRequest(
     url,
     headers: <String, String>{
-     'Authorization': 'Bearer $accessToken',
+     'Content-Type': 'application/json',
     },
    );
 
@@ -134,3 +125,4 @@ class SubCategoriesController extends GetxController {
   super.dispose();
  }
 }
+

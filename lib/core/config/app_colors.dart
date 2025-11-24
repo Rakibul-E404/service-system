@@ -23,6 +23,7 @@ class AppColors{
   static const Color whiteColor = Colors.white;
   
   static const Color textBlackColor = Color(0XFF303F47);
+  static const Color textWhiteColor = Colors.white;
 
   static const Color borderColor = Color(0x28333F40);
   static const Color dividerColor = Color(0xFFBDBDBD);
