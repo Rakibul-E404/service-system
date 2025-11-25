@@ -473,7 +473,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               /// TODO : Google sign-in implementation
                               debugPrint('Google sign-in tapped');
                               // Add your Google sign-in logic here
-                              // signInController.signInWithGoogle();
+                              signInController.handleGoogleSignIn();
                             },
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(

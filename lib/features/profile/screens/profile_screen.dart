@@ -311,29 +311,6 @@ class ProfileScreen extends GetView<ProfileController> {
 
                 const SizedBox(height: AppSizes.md),
 
-
-
-                // // Delete Account - Only for Users (not providers)
-                // Obx(() {
-                //   if (controller.role.value == 'user') {
-                //     return Column(
-                //       children: [
-                //         ProfileCommonTile(
-                //           onTap: () {
-                //
-                //           },
-                //           leadingIcon: const Icon(Icons.remove_circle, color: Colors.red),
-                //           title: 'Delete Account',
-                //         ),
-                //         const SizedBox(height: AppSizes.md),
-                //       ],
-                //     );
-                //   }
-                //   return const SizedBox.shrink();
-                //
-                // }),
-                // const SizedBox(height: AppSizes.sm),
-
                 ProfileCommonTile(
                   onTap: () {
                     LogoutModal.show(

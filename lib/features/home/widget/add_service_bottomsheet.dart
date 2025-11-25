@@ -56,11 +56,11 @@ class AddServiceCategoryController extends GetxController {
       selectedSubCategoryName.value = '';
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoadingCategories.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoadingCategories.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/category');
       print('🌐 Fetching categories from: $url');
@@ -100,11 +100,11 @@ class AddServiceCategoryController extends GetxController {
       selectedSubCategoryName.value = '';
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoadingSubCategories.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoadingSubCategories.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/category/$categoryId/subcategories');
       print('🌐 Fetching sub-categories from: $url');
@@ -184,9 +184,9 @@ class AddServiceCategoryController extends GetxController {
       }
 
       final token = await _getAuthToken();
-      if (token == null) {
-        throw Exception('Please login again');
-      }
+      // if (token == null) {
+      //   throw Exception('Please login again');
+      // }
 
       // 🌐 POST API ENDPOINT
       final url = Uri.parse('$baseUrl/service');

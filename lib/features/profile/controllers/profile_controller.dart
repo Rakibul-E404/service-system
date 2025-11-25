@@ -40,13 +40,13 @@ class ProfileController extends GetxController {
 
       if (token == null || token.isEmpty) {
         debugPrint('❌ No auth token found');
-        Get.snackbar(
-          'Error',
-          'Please login again',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
+        // Get.snackbar(
+        //   'Error',
+        //   'Please login again',
+        //   backgroundColor: Colors.red,
+        //   colorText: Colors.white,
+        //   snackPosition: SnackPosition.TOP,
+        // );
         isLoading.value = false;
         return;
       }

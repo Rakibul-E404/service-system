@@ -100,7 +100,7 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
                         () => _buildRoleOption(
                       icon: Icons.business_center_outlined,
                       title: AppStrings.provider,
-                      subtitle: 'Create your account as a Provider',
+                      subtitle: 'Create your account as Business',
                       isSelected: controller.selectedRole.value == 'provider',
                       onTap: () => controller.selectRole('provider'), // Changed to lowercase
                       backgroundColor: Colors.white,

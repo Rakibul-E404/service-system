@@ -1,6 +1,8 @@
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:manx_mate/core/network/network_caller.dart';
 import 'package:manx_mate/core/network/network_response.dart';
 import '../../../core/config/app_constants.dart';
@@ -218,6 +220,46 @@ class SignInController extends GetxController {
       isTermsAndConditionAgreementAccept.value = value;
     }
   }
+
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '695021061678-alestl47nmltb1kds35ojadofjsc1lmg.apps.googleusercontent.com',
+    scopes: <String>['email', 'profile'],
+  );
+
+  Future<void> handleGoogleSignIn() async {
+    try {
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      debugPrint("google login success : ${user}");
+
+      // handleSignIn(email: user?.email, name: user?.displayName);
+    }
+    catch (error) {
+      debugPrint("google login error : ${error}");
+
+      // isLoading.value = false;
+    }
+    finally{
+      // isLoading.value = false;
+    }
+  }
+
 
   /// [onInit] Lifecycle method called when the controller is initialized.
   @override

@@ -41,11 +41,11 @@ class ProviderServicesController extends GetxController {
       services.clear();
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoading.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoading.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/service/provider/self');
       print('🌐 Fetching provider services from: $url');
@@ -106,11 +106,11 @@ class ProviderPendingController extends GetxController {
       bookings.clear();
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoading.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoading.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/booking/provider?status=accepted');
       print('🌐 Fetching provider pending bookings from: $url');
@@ -147,11 +147,11 @@ class ProviderPendingController extends GetxController {
       processingIds.add(bookingId);
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        processingIds.remove(bookingId);
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   processingIds.remove(bookingId);
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/booking/respond/$bookingId');
       print('🌐 Updating booking status: $url');
@@ -242,11 +242,11 @@ class ProviderCompletedController extends GetxController {
       bookings.clear();
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoading.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoading.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/booking/provider?status=completed');
       print('🌐 Fetching provider completed bookings from: $url');
@@ -306,11 +306,11 @@ class ProviderCancelledController extends GetxController {
       bookings.clear();
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoading.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoading.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/booking/provider?status=cancelled');
       print('🌐 Fetching provider cancelled bookings from: $url');
@@ -371,11 +371,11 @@ class ProviderQuoteController extends GetxController {
       bookings.clear();
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        isLoading.value = false;
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   isLoading.value = false;
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/booking/provider?status=pending');
       print('🌐 Fetching provider quote (pending) bookings from: $url');
@@ -412,11 +412,11 @@ class ProviderQuoteController extends GetxController {
       processingIds.add(bookingId);
 
       final token = await _getAuthToken();
-      if (token == null) {
-        errorMessage.value = 'Please login again.';
-        processingIds.remove(bookingId);
-        return;
-      }
+      // if (token == null) {
+      //   errorMessage.value = 'Please login again.';
+      //   processingIds.remove(bookingId);
+      //   return;
+      // }
 
       final url = Uri.parse('$baseUrl/booking/respond/$bookingId');
       print('🌐 Updating booking status: $url');

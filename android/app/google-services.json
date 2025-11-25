@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "695021061678",
+    "project_id": "manx-9d892",
+    "storage_bucket": "manx-9d892.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695021061678:android:b639cc9f6e9fbb138141bf",
+        "android_client_info": {
+          "package_name": "com.example.manx_mate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "695021061678-alestl47nmltb1kds35ojadofjsc1lmg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnHIaOY0GM4xHi7w1tMCBfawPU1G35Q0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "695021061678-alestl47nmltb1kds35ojadofjsc1lmg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "695021061678-5ta20bsmolhri6d9pgd7mvt98pq3ugkj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.manxMate"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

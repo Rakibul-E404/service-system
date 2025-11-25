@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:manx_mate/core/config/app_images.dart';
 import '../controllers/splash_screen_controller.dart';
 
+
+
 class SplashScreenScreen extends GetView<SplashScreenController> {
   const SplashScreenScreen({super.key});
 
