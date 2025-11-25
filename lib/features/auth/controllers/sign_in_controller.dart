@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/network/network_caller.dart';
@@ -235,3 +236,20 @@ class SignInController extends GetxController {
     super.dispose();
   }
 }
+
+
+
+
+
+
+///
+///
+///
+/// todo::; close the error messge for the guest
+///
+///
+///
+
+
+
+
