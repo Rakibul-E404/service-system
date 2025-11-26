@@ -1,7 +1,6 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:manx_mate/core/extensions/widget_extensions.dart';
 import 'package:manx_mate/features/booking/screens/booking_screen.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/screens/home_screen.dart';
