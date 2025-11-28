@@ -887,7 +887,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          category['name'] ?? 'No Category',
+                          author['name'] ?? 'Unknown',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -943,21 +943,21 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
               const SizedBox(height: AppSizes.md),
               Row(
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: NetworkImage(providerImageUrl),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                  // Container(
+                  //   width: 32,
+                  //   height: 32,
+                  //   decoration: BoxDecoration(
+                  //     shape: BoxShape.circle,
+                  //     image: DecorationImage(
+                  //       image: NetworkImage(providerImageUrl),
+                  //       fit: BoxFit.cover,
+                  //     ),
+                  //   ),
+                  // ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      author['name'] ?? 'Unknown',
+                      category['name'] ?? 'No Category',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -1103,7 +1103,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          category['name'] ?? 'No Category',
+                          author['name'] ?? 'Unknown',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1159,21 +1159,21 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
               const SizedBox(height: AppSizes.md),
               Row(
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: NetworkImage(providerImageUrl),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                  // Container(
+                  //   width: 32,
+                  //   height: 32,
+                  //   decoration: BoxDecoration(
+                  //     shape: BoxShape.circle,
+                  //     image: DecorationImage(
+                  //       image: NetworkImage(providerImageUrl),
+                  //       fit: BoxFit.cover,
+                  //     ),
+                  //   ),
+                  // ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      author['name'] ?? 'Unknown',
+                      category['name'] ?? 'No Category',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
