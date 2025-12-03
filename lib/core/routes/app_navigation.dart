@@ -163,7 +163,8 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.profilePage,
-      page: () => const ProfileScreen(),
+      // page: () => const ProfileScreen(),
+      page: () =>  ProfileScreen(),
       transition: Transition.noTransition,
       binding: ProfileBinding(),
     ),

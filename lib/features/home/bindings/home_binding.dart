@@ -55,6 +55,6 @@ class HomeBinding extends Bindings {
 
     // Use ProfileController instead of HomeTopBarController
     // This ensures the same controller instance is used across the app
-    Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+    // Get.put(dependency)<ProfileController>(() => ProfileController(), fenix: true);
   }
 }

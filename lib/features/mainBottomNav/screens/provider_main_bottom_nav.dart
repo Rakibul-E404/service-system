@@ -21,7 +21,8 @@ class _ProviderMainBottomNavScreenState extends State<ProviderMainBottomNavScree
     const ProviderDashboardScreen(),
     const ProviderServicesScreen(),
      const MessageScreen(),
-    const ProfileScreen(),
+    // const ProfileScreen(),
+     ProfileScreen(),
   ];
 
   final List<IconData> _icons = <IconData>[

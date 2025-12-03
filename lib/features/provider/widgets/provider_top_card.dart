@@ -120,7 +120,8 @@ class ProviderTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Get the existing instances
-    final ProfileController controller = Get.find<ProfileController>();
+    final ProfileController controller = Get.put(ProfileController());
+
     final NotificationController notificationController = Get.find<NotificationController>();
 
     return Container(
