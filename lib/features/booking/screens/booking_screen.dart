@@ -2255,9 +2255,9 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
                     labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
                     unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
                     tabs: const <Widget>[
-                      Tab(text: "Active Slot"),
-                      Tab(text: "Ongoing Slot"),
-                      Tab(text: "Past Slot"),
+                      // Tab(text: "Active Job"),
+                      Tab(text: "Active Job"),
+                      Tab(text: "Past Job"),
                     ],
                   ),
                 ),

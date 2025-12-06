@@ -1551,7 +1551,7 @@ class ProviderDashboardScreen extends GetView<ProviderController> {
 
                           // Availability Switch - FIXED: Now depends on API
                           // Only wrap this specific widget with Obx
-                          _buildAvailabilitySwitch(),
+                          // _buildAvailabilitySwitch(),
 
                           const SizedBox(height: AppSizes.md),
 
@@ -1670,44 +1670,44 @@ class ProviderDashboardScreen extends GetView<ProviderController> {
 
 
 
-  // Fixed Availability Switch Widget - No loading indicator
-  Widget _buildAvailabilitySwitch() {
-    return Obx(() {
-      final bool isAvailable = controller.isAvailable;
-
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            const Expanded(
-              child: Text(
-                'Set Availability',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-            Switch(
-              value: isAvailable,
-              onChanged: (value) => controller.updateAvailability(value),
-              activeColor: AppColors.primaryColor,
-              inactiveThumbColor: AppColors.greyColor,
-              inactiveTrackColor: AppColors.whiteColor,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ],
-        ),
-      );
-    });
-  }
+  // // Fixed Availability Switch Widget - No loading indicator
+  // Widget _buildAvailabilitySwitch() {
+  //   return Obx(() {
+  //     final bool isAvailable = controller.isAvailable;
+  //
+  //     return Container(
+  //       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+  //       decoration: BoxDecoration(
+  //         color: AppColors.whiteColor,
+  //         borderRadius: BorderRadius.circular(8.0),
+  //         border: Border.all(color: Colors.grey.shade300),
+  //       ),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: <Widget>[
+  //           const Expanded(
+  //             child: Text(
+  //               'Set Availability',
+  //               style: TextStyle(
+  //                 fontSize: 16,
+  //                 color: Colors.black,
+  //                 fontWeight: FontWeight.w400,
+  //               ),
+  //             ),
+  //           ),
+  //           Switch(
+  //             value: isAvailable,
+  //             onChanged: (value) => controller.updateAvailability(value),
+  //             activeColor: AppColors.primaryColor,
+  //             inactiveThumbColor: AppColors.greyColor,
+  //             inactiveTrackColor: AppColors.whiteColor,
+  //             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   });
+  // }
 
 
 

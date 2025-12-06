@@ -1673,9 +1673,9 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                   unselectedLabelStyle:
                   const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
                   tabs: const [
-                    Tab(text: "Listing"),
+                    // Tab(text: "Listing"),
                     Tab(text: "Quote"),
-                    Tab(text: "Cancel"),
+                    // Tab(text: "Cancel"),
                     Tab(text: "Ongoing"),
                     Tab(text: "Complete"),
                   ],
