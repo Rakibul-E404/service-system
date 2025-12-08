@@ -10,6 +10,8 @@ class AppImages {
   static const String loginImage3 = "assets/images/image_slider_3.png";
   static const String loginImage4 = "assets/images/image_slider_4.png";
   static const String loginImage5 = "assets/images/image_slider_5.png";
+  static const String loginImage6 = "assets/images/image_slider_6.png";
+  static const String loginImage7 = "assets/images/image_slider_7.png";
   static const String phoneImage = "$baseUrl/phone_image.png";
   static const String splashScreenImage = "$baseUrl/splash_screen_image.png";
 }
