@@ -253,6 +253,12 @@ class HomeScreen extends StatelessWidget {
 
 
 
+
+
+
+
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
@@ -349,7 +355,9 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: AppSizes.sm),
 
                     /// ============================> Categories GridView ===============>
+                    // Use Obx properly
                     Obx(() {
+                      // Access reactive variables directly
                       if (controller.isLoadingCategories.value) {
                         return const Center(
                           child: Padding(
@@ -359,7 +367,7 @@ class HomeScreen extends StatelessWidget {
                         );
                       }
 
-                      if (controller.errorMessage.isNotEmpty) {
+                      if (controller.errorMessage.value.isNotEmpty) {
                         return Center(
                           child: Padding(
                             padding: const EdgeInsets.all(AppSizes.xl),
@@ -433,9 +441,9 @@ class HomeScreen extends StatelessWidget {
                       child: Column(
                         children: <Widget>[
                           Row(
-                            spacing: AppSizes.md,
                             children: <Widget>[
                               Image.asset(AppImages.phoneImage),
+                              const SizedBox(width: AppSizes.md),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,7 +509,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
 
 
 
