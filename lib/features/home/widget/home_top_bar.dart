@@ -200,18 +200,36 @@ class HomeTopBar extends StatelessWidget {
                           );
                         },
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.whiteColor,
-                          border: Border.all(color: AppColors.primaryColor),
-                          borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            Get.toNamed(AppRoutes.notificationPage);
-                          },
-                          icon: const Icon(CupertinoIcons.bell, color: AppColors.primaryColor),
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.whiteColor,
+                              border: Border.all(color: AppColors.primaryColor),
+                              borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                Get.toNamed(AppRoutes.homeSearchRoute);
+                              },
+                              icon: const Icon(CupertinoIcons.search, color: AppColors.primaryColor),
+                            ),
+                          ),
+                          const SizedBox(width: 10,),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.whiteColor,
+                              border: Border.all(color: AppColors.primaryColor),
+                              borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                Get.toNamed(AppRoutes.notificationPage);
+                              },
+                              icon: const Icon(CupertinoIcons.bell, color: AppColors.primaryColor),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -221,44 +239,44 @@ class HomeTopBar extends StatelessWidget {
           ),
         ),
 
-        // Search Field - Positioned to overlap
-        Positioned(
-          bottom: 0,
-          left: AppSizes.md,
-          right: AppSizes.md,
-          child: Material(
-            color: AppColors.whiteColor,
-            child: InkWell(
-              splashColor: AppColors.greyColor,
-              borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-              onTap: () {
-                Get.toNamed(AppRoutes.homeSearchRoute);
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSizes.md,
-                    horizontal: AppSizes.md,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.primaryColor),
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      const Icon(CupertinoIcons.search, color: AppColors.primaryColor),
-                      const SizedBox(width: AppSizes.md),
-                      Text("Search a service", style: Theme.of(context).textTheme.headlineMedium),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        // // Search Field - Positioned to overlap
+        // Positioned(
+        //   bottom: 0,
+        //   left: AppSizes.md,
+        //   right: AppSizes.md,
+        //   child: Material(
+        //     color: AppColors.whiteColor,
+        //     child: InkWell(
+        //       splashColor: AppColors.greyColor,
+        //       borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+        //       onTap: () {
+        //         Get.toNamed(AppRoutes.homeSearchRoute);
+        //       },
+        //       child: Container(
+        //         decoration: BoxDecoration(
+        //           borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+        //         ),
+        //         child: Container(
+        //           padding: const EdgeInsets.symmetric(
+        //             vertical: AppSizes.md,
+        //             horizontal: AppSizes.md,
+        //           ),
+        //           decoration: BoxDecoration(
+        //             border: Border.all(color: AppColors.primaryColor),
+        //             borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+        //           ),
+        //           child: Row(
+        //             children: <Widget>[
+        //               const Icon(CupertinoIcons.search, color: AppColors.primaryColor),
+        //               const SizedBox(width: AppSizes.md),
+        //               Text("Search a service", style: Theme.of(context).textTheme.headlineMedium),
+        //             ],
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

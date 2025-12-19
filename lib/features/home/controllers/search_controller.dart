@@ -1,112 +1,3 @@
-/**
-
-
-import 'package:get/get.dart';
-import '../../../core/network/network_caller.dart';
-import '../../../core/network/network_response.dart';
-import '../../../core/utils/api/app_url.dart';
-import '../../../core/utils/token_service/token_storage_service.dart';
-
-class HomeSearchController extends GetxController {
-  RxList<dynamic> services = <dynamic>[].obs;
-  RxList<dynamic> filteredServices = <dynamic>[].obs;
-  RxBool isLoading = false.obs;
-  RxString error = ''.obs;
-
-  final SharedPrefService _sharedPrefService = SharedPrefService();
-
-  @override
-  void onInit() {
-    super.onInit();
-    fetchServices();
-  }
-
-  Future<void> fetchServices() async {
-    isLoading.value = true;
-    error.value = '';
-
-    String? accessToken = await _sharedPrefService.getAccessToken();
-    Map<String, String> headers = {};
-    if (accessToken != null && accessToken.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $accessToken';
-    }
-
-    NetworkResponse response =
-    await NetworkCaller().getRequest(AppUrl.allService, headers: headers);
-
-    if (response.isSuccess) {
-      final data = response.jsonResponse?['data']['data'];
-      if (data is List) {
-        services.value = data;
-        filteredServices.value = List.from(data); // Initialize filtered list
-      } else {
-        services.clear();
-        filteredServices.clear();
-        error.value = 'No services found';
-      }
-    } else {
-      error.value = response.errorMessage ?? 'Failed to fetch services';
-      services.clear();
-      filteredServices.clear();
-    }
-    isLoading.value = false;
-  }
-
-  void searchServices({String keyword = '', String location = ''}) {
-    if (services.isEmpty) return;
-
-    List<dynamic> results = List.from(services);
-
-    // Filter by keyword (search in name and description)
-    if (keyword.isNotEmpty) {
-      results = results.where((service) {
-        final name = service['name']?.toString().toLowerCase() ?? '';
-        final description = service['description']?.toString().toLowerCase() ?? '';
-        return name.contains(keyword.toLowerCase()) ||
-            description.contains(keyword.toLowerCase());
-      }).toList();
-    }
-
-    // Filter by location
-    if (location.isNotEmpty) {
-      results = results.where((service) {
-        final serviceLocation = service['location']?.toString().toLowerCase() ?? '';
-        return serviceLocation.contains(location.toLowerCase());
-      }).toList();
-    }
-
-    filteredServices.value = results;
-  }
-
-  void clearFilters() {
-    filteredServices.value = List.from(services);
-  }
-}*/
-
-
-
-
-
-
-
-
-
-
-
-
-///
-///
-///
-///
-/// todo:: fixing the issue
-///
-///
-///
-///
-
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import '../../../core/network/network_caller.dart';
@@ -115,7 +6,7 @@ import '../../../core/utils/api/app_url.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 
 class HomeSearchController extends GetxController {
-  // Reactive variables
+  // Reactive data
   final RxList<dynamic> _services = <dynamic>[].obs;
   final RxList<dynamic> _filteredServices = <dynamic>[].obs;
   final RxBool _isLoading = false.obs;
@@ -153,7 +44,7 @@ class HomeSearchController extends GetxController {
         final data = response.jsonResponse!['data']?['data'];
         if (data is List && data.isNotEmpty) {
           _services.value = data;
-          _filteredServices.value = List.from(data); // Initialize filtered list
+          _filteredServices.value = List.from(data);
           debugPrint('✅ Services loaded: ${data.length} items');
         } else {
           _services.clear();
@@ -171,44 +62,61 @@ class HomeSearchController extends GetxController {
       _filteredServices.clear();
     } finally {
       _isLoading.value = false;
-      update(); // IMPORTANT: Add this to trigger GetBuilder rebuilds
+      update();
     }
   }
 
-  void searchServices({String keyword = '', String location = ''}) {
+  /// 🔍 Search with optional filters: keyword, location, category, subcategory
+  void searchServices({
+    String keyword = '',
+    String location = '',
+    String category = '',
+    String subcategory = '',
+  }) {
     if (_services.isEmpty) return;
 
     List<dynamic> results = List.from(_services.value);
 
-    // Filter by keyword (search in name and description)
+    // 🔤 Keyword: match in name, description, or subCategory
     if (keyword.isNotEmpty) {
+      final term = keyword.toLowerCase();
       results = results.where((service) {
-        final name = service['name']?.toString().toLowerCase() ?? '';
-        final description = service['description']?.toString().toLowerCase() ?? '';
-        final subCategory = service['subCategory']?.toString().toLowerCase() ?? '';
-
-        return name.contains(keyword.toLowerCase()) ||
-            description.contains(keyword.toLowerCase()) ||
-            subCategory.contains(keyword.toLowerCase());
+        final name = (service['name'] ?? '').toString().toLowerCase();
+        final desc = (service['description'] ?? '').toString().toLowerCase();
+        final subCat = (service['subCategory'] ?? '').toString().toLowerCase();
+        return name.contains(term) || desc.contains(term) || subCat.contains(term);
       }).toList();
     }
 
-    // Filter by location
-    if (location.isNotEmpty) {
+    // 📍 Location filter (partial match)
+    if (location.isNotEmpty && location != 'All Locations') {
       results = results.where((service) {
-        final serviceLocation = service['location']?.toString().toLowerCase() ?? '';
-        return serviceLocation.contains(location.toLowerCase());
+        final loc = (service['location'] ?? '').toString().toLowerCase();
+        return loc.contains(location.toLowerCase());
+      }).toList();
+    }
+
+    // 🏷️ Category filter (exact match)
+    if (category.isNotEmpty && category != 'All Categories') {
+      results = results.where((service) {
+        return (service['category'] ?? '') == category;
+      }).toList();
+    }
+
+    // 🔖 Subcategory filter (exact match)
+    if (subcategory.isNotEmpty && subcategory != 'All Subcategories') {
+      results = results.where((service) {
+        return (service['subCategory'] ?? '') == subcategory;
       }).toList();
     }
 
     _filteredServices.value = results;
-    update(); // IMPORTANT: Add this to trigger GetBuilder rebuilds
+    update();
   }
 
   void clearFilters() {
     _filteredServices.value = List.from(_services.value);
-    update(); // IMPORTANT: Add this to trigger GetBuilder rebuilds
+    update();
   }
 }
-
 

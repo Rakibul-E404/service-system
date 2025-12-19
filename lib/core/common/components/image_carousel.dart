@@ -303,24 +303,6 @@ class _ImageSliderState extends State<ImageSlider> {
                       ),
                     ),
 
-                    // Add a semi-transparent overlay to indicate tappable area
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(widget.borderRadius),
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.3),
-                              Colors.transparent,
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
                     Positioned(
                       left: 50,
                       bottom: 50,

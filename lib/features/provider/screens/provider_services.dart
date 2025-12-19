@@ -1579,77 +1579,77 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           ? SizedBox(
         width: context.screenWidth * 0.9,
         height: 50,
-        child: ReusableButton(
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (context) => Container(
-                height: context.screenHeight * 0.75,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Add a new service',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: AddServiceBottomSheet(
-                          key: _bottomSheetKey,
-                          serviceNameTEController: serviceNameTEController,
-                          dateTEController: dateTEController,
-                          timeController: timeController,
-                          locationTEController: locationTEController,
-                          additionalNoteTEController: additionalNoteTEController,
-                          typeTEController: typeTEController,
-                          formKey: addServiceFormKey,
-                          onSubmit: _handleAddService,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ReusableButton(
-                          onTap: () {
-                            print('🔥 Add Service Button Clicked!');
-                            _bottomSheetKey.currentState?.submitForm();
-                          },
-                          label: "Add Service",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-          label: "Add Service",
-        ),
+        // child: ReusableButton(
+        //   onTap: () {
+        //     showModalBottomSheet(
+        //       context: context,
+        //       isScrollControlled: true,
+        //       backgroundColor: Colors.transparent,
+        //       builder: (context) => Container(
+        //         height: context.screenHeight * 0.75,
+        //         decoration: const BoxDecoration(
+        //           color: Colors.white,
+        //           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        //         ),
+        //         child: Column(
+        //           children: [
+        //             Padding(
+        //               padding: const EdgeInsets.all(16.0),
+        //               child: Row(
+        //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //                 children: [
+        //                   const Text(
+        //                     'Add a new service',
+        //                     style: TextStyle(
+        //                       fontSize: 18,
+        //                       fontWeight: FontWeight.bold,
+        //                     ),
+        //                   ),
+        //                   IconButton(
+        //                     icon: const Icon(Icons.close),
+        //                     onPressed: () => Navigator.pop(context),
+        //                   ),
+        //                 ],
+        //               ),
+        //             ),
+        //             const Divider(),
+        //             Expanded(
+        //               child: SingleChildScrollView(
+        //                 padding: const EdgeInsets.all(16.0),
+        //                 child: AddServiceBottomSheet(
+        //                   key: _bottomSheetKey,
+        //                   serviceNameTEController: serviceNameTEController,
+        //                   dateTEController: dateTEController,
+        //                   timeController: timeController,
+        //                   locationTEController: locationTEController,
+        //                   additionalNoteTEController: additionalNoteTEController,
+        //                   typeTEController: typeTEController,
+        //                   formKey: addServiceFormKey,
+        //                   onSubmit: _handleAddService,
+        //                 ),
+        //               ),
+        //             ),
+        //             Padding(
+        //               padding: const EdgeInsets.all(16.0),
+        //               child: SizedBox(
+        //                 width: double.infinity,
+        //                 height: 50,
+        //                 child: ReusableButton(
+        //                   onTap: () {
+        //                     print('🔥 Add Service Button Clicked!');
+        //                     _bottomSheetKey.currentState?.submitForm();
+        //                   },
+        //                   label: "Add Service",
+        //                 ),
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       ),
+        //     );
+        //   },
+        //   label: "Add Service",
+        // ),
       )
           : const SizedBox.shrink(),
       body: SafeArea(
