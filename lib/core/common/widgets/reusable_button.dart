@@ -23,7 +23,7 @@ class ReusableButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: bgColor.withOpacity(isLoading ? 0.6 : 1.0), // ← Dim background when loading
+      color: bgColor.withValues(alpha: isLoading ? 0.6 : 1.0),
       borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
@@ -33,7 +33,7 @@ class ReusableButton extends StatelessWidget {
             : () {
           DeviceUtility.hapticFeedback();
           onTap();
-        }, // ← Disable tap when loading
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
           width: double.infinity,

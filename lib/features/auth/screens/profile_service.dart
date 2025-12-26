@@ -1181,15 +1181,6 @@ class ProfileService extends GetxService {
 
       // Show success message
       await Future.delayed(const Duration(milliseconds: 300));
-      Get.snackbar(
-        'Success',
-        'You have been logged out successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
-        icon: const Icon(Icons.check_circle, color: Colors.white),
-      );
 
     } catch (e, stackTrace) {
       isLoading.value = false;

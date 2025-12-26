@@ -205,28 +205,28 @@ class HomeTopBar extends StatelessWidget {
                           Container(
                             decoration: BoxDecoration(
                               color: AppColors.whiteColor,
-                              border: Border.all(color: AppColors.primaryColor),
+                              border: Border.all(color: AppColors.greyColor),
                               borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                             ),
                             child: IconButton(
                               onPressed: () {
                                 Get.toNamed(AppRoutes.homeSearchRoute);
                               },
-                              icon: const Icon(CupertinoIcons.search, color: AppColors.primaryColor),
+                              icon: const Icon(CupertinoIcons.search, color: AppColors.blackColor),
                             ),
                           ),
                           const SizedBox(width: 10,),
                           Container(
                             decoration: BoxDecoration(
                               color: AppColors.whiteColor,
-                              border: Border.all(color: AppColors.primaryColor),
+                              border: Border.all(color: AppColors.greyColor),
                               borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                             ),
                             child: IconButton(
                               onPressed: () {
                                 Get.toNamed(AppRoutes.notificationPage);
                               },
-                              icon: const Icon(CupertinoIcons.bell, color: AppColors.primaryColor),
+                              icon: const Icon(CupertinoIcons.bell, color: AppColors.blackColor),
                             ),
                           ),
                         ],

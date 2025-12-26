@@ -79,7 +79,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Search", style: context.txtTheme.headlineLarge),
+        title: Text("Service", style: context.txtTheme.headlineLarge),
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Get.back(),
