@@ -10,6 +10,9 @@ import '../model/categor_model.dart';
 class HomeController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
 
+  // PageController for horizontal pagination
+  final PageController pageController = PageController();
+
   // Observable lists
   final RxList<CategoryModel> categories = <CategoryModel>[].obs;
   final RxList<dynamic> subcategories = <dynamic>[].obs;
@@ -338,6 +341,9 @@ class HomeController extends GetxController {
     subcategoryErrorMessage.value = '';
     currentPage.value = 0; // Reset to first page on refresh
 
+    // Reset page controller to first page
+    pageController.jumpToPage(0);
+
     await Future.wait([
       fetchCategories(),
       fetchAdvertisements(),
@@ -353,7 +359,15 @@ class HomeController extends GetxController {
   }
 
   @override
+  void onClose() {
+    // Dispose the page controller to prevent memory leaks
+    pageController.dispose();
+    super.onClose();
+  }
+
+  @override
   void dispose() {
+    // Note: onClose is preferred over dispose in GetX for cleanup
     categories.clear();
     subcategories.clear();
     advertisements.clear();

@@ -1,51 +1,95 @@
 /**
 import 'package:flutter/material.dart';
-
 import '../../../core/common/components/custom_network_image.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_sizes.dart';
 
 class ReusableSmallCard extends StatelessWidget {
   final String imagePath;
-final VoidCallback onTap ;
+  final VoidCallback onTap;
   final String title;
+  final double? elevation;
+  final Color? backgroundColor;
 
-  const ReusableSmallCard({super.key, required this.imagePath, required this.title, required this.onTap});
+  const ReusableSmallCard({
+    super.key,
+    required this.imagePath,
+    required this.title,
+    required this.onTap,
+    this.elevation = 0,
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryColor.withValues(alpha: 0.1),
-          border: Border.all(color: AppColors.primaryColor, width: 2),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(AppSizes.lg),
-            topRight: Radius.circular(AppSizes.sm),
-            bottomRight: Radius.circular(AppSizes.lg),
-            bottomLeft: Radius.circular(AppSizes.sm),
-          ),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-              child: CustomCachedImage(imageUrl: imagePath, height: 100),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSizes.sm),
-              child: Divider(thickness: 2, color: AppColors.primaryColor),
-            ),
-            Text(title, textAlign: TextAlign.center),
-          ],
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          padding: const EdgeInsets.all(AppSizes.sm),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+            color: backgroundColor ?? AppColors.whiteColor2,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              // Image Container
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
+                  child: Container(
+                    padding: EdgeInsets.zero,
+                    height: double.infinity,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: AppColors.primaryColor.withValues(alpha: 0.3),
+                        width: 0,
+                      ),
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
+                    ),
+                    child: CustomCachedImage(
+                      imageUrl: imagePath,
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              /// Title----->
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.xs,
+                  vertical: 6,
+                ),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.blackColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-*/
+}*/
 
 
 
@@ -54,13 +98,12 @@ final VoidCallback onTap ;
 
 
 
-///
-///
-///
-/// todo::: fixing the design as new update-->>
-///
-///
-///
+
+
+
+
+
+
 
 
 
@@ -91,7 +134,7 @@ class ReusableSmallCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: elevation,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
         ),
@@ -105,22 +148,29 @@ class ReusableSmallCard extends StatelessWidget {
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               // Image Container
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
                   child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.primaryColor.withValues(alpha: 0.3),
-                        width: 0,
-                      ),
                       borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
                     ),
-                    child: CustomCachedImage(
+                    child: imagePath.isNotEmpty
+                        ? CustomCachedImage(
                       imageUrl: imagePath,
                       fit: BoxFit.cover,
+                    )
+                        : const Center(
+                      child: Icon(
+                        Icons.category,
+                        size: 40,
+                        color: AppColors.greyColor,
+                      ),
                     ),
                   ),
                 ),
@@ -128,22 +178,22 @@ class ReusableSmallCard extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // Title
+              /// Title
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.xs,
-                  vertical: 6,
                 ),
                 child: Text(
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.blackColor,
+                    height: 1.2,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

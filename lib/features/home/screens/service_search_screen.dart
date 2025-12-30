@@ -83,12 +83,12 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: const Icon(CupertinoIcons.back,size: 30,),
+          icon: const Icon(CupertinoIcons.back,size: 25,),
         ),
         actions: [
           IconButton(
             onPressed: () => _showFilterBottomSheet(context),
-            icon: const Icon(Icons.filter_alt_rounded, color: AppColors.primaryColor,size: 30,),
+            icon: const Icon(Icons.filter_alt_rounded, color: AppColors.primaryColor,size: 25,),
           ),
         ],
       ),
@@ -103,7 +103,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const SizedBox(height: AppSizes.sm),
-                    Text('What are you looking for?', style: context.txtTheme.labelMedium),
+                    Text('What are you looking for?', style: context.txtTheme.labelLarge),
                     const SizedBox(height: AppSizes.sm),
                     MyTextFormFieldWithIcon(
                       formHintText: "Search by keyword...",
@@ -133,13 +133,14 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       height: 180,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
-                        children: List.generate(5, (index) {
+                        children: List.generate(5, (int index) {
                           return Container(
                             width: 140,
                             margin: const EdgeInsets.only(right: 12),
                             child: GestureDetector(
                               onTap: () {},
                               child: Card(
+                                color: AppColors.whiteColor,
                                 elevation: 3,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
@@ -152,31 +153,41 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                                       child: Container(
                                         height: 100,
                                         width: double.infinity,
-                                        color: Colors.grey[300],
+                                        color: Colors.white,
                                         child: const Icon(Icons.person, size: 40, color: Colors.grey),
                                       ),
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8),
+                                    const Padding(
+                                      padding: EdgeInsets.all(8),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            "Provider ${index + 1}",
-                                            style: const TextStyle(
+                                            // "Provider ${index + 1}",
+                                            "Platform Service Co.",
+                                            style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(height: 4),
-                                          const Row(
+                                          Text(
+                                            "Residental Plambing",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          SizedBox(height: 4),
+                                          Row(
                                             children: [
-                                              Icon(Icons.star, color: Colors.amber, size: 12),
+                                              Icon(Icons.location_on, color: AppColors.greyColor, size: 12),
                                               SizedBox(width: 4),
                                               Text(
-                                                "4.8",
+                                                "Crock Ireland",
                                                 style: TextStyle(fontSize: 12),
                                               ),
                                             ],
