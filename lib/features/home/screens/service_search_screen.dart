@@ -1,3 +1,5 @@
+/**
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,6 +26,92 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   String _selectedCategory = 'All Categories';
   String _selectedSubCategory = 'All Subcategories';
   String _selectedLocation = 'All Locations';
+
+  final List<Map<String, dynamic>> _dummyServices = [
+    {
+      '_id': '1',
+      'name': 'Premium Cleaning Service',
+      'description': 'Professional home and office cleaning',
+      'location': 'Downtown Manhattan',
+      'image': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952',
+      'rating': 4.8,
+      'price': 85,
+      'author': {'_id': 'author1', 'name': 'John Cleaners'}
+    },
+    {
+      '_id': '2',
+      'name': 'Green Garden Solutions',
+      'description': 'Expert gardening and lawn care',
+      'location': 'Brooklyn Heights',
+      'image': 'https://images.unsplash.com/photo-1560493676-04071c5f467b',
+      'rating': 4.6,
+      'price': 65,
+      'author': {'_id': 'author2', 'name': 'Green Thumb Inc.'}
+    },
+    {
+      '_id': '3',
+      'name': 'Quick Fix Electrical',
+      'description': '24/7 emergency electrical services',
+      'location': 'Queens',
+      'image': 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4',
+      'rating': 4.9,
+      'price': 120,
+      'author': {'_id': 'author3', 'name': 'ElectroFix'}
+    },
+    {
+      '_id': '4',
+      'name': 'PlumbPro Masters',
+      'description': 'Leak repair and pipe installation',
+      'location': 'Staten Island',
+      'image': 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39',
+      'rating': 4.7,
+      'price': 95,
+      'author': {'_id': 'author4', 'name': 'PlumbPro'}
+    },
+    {
+      '_id': '5',
+      'name': 'Perfect Painters',
+      'description': 'Interior and exterior painting',
+      'location': 'Upper East Side',
+      'image': 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f',
+      'rating': 4.5,
+      'price': 150,
+      'author': {'_id': 'author5', 'name': 'ColorCraft'}
+    },
+    {
+      '_id': '6',
+      'name': 'Master Carpenters LLC',
+      'description': 'Custom furniture and woodwork',
+      'location': 'Chelsea',
+      'image': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136',
+      'rating': 4.8,
+      'price': 200,
+      'author': {'_id': 'author6', 'name': 'WoodWorks'}
+    },
+    {
+      '_id': '7',
+      'name': 'Swift Movers',
+      'description': 'Local and long distance moving',
+      'location': 'Harlem',
+      'image': 'https://images.unsplash.com/photo-1542838132-92c53300491e',
+      'rating': 4.4,
+      'price': 180,
+      'author': {'_id': 'author7', 'name': 'SwiftMove'}
+    },
+    {
+      '_id': '8',
+      'name': 'Elite Cleaning Professionals',
+      'description': 'Deep cleaning and sanitization',
+      'location': 'Financial District',
+      'image': 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e',
+      'rating': 4.9,
+      'price': 110,
+      'author': {'_id': 'author8', 'name': 'EliteClean'}
+    },
+  ];
+
+
+
 
   final Map<String, List<String>> _categoryToSubCategories = {
     'All Categories': ['All Subcategories'],
@@ -79,7 +167,10 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Service", style: context.txtTheme.headlineLarge),
+        backgroundColor: AppColors.whiteColor,
+        title: Text("Service", style: context.txtTheme.headlineLarge?.copyWith(
+          fontSize: 25,
+        )),
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Get.back(),
@@ -103,7 +194,9 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const SizedBox(height: AppSizes.sm),
-                    Text('What are you looking for?', style: context.txtTheme.labelLarge),
+                    Text('What are you looking for?', style: context.txtTheme.labelSmall?.copyWith(
+                      fontSize: 24
+                    )),
                     const SizedBox(height: AppSizes.sm),
                     MyTextFormFieldWithIcon(
                       formHintText: "Search by keyword...",
@@ -134,70 +227,92 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: List.generate(5, (int index) {
-                          return Container(
-                            width: 140,
-                            margin: const EdgeInsets.only(right: 12),
-                            child: GestureDetector(
-                              onTap: () {},
-                              child: Card(
-                                color: AppColors.whiteColor,
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SizedBox(
+                              width: 150,
+                              child: Material(
+                                color: Colors.white,
                                 elevation: 3,
-                                shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                                clipBehavior: Clip.antiAlias, // crucial for ripple to be clipped
+                                child: InkWell(
+                                  onTap: () {},
                                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.borderRadiusMd)),
-                                      child: Container(
-                                        height: 100,
-                                        width: double.infinity,
-                                        color: Colors.white,
-                                        child: const Icon(Icons.person, size: 40, color: Colors.grey),
-                                      ),
-                                    ),
-                                    const Padding(
-                                      padding: EdgeInsets.all(8),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            // "Provider ${index + 1}",
-                                            "Platform Service Co.",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            "Residental Plambing",
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          SizedBox(height: 4),
-                                          Row(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Top section now uses Ink so ripple is visible
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.borderRadiusMd)),
+                                        child: Ink(
+                                          height: 100,
+                                          width: double.infinity,
+                                          color: Colors.white,
+                                          child: Stack(
                                             children: [
-                                              Icon(Icons.location_on, color: AppColors.greyColor, size: 12),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                "Crock Ireland",
-                                                style: TextStyle(fontSize: 12),
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              Positioned(
+                                                bottom: 8,
+                                                right: 8,
+                                                child: SvgPicture.asset(
+                                                  'assets/icons/sponsor_icon.svg',
+                                                  width: 25,
+                                                  height: 25,
+                                                ),
                                               ),
                                             ],
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      const Padding(
+                                        padding: EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Platform Service Co.Platform Service Co.",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              "Residential Plumbing",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.location_on, color: Colors.grey, size: 12),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  "Crock Ireland",
+                                                  style: TextStyle(fontSize: 12),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              )
+
                             ),
                           );
                         }),
@@ -212,20 +327,47 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: AppSizes.sm),
-                child: Text(
-                  'Your Search Results',
-                  style: context.txtTheme.headlineSmall,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Your Search Results',
+                      style: context.txtTheme.headlineSmall,
+                    ),
+                    TextButton(
+                      onPressed: (){},
+                      child: Text("See All",style: context.txtTheme.bodySmall?.copyWith(
+                        color: AppColors.primaryColor,
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppColors.primaryColor
+                      ),),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // Search results grid
+
+
+
+
+            /// Search results grid--->
             GetBuilder<HomeSearchController>(
-              builder: (ctrl) {
-                if (ctrl.isLoading) {
+              builder: (HomeSearchController ctrl) {
+                // Determine which data to show
+                final bool showDummyData = !_initialSearchPerformed &&
+                    ctrl.filteredServices.isEmpty &&
+                    _searchTEController.text.isEmpty;
+
+                final List<dynamic> displayServices =  showDummyData
+                    ? _dummyServices
+                    : ctrl.filteredServices;
+
+                if (ctrl.isLoading && !showDummyData) {
                   return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
                 }
-                if (ctrl.error.isNotEmpty) {
+
+                if (ctrl.error.isNotEmpty && !showDummyData) {
                   return SliverFillRemaining(
                     child: Center(
                       child: Column(
@@ -239,7 +381,8 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                     ),
                   );
                 }
-                if (ctrl.filteredServices.isEmpty) {
+
+                if (displayServices.isEmpty) {
                   return SliverFillRemaining(
                     child: Center(
                       child: Column(
@@ -270,10 +413,11 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       crossAxisSpacing: 18,
                       mainAxisSpacing: 16,
                       childAspectRatio: 0.85,
+                      mainAxisExtent: 250
                     ),
-                    itemCount: ctrl.filteredServices.length,
-                    itemBuilder: (context, index) {
-                      final item = ctrl.filteredServices[index];
+                    itemCount: displayServices.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final item = displayServices[index];
                       final serviceId = item['_id']?.toString() ?? '';
                       final serviceName = item['name']?.toString() ?? 'No Name';
                       final serviceDescription = item['description']?.toString() ?? '';
@@ -281,26 +425,38 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                       final serviceImage = item['image']?.toString() ?? '';
                       final serviceRating = (item['rating']?.toDouble() ?? 0.0);
                       final author = item['author'];
-                      final completeImageUrl = serviceImage.isNotEmpty
+                      final completeImageUrl = serviceImage.isNotEmpty && serviceImage.startsWith('http')
+                          ? serviceImage
+                          : serviceImage.isNotEmpty
                           ? '${AppUrl.imageBaseUrl}/$serviceImage'
                           : '';
 
                       return GestureDetector(
                         onTap: () {
-                          Get.toNamed(
-                            AppRoutes.homeServiceDetailsRoute,
-                            arguments: {
-                              '_id': serviceId,
-                              'serviceId': serviceId,
-                              'serviceName': serviceName,
-                              'serviceDescription': serviceDescription,
-                              'serviceLocation': serviceLocation,
-                              'serviceImage': completeImageUrl,
-                              'serviceRating': serviceRating,
-                              'author': author,
-                              'authorId': author is String ? author : (author is Map ? author['_id'] : null),
-                            },
-                          );
+                          if (!showDummyData) {
+                            Get.toNamed(
+                              AppRoutes.homeServiceDetailsRoute,
+                              arguments: {
+                                '_id': serviceId,
+                                'serviceId': serviceId,
+                                'serviceName': serviceName,
+                                'serviceDescription': serviceDescription,
+                                'serviceLocation': serviceLocation,
+                                'serviceImage': completeImageUrl,
+                                'serviceRating': serviceRating,
+                                'author': author,
+                                'authorId': author is String ? author : (author is Map ? author['_id'] : null),
+                              },
+                            );
+                          } else {
+                            // Optional: Show a message when tapping dummy data
+                            Get.snackbar(
+                              'Demo Mode',
+                              'This is sample data. Perform a real search to see actual services.',
+                              backgroundColor: Colors.blue,
+                              colorText: Colors.white,
+                            );
+                          }
                         },
                         child: Card(
                           elevation: 3,
@@ -308,6 +464,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                             borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                           ),
                           child: Column(
+
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               ClipRRect(
@@ -317,13 +474,13 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                                   imageUrl: completeImageUrl,
                                   height: 120,
                                   width: double.infinity,
-                                  fit: BoxFit.contain,
-                                  placeholder: (context, url) => Container(
+                                  fit: BoxFit.cover,
+                                  placeholder: (BuildContext context, String url) => Container(
                                     height: 120,
                                     color: Colors.grey[200],
                                     child: const Center(child: CircularProgressIndicator()),
                                   ),
-                                  errorWidget: (context, url, error) => Container(
+                                  errorWidget: (BuildContext context, String url, Object error) => Container(
                                     height: 120,
                                     color: Colors.grey[200],
                                     child: const Icon(Icons.error, size: 40, color: Colors.grey),
@@ -373,7 +530,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                                         children: [
                                           Row(
                                             children: [
-                                              Icon(Icons.location_on, color: Colors.grey, size: 12),
+                                              const Icon(Icons.location_on, color: Colors.grey, size: 12),
                                               const SizedBox(width: 4),
                                               Expanded(
                                                 child: Text(
@@ -391,7 +548,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                                           const SizedBox(height: 6),
                                           Row(
                                             children: [
-                                              Icon(Icons.star, color: Colors.amber, size: 12),
+                                              const Icon(Icons.star, color: Colors.amber, size: 12),
                                               const SizedBox(width: 4),
                                               Text(
                                                 serviceRating.toStringAsFixed(1),
@@ -405,7 +562,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                                               if (item['price'] != null)
                                                 Text(
                                                   '\$${item['price']}',
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.bold,
                                                     color: AppColors.primaryColor,
@@ -428,6 +585,8 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
                 );
               },
             ),
+
+
           ],
         ),
       ),
@@ -487,12 +646,14 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.borderRadiusMd)),
       ),
-      builder: (context) {
+      builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (BuildContext context, setState) {
             List<String> getSubCategories(String category) {
-              if (category == 'All Categories') return ['All Subcategories'];
-              return ['All Subcategories', ...?categoryToSubCategories[category]];
+              if (category == 'All Categories') {
+                return <String>['All Subcategories'];
+              }
+              return <String>['All Subcategories', ...?categoryToSubCategories[category]];
             }
 
             return Padding(
@@ -598,3 +759,1049 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
     Get.rawSnackbar(message: 'Filters cleared', backgroundColor: Colors.green);
   }
 }
+*/
+
+
+
+
+
+
+
+
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+
+
+
+
+
+
+
+import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../controllers/search_controller.dart';
+import '../../auth/widgets/custom_text_field.dart';
+import 'package:manx_mate/core/config/app_sizes.dart';
+import 'package:manx_mate/core/config/app_colors.dart';
+import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:manx_mate/core/extensions/context_extensions.dart';
+
+class HomeSearchScreen extends StatefulWidget {
+  const HomeSearchScreen({super.key});
+
+  @override
+  State<HomeSearchScreen> createState() => _HomeSearchScreenState();
+}
+
+class _HomeSearchScreenState extends State<HomeSearchScreen> {
+  final HomeSearchController controller = Get.find<HomeSearchController>();
+  final TextEditingController _searchTEController = TextEditingController();
+
+  String _selectedCategory = 'All Categories';
+  String _selectedSubCategory = 'All Subcategories';
+  String _selectedLocation = 'All Locations';
+
+  final List<Map<String, dynamic>> _dummyServices = [
+    {
+      '_id': '1',
+      'name': 'Premium Cleaning Service',
+      'description': 'Professional home and office cleaning',
+      'location': 'Downtown Manhattan',
+      'image': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
+      'rating': 4.8,
+      'price': 85,
+      'author': {'_id': 'author1', 'name': 'John Cleaners'}
+    },
+    {
+      '_id': '2',
+      'name': 'Green Garden Solutions',
+      'description': 'Expert gardening and lawn care',
+      'location': 'Brooklyn Heights',
+      'image': 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop',
+      'rating': 4.6,
+      'price': 65,
+      'author': {'_id': 'author2', 'name': 'Green Thumb Inc.'}
+    },
+    {
+      '_id': '3',
+      'name': 'Quick Fix Electrical',
+      'description': '24/7 emergency electrical services',
+      'location': 'Queens',
+      'image': 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&h=300&fit=crop',
+      'rating': 4.9,
+      'price': 120,
+      'author': {'_id': 'author3', 'name': 'ElectroFix'}
+    },
+    {
+      '_id': '4',
+      'name': 'PlumbPro Masters',
+      'description': 'Leak repair and pipe installation',
+      'location': 'Staten Island',
+      'image': 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=400&h=300&fit=crop',
+      'rating': 4.7,
+      'price': 95,
+      'author': {'_id': 'author4', 'name': 'PlumbPro'}
+    },
+    {
+      '_id': '5',
+      'name': 'Perfect Painters',
+      'description': 'Interior and exterior painting',
+      'location': 'Upper East Side',
+      'image': 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&h=300&fit=crop',
+      'rating': 4.5,
+      'price': 150,
+      'author': {'_id': 'author5', 'name': 'ColorCraft'}
+    },
+    {
+      '_id': '6',
+      'name': 'Master Carpenters LLC',
+      'description': 'Custom furniture and woodwork',
+      'location': 'Chelsea',
+      'image': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
+      'rating': 4.8,
+      'price': 200,
+      'author': {'_id': 'author6', 'name': 'WoodWorks'}
+    },
+    {
+      '_id': '7',
+      'name': 'Swift Movers',
+      'description': 'Local and long distance moving',
+      'location': 'Harlem',
+      'image': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+      'rating': 4.4,
+      'price': 180,
+      'author': {'_id': 'author7', 'name': 'SwiftMove'}
+    },
+    {
+      '_id': '8',
+      'name': 'Elite Cleaning Professionals',
+      'description': 'Deep cleaning and sanitization',
+      'location': 'Financial District',
+      'image': 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?w=400&h=300&fit=crop',
+      'rating': 4.9,
+      'price': 110,
+      'author': {'_id': 'author8', 'name': 'EliteClean'}
+    },
+  ];
+
+  final Map<String, List<String>> _categoryToSubCategories = {
+    'All Categories': ['All Subcategories'],
+    'Cleaning': ['Home Cleaning', 'Office Cleaning', 'Deep Cleaning'],
+    'Gardening': ['Garden Maintenance', 'Lawn Mowing', 'Landscaping'],
+    'Electrical': ['Electrical Services', 'Wiring', 'Lighting'],
+    'Plumbing': ['Plumbing Services', 'Pipe Repair', 'Installation'],
+    'Painting': ['Painting Services', 'Interior', 'Exterior'],
+    'Carpentry': ['Carpentry Services', 'Furniture', 'Repairs'],
+    'Moving': ['Moving Services', 'Packing', 'Local Move'],
+  };
+
+  final List<String> _locationOptions = [
+    'All Locations',
+    'North',
+    'South',
+    'East',
+    'West'
+  ];
+
+  bool _initialSearchPerformed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _handleInitialArguments();
+  }
+
+  void _handleInitialArguments() {
+    final args = Get.arguments;
+    final initialCategory = args?['initialCategory'] as String?;
+    final initialSubCategory = args?['initialSubCategory'] as String?;
+
+    if (initialCategory != null) {
+      setState(() {
+        _selectedCategory = initialCategory;
+        _selectedSubCategory = initialSubCategory ?? 'All Subcategories';
+      });
+      _searchTEController.text = initialSubCategory ?? '';
+      Future.delayed(const Duration(milliseconds: 300), _performSearch);
+      _initialSearchPerformed = true;
+    }
+  }
+
+  List<String> get _subCategoryOptions {
+    if (_selectedCategory == 'All Categories') {
+      return ['All Subcategories'];
+    }
+    return ['All Subcategories', ...?_categoryToSubCategories[_selectedCategory]];
+  }
+
+  // Method to get all services (dummy or real)
+  List<dynamic> get _allServices {
+    final bool showDummyData = !_initialSearchPerformed &&
+        controller.filteredServices.isEmpty &&
+        _searchTEController.text.isEmpty;
+
+    return showDummyData ? _dummyServices : controller.filteredServices;
+  }
+
+  // Method to navigate to all services screen
+  void _navigateToAllServices() {
+    final allServices = _allServices;
+
+    if (allServices.isEmpty) {
+      Get.snackbar(
+        'No Services',
+        'There are no services to show.',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Navigate to the AllServicesScreen
+    Get.to(
+          () => AllServicesScreen(services: List<Map<String, dynamic>>.from(allServices)),
+      transition: Transition.rightToLeft,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.whiteColor,
+        title: Text("Service", style: context.txtTheme.headlineLarge?.copyWith(
+          fontSize: 25,
+        )),
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(CupertinoIcons.back,size: 25,),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () => _showFilterBottomSheet(context),
+            icon: const Icon(Icons.filter_alt_rounded, color: AppColors.primaryColor,size: 25,),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: <Widget>[
+            // Search input & filters
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const SizedBox(height: AppSizes.sm),
+                    Text('What are you looking for?', style: context.txtTheme.labelSmall?.copyWith(
+                        fontSize: 24
+                    )),
+                    const SizedBox(height: AppSizes.sm),
+                    MyTextFormFieldWithIcon(
+                      formHintText: "Search by keyword...",
+                      prefixIcon: const Icon(CupertinoIcons.search, color: AppColors.primaryColor),
+                      controller: _searchTEController,
+                      validator: (String? value) => null,
+                    ),
+                    const SizedBox(height: AppSizes.sm),
+                  ],
+                ),
+              ),
+            ),
+
+            // Featured Providers Horizontal Scroll
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: AppSizes.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Featured Providers",
+                      style: context.txtTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: AppSizes.sm),
+                    SizedBox(
+                      height: 200,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: List.generate(5, (int index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SizedBox(
+                                width: 150,
+                                child: Material(
+                                  color: Colors.white,
+                                  elevation: 3,
+                                  borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () {},
+                                    borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.borderRadiusMd)),
+                                          child: Ink(
+                                            height: 100,
+                                            width: double.infinity,
+                                            color: Colors.white,
+                                            child: Stack(
+                                              children: [
+                                                const Center(
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    size: 40,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  bottom: 8,
+                                                  right: 8,
+                                                  child: SvgPicture.asset(
+                                                    'assets/icons/sponsor_icon.svg',
+                                                    width: 25,
+                                                    height: 25,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const Padding(
+                                          padding: EdgeInsets.all(8),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Platform Service Co.",
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                "Residential Plumbing",
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.location_on, color: Colors.grey, size: 12),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    "Crock Ireland",
+                                                    style: TextStyle(fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // "Your Search Results" header
+            SliverToBoxAdapter(
+              child: GetBuilder<HomeSearchController>(
+                builder: (HomeSearchController ctrl) {
+                  final bool showDummyData = !_initialSearchPerformed &&
+                      ctrl.filteredServices.isEmpty &&
+                      _searchTEController.text.isEmpty;
+
+                  final List<dynamic> displayServices = showDummyData
+                      ? _dummyServices
+                      : ctrl.filteredServices;
+
+                  // Only show "See All" if there are more than 4 items
+                  final shouldShowSeeAll = displayServices.length > 4;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: AppSizes.sm),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Your Search Results',
+                          style: context.txtTheme.headlineSmall,
+                        ),
+                        if (shouldShowSeeAll)
+                          TextButton(
+                            onPressed: _navigateToAllServices,
+                            child: Text(
+                              "See All (${displayServices.length})",
+                              style: context.txtTheme.bodySmall?.copyWith(
+                                color: AppColors.primaryColor,
+                                decoration: TextDecoration.underline,
+                                decorationColor: AppColors.primaryColor,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            /// Search results grid (Limited to 4 items) --->
+            GetBuilder<HomeSearchController>(
+              builder: (HomeSearchController ctrl) {
+                // Determine which data to show
+                final bool showDummyData = !_initialSearchPerformed &&
+                    ctrl.filteredServices.isEmpty &&
+                    _searchTEController.text.isEmpty;
+
+                final List<dynamic> displayServices = showDummyData
+                    ? _dummyServices
+                    : ctrl.filteredServices;
+
+                if (ctrl.isLoading && !showDummyData) {
+                  return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
+                }
+
+                if (ctrl.error.isNotEmpty && !showDummyData) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(ctrl.error, style: const TextStyle(color: Colors.red)),
+                          const SizedBox(height: 16),
+                          ElevatedButton(onPressed: _performSearch, child: const Text('Retry Search')),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                if (displayServices.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchTEController.text.isNotEmpty
+                                ? 'No services found for "${_searchTEController.text}"'
+                                : 'Search for services using the filters above',
+                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Try different keywords or filters', style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                // Show only 4 items on the first screen
+                final visibleServices = displayServices.take(4).toList();
+
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                  sliver: SliverGrid.builder(
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200,
+                      crossAxisSpacing: 18,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                      mainAxisExtent: 280,
+                    ),
+                    itemCount: visibleServices.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final item = visibleServices[index];
+                      final serviceId = item['_id']?.toString() ?? '';
+                      final serviceName = item['name']?.toString() ?? 'No Name';
+                      final serviceDescription = item['description']?.toString() ?? '';
+                      final serviceLocation = item['location']?.toString() ?? '';
+                      final serviceImage = item['image']?.toString() ?? '';
+                      final serviceRating = (item['rating']?.toDouble() ?? 0.0);
+                      final author = item['author'];
+                      final completeImageUrl = serviceImage.isNotEmpty && serviceImage.startsWith('http')
+                          ? serviceImage
+                          : serviceImage.isNotEmpty
+                          ? '${AppUrl.imageBaseUrl}/$serviceImage'
+                          : '';
+
+                      return GestureDetector(
+                        onTap: () {
+                          if (!showDummyData) {
+                            Get.toNamed(
+                              AppRoutes.homeServiceDetailsRoute,
+                              arguments: {
+                                '_id': serviceId,
+                                'serviceId': serviceId,
+                                'serviceName': serviceName,
+                                'serviceDescription': serviceDescription,
+                                'serviceLocation': serviceLocation,
+                                'serviceImage': completeImageUrl,
+                                'serviceRating': serviceRating,
+                                'author': author,
+                                'authorId': author is String ? author : (author is Map ? author['_id'] : null),
+                              },
+                            );
+                          } else {
+                            Get.snackbar(
+                              'Demo Mode',
+                              'This is sample data. Perform a real search to see actual services.',
+                              backgroundColor: Colors.blue,
+                              colorText: Colors.white,
+                            );
+                          }
+                        },
+                        child: Card(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.borderRadiusMd)),
+                                child: completeImageUrl.isNotEmpty
+                                    ? CachedNetworkImage(
+                                  imageUrl: completeImageUrl,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  placeholder: (BuildContext context, String url) => Container(
+                                    height: 120,
+                                    color: Colors.grey[200],
+                                    child: const Center(child: CircularProgressIndicator()),
+                                  ),
+                                  errorWidget: (BuildContext context, String url, Object error) => Container(
+                                    height: 120,
+                                    color: Colors.grey[200],
+                                    child: const Icon(Icons.error, size: 40, color: Colors.grey),
+                                  ),
+                                )
+                                    : Container(
+                                  height: 120,
+                                  width: double.infinity,
+                                  color: Colors.grey[300],
+                                  child: const Icon(Icons.image, size: 40, color: Colors.grey),
+                                ),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            serviceName,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            serviceDescription,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.location_on, color: Colors.grey, size: 12),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  serviceLocation,
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 18),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.star, color: Colors.amber, size: 14),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                serviceRating.toStringAsFixed(1),
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              if (item['price'] != null)
+                                                Text(
+                                                  '\$${item['price']}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.primaryColor,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+
+            // Add some bottom padding
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterDropdown({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
+          items: items.map((item) {
+            return DropdownMenuItem<String>(value: item, child: Text(item));
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  void _performSearch() {
+    final keyword = _searchTEController.text.trim();
+    final category = _selectedCategory == 'All Categories' ? '' : _selectedCategory;
+    final subcategory = _selectedSubCategory == 'All Subcategories' ? '' : _selectedSubCategory;
+    final location = _selectedLocation == 'All Locations' ? '' : _selectedLocation;
+
+    setState(() {
+      _initialSearchPerformed = true;
+    });
+
+    controller.searchServices(
+      keyword: keyword,
+      category: category,
+      subcategory: subcategory,
+      location: location,
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    String selectedCategory = _selectedCategory;
+    String selectedSubCategory = _selectedSubCategory;
+    String selectedLocation = _selectedLocation;
+
+    final Map<String, List<String>> categoryToSubCategories = _categoryToSubCategories;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.borderRadiusMd)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, setState) {
+            List<String> getSubCategories(String category) {
+              if (category == 'All Categories') {
+                return <String>['All Subcategories'];
+              }
+              return <String>['All Subcategories', ...?categoryToSubCategories[category]];
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSizes.md,
+                AppSizes.sm,
+                AppSizes.md,
+                MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Filters', style: context.txtTheme.headlineSmall),
+                  const SizedBox(height: AppSizes.md),
+                  Text('Category', style: context.txtTheme.labelMedium),
+                  const SizedBox(height: AppSizes.sm),
+                  _buildFilterDropdown(
+                    value: selectedCategory,
+                    items: ['All Categories', ...categoryToSubCategories.keys.where((k) => k != 'All Categories')],
+                    onChanged: (val) {
+                      if (val != null) {
+                        selectedCategory = val;
+                        selectedSubCategory = 'All Subcategories';
+                        setState(() {});
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSizes.md),
+                  Text('Subcategory', style: context.txtTheme.labelMedium),
+                  const SizedBox(height: AppSizes.sm),
+                  _buildFilterDropdown(
+                    value: selectedSubCategory,
+                    items: getSubCategories(selectedCategory),
+                    onChanged: (val) {
+                      if (val != null) {
+                        selectedSubCategory = val;
+                        setState(() {});
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSizes.md),
+                  Text('Location', style: context.txtTheme.labelMedium),
+                  const SizedBox(height: AppSizes.sm),
+                  _buildFilterDropdown(
+                    value: selectedLocation,
+                    items: _locationOptions,
+                    onChanged: (String? val) {
+                      if (val != null) {
+                        selectedLocation = val;
+                        setState(() {});
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSizes.xl),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            _clearFilters();
+                            Get.back();
+                          },
+                          child: const Text('Clear'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSizes.sm),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedCategory = selectedCategory;
+                              _selectedSubCategory = selectedSubCategory;
+                              _selectedLocation = selectedLocation;
+                            });
+                            _performSearch();
+                            Get.back();
+                          },
+                          child: const Text('Apply'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.md),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _clearFilters() {
+    _searchTEController.clear();
+    setState(() {
+      _selectedCategory = 'All Categories';
+      _selectedSubCategory = 'All Subcategories';
+      _selectedLocation = 'All Locations';
+      _initialSearchPerformed = false;
+    });
+    controller.clearFilters();
+    Get.rawSnackbar(message: 'Filters cleared', backgroundColor: Colors.green);
+  }
+}
+
+// AllServicesScreen Widget
+class AllServicesScreen extends StatelessWidget {
+  final List<Map<String, dynamic>> services;
+
+  const AllServicesScreen({super.key, required this.services});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.whiteColor,
+        title: Text(
+          "All Services (${services.length})",
+          style: context.txtTheme.headlineLarge?.copyWith(
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(
+            Icons.arrow_back,
+            size: 25,
+            color: Colors.black,
+          ),
+        ),
+        elevation: 0,
+      ),
+      body: services.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              'No services available',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      )
+          : Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: services.length,
+          itemBuilder: (BuildContext context, int index) {
+            final item = services[index];
+            final serviceId = item['_id']?.toString() ?? '';
+            final serviceName = item['name']?.toString() ?? 'No Name';
+            final serviceDescription = item['description']?.toString() ?? '';
+            final serviceLocation = item['location']?.toString() ?? '';
+            final serviceImage = item['image']?.toString() ?? '';
+            final serviceRating = (item['rating']?.toDouble() ?? 0.0);
+            final author = item['author'];
+            final completeImageUrl = serviceImage.isNotEmpty && serviceImage.startsWith('http')
+                ? serviceImage
+                : serviceImage.isNotEmpty
+                ? '${AppUrl.imageBaseUrl}/$serviceImage'
+                : '';
+
+            return GestureDetector(
+              onTap: () {
+                Get.toNamed(
+                  AppRoutes.homeServiceDetailsRoute,
+                  arguments: {
+                    '_id': serviceId,
+                    'serviceId': serviceId,
+                    'serviceName': serviceName,
+                    'serviceDescription': serviceDescription,
+                    'serviceLocation': serviceLocation,
+                    'serviceImage': completeImageUrl,
+                    'serviceRating': serviceRating,
+                    'author': author,
+                    'authorId': author is String ? author : (author is Map ? author['_id'] : null),
+                  },
+                );
+              },
+              child: Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(AppSizes.borderRadiusMd),
+                      ),
+                      child: completeImageUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                        imageUrl: completeImageUrl,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (BuildContext context, String url) => Container(
+                          height: 120,
+                          color: Colors.grey[200],
+                          child: const Center(child: CircularProgressIndicator()),
+                        ),
+                        errorWidget: (BuildContext context, String url, Object error) => Container(
+                          height: 120,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.error, size: 40, color: Colors.grey),
+                        ),
+                      )
+                          : Container(
+                        height: 120,
+                        width: double.infinity,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image, size: 40, color: Colors.grey),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  serviceName,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  serviceDescription,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on, color: Colors.grey, size: 12),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        serviceLocation,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star, color: Colors.amber, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      serviceRating.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (item['price'] != null)
+                                      Text(
+                                        '\$${item['price']}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryColor,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+
