@@ -36,11 +36,13 @@ class AllServicesScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.md),
           child: GridView.builder(
+            shrinkWrap: true,
+            physics: const BouncingScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
+              childAspectRatio: 0.70, // Increased to give more vertical space
             ),
             itemCount: services.length,
             itemBuilder: (BuildContext context, int index) {
@@ -71,7 +73,9 @@ class AllServicesScreen extends StatelessWidget {
                       'serviceImage': completeImageUrl,
                       'serviceRating': serviceRating,
                       'author': author,
-                      'authorId': author is String ? author : (author is Map ? author['_id'] : null),
+                      'authorId': author is String
+                          ? author
+                          : (author is Map ? author['_id'] : null),
                     },
                   );
                 },
@@ -83,6 +87,7 @@ class AllServicesScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Service Image - Fixed height
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(AppSizes.borderRadiusMd),
@@ -90,105 +95,111 @@ class AllServicesScreen extends StatelessWidget {
                         child: completeImageUrl.isNotEmpty
                             ? CachedNetworkImage(
                           imageUrl: completeImageUrl,
-                          height: 120,
+                          height: 120, // Reduced from 140
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          placeholder: (BuildContext context, String url) => Container(
+                          placeholder: (context, url) => Container(
                             height: 120,
                             color: Colors.grey[200],
-                            child: const Center(child: CircularProgressIndicator()),
+                            child: const Center(
+                                child: CircularProgressIndicator()),
                           ),
-                          errorWidget: (BuildContext context, String url, Object error) =>
-                              Container(
-                                height: 120,
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.error, size: 40, color: Colors.grey),
-                              ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 120,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.error,
+                                size: 40, color: Colors.grey),
+                          ),
                         )
                             : Container(
                           height: 120,
                           width: double.infinity,
                           color: Colors.grey[300],
-                          child: const Icon(Icons.image, size: 40, color: Colors.grey),
+                          child: const Icon(Icons.image,
+                              size: 40, color: Colors.grey),
                         ),
                       ),
+
+                      // Service Details - Flexible to fill remaining space
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.all(8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              // Name
+                              Text(
+                                serviceName,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+
+                              // Description
+                              Text(
+                                serviceDescription,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              // Location
+                              Row(
                                 children: [
+                                  const Icon(Icons.location_on,
+                                      color: Colors.grey, size: 12),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      serviceLocation,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const Spacer(), // Pushes rating/price to bottom
+
+                              // Rating & Price
+                              Row(
+                                children: [
+                                  const Icon(Icons.star,
+                                      color: Colors.amber, size: 14),
+                                  const SizedBox(width: 3),
                                   Text(
-                                    serviceName,
+                                    serviceRating.toStringAsFixed(1),
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.grey[800],
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    serviceDescription,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
+                                  const Spacer(),
+                                  if (item['price'] != null)
+                                    Text(
+                                      '\$${item['price']}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryColor,
+                                      ),
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, color: Colors.grey, size: 12),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          serviceLocation,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey[600],
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.star, color: Colors.amber, size: 12),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        serviceRating.toStringAsFixed(1),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.normal,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      if (item['price'] != null)
-                                        Text(
-                                          '\$${item['price']}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primaryColor,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
                                 ],
                               ),
                             ],
@@ -206,3 +217,5 @@ class AllServicesScreen extends StatelessWidget {
     );
   }
 }
+
+
