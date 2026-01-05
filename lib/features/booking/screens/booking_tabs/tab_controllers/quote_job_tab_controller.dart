@@ -7,13 +7,14 @@ import '../../../../../core/utils/token_service/token_storage_service.dart';
 import '../../../../../model/booking_service_model.dart';
 
 class QuoteController extends GetxController {
-  var isLoading = false.obs;
-  var quotes = <BookingServiceModel>[].obs;
   final NetworkCaller _networkCaller = NetworkCaller();
 
-  var currentPage = 1.obs;
-  var totalPages = 1.obs;
-  var hasMore = true.obs;
+  final isLoading = false.obs;
+  final quotes = <BookingServiceModel>[].obs;
+
+  final currentPage = 1.obs;
+  final totalPages = 1.obs;
+  final hasMore = true.obs;
 
   @override
   void onInit() {
@@ -21,7 +22,10 @@ class QuoteController extends GetxController {
     fetchQuotes();
   }
 
+  /// Fetch quotes (used for initial load, refresh & pagination)
   Future<void> fetchQuotes({bool isRefresh = false}) async {
+    if (isLoading.value) return;
+
     try {
       if (isRefresh) {
         currentPage.value = 1;
@@ -29,13 +33,15 @@ class QuoteController extends GetxController {
         quotes.clear();
       }
 
-      if (!hasMore.value && !isRefresh) return;
+      if (!hasMore.value) return;
 
       isLoading.value = true;
 
       // Get access token
-      final SharedPrefService sharedPrefService = Get.find<SharedPrefService>();
-      final String? accessToken = await sharedPrefService.getAccessToken();
+      final SharedPrefService sharedPrefService =
+      Get.find<SharedPrefService>();
+      final String? accessToken =
+      await sharedPrefService.getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
         Get.snackbar(
@@ -43,106 +49,76 @@ class QuoteController extends GetxController {
           'Please login to view quotes',
           backgroundColor: Colors.red,
           colorText: Colors.white,
-          duration: const Duration(seconds: 2),
         );
-        isLoading.value = false;
         return;
       }
 
-      // Prepare headers
-      Map<String, String> headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      };
-
-      debugPrint('🔑 Fetching quotes with token: ${accessToken.substring(0, 20)}...');
-
-      final NetworkResponse response = await _networkCaller.getRequest(
+      final NetworkResponse response =
+      await _networkCaller.getRequest(
         '${AppUrl.getMyQuote}?page=${currentPage.value}&limit=10',
-        headers: headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
       );
 
-      if (response.isSuccess && response.jsonResponse != null) {
-        final Map<String, dynamic> jsonData = response.jsonResponse!;
-
-        if (jsonData['success'] == true && jsonData.containsKey('data')) {
-          final Map<String, dynamic> data = jsonData['data'];
-
-          if (data.containsKey('data') && data['data'] is List) {
-            final List<dynamic> quotesData = data['data'];
-
-            if (quotesData.isNotEmpty) {
-              final List<BookingServiceModel> parsedQuotes = [];
-
-              for (var item in quotesData) {
-                try {
-                  if (item is Map<String, dynamic>) {
-                    debugPrint('✅ Parsing quote: ${item['_id']}');
-                    debugPrint('📝 SubCategory: ${item['subCategory']}');
-                    debugPrint('📍 Location: ${item['location']}');
-
-                    parsedQuotes.add(BookingServiceModel.fromJson(item));
-                  }
-                } catch (e) {
-                  debugPrint('❌ Error parsing quote item: $e');
-                  debugPrint('❌ Item data: $item');
-                }
-              }
-
-              if (isRefresh) {
-                quotes.value = parsedQuotes;
-              } else {
-                quotes.addAll(parsedQuotes);
-              }
-
-              debugPrint('🎉 Successfully loaded ${parsedQuotes.length} quotes');
-
-              // Handle pagination
-              if (data.containsKey('pagination') && data['pagination'] is Map<String, dynamic>) {
-                final Map<String, dynamic> pagination = data['pagination'];
-                currentPage.value = (pagination['page'] as int?) ?? 1;
-                totalPages.value = (pagination['totalPages'] as int?) ?? 1;
-                hasMore.value = currentPage.value < totalPages.value;
-              }
-            } else {
-              debugPrint('📭 No quotes found in data array');
-              if (isRefresh) {
-                quotes.value = [];
-              }
-            }
-          }
-        }
-      } else {
+      if (!response.isSuccess || response.jsonResponse == null) {
         Get.snackbar(
           'Error',
           response.errorMessage ?? 'Failed to fetch quotes',
           backgroundColor: Colors.red,
           colorText: Colors.white,
-          duration: const Duration(seconds: 3),
         );
+        return;
       }
+
+      final json = response.jsonResponse!;
+      final data = json['data'];
+
+      if (data == null || data['data'] is! List) return;
+
+      final List<dynamic> list = data['data'];
+
+      final parsedQuotes = list
+          .whereType<Map<String, dynamic>>()
+          .map(BookingServiceModel.fromJson)
+          .toList();
+
+      quotes.addAll(parsedQuotes);
+
+      /// Pagination handling (BACKEND → frontend sync)
+      if (data['pagination'] != null) {
+        totalPages.value = data['pagination']['totalPages'] ?? 1;
+        hasMore.value = currentPage.value < totalPages.value;
+      }
+
+      /// 🛡️ Safety: Remove accidental duplicates by ID
+      quotes.assignAll({
+        for (var q in quotes) q.id: q,
+      }.values.toList());
+
     } catch (e) {
-      debugPrint('🔥 Exception in fetchQuotes: $e');
+      debugPrint('🔥 QuoteController Error: $e');
       Get.snackbar(
         'Error',
         'Something went wrong. Please try again.',
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        duration: const Duration(seconds: 3),
       );
     } finally {
       isLoading.value = false;
     }
   }
 
+  /// Pull-to-refresh
   Future<void> refreshQuotes() async {
     await fetchQuotes(isRefresh: true);
   }
 
+  /// Load next page
   Future<void> loadMoreQuotes() async {
-    if (hasMore.value && !isLoading.value) {
-      currentPage.value++;
-      await fetchQuotes();
-    }
+    if (!hasMore.value || isLoading.value) return;
+    currentPage.value++;
+    await fetchQuotes();
   }
 }
