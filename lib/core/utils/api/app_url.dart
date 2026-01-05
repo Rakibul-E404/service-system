@@ -5,6 +5,8 @@ class AppUrl {
   AppUrl._();
 
   static const String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  static const String baseUrlV1 = 'https://d7001.sobhoy.com';
+  static const String version1 = 'api/v1';
   static const String imageBaseUrl = 'https://d7001.sobhoy.com';
   static const String socketBaseUrl = 'https://d7002.sobhoy.com';
 
@@ -22,6 +24,7 @@ class AppUrl {
   static const String updateSelfProfileUrl = '$baseUrl/user/update-profile';
   static const String getUserProfileUrl = '$baseUrl/user/profile';
   static const String searchQuoteUrl = '$baseUrl/service/search';
+  static const String getMyQuote = '$baseUrlV1/$version1/service-inquiry/self';
   static const String bookingUrl = '$baseUrl/booking';
   static const String notificationUrl = '$baseUrl/notification';
 

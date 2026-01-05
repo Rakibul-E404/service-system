@@ -133,7 +133,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.bookingPage,
-      page: () => BookingScreen(),
+      page: () => const BookingScreen(),
       transition: Transition.rightToLeftWithFade,
       binding: BookingBinding(),
     ),

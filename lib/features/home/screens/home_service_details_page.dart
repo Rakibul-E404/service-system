@@ -10,7 +10,6 @@ import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/extensions/widget_extensions.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/features/home/controllers/home_service_details_controller.dart';
-
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
 import '../widget/inquiry_bottom_sheet.dart';

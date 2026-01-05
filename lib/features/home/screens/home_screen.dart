@@ -96,26 +96,6 @@ class HomeScreen extends StatelessWidget {
                             style: context.txtTheme.headlineLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             )),
-                        // Obx(() {
-                        //   final int totalItems = controller.categories.length;
-                        //   final int itemsPerPage = 3;
-                        //   final int totalPages =
-                        //   (totalItems / itemsPerPage).ceil();
-                        //   if (totalPages <= 1) return const SizedBox.shrink();
-                        //
-                        //   return Row(
-                        //     children: [
-                        //       Text(
-                        //         '${controller.currentPage.value + 1}/$totalPages',
-                        //         style: const TextStyle(
-                        //           fontSize: 14,
-                        //           fontWeight: FontWeight.w500,
-                        //           color: AppColors.greyColor,
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   );
-                        // }),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -168,7 +148,7 @@ class HomeScreen extends StatelessWidget {
 
                       // Calculate page count for pagination
                       final int totalItems = controller.categories.length;
-                      final int itemsPerPage = 3;
+                      const int itemsPerPage = 3;
                       final int totalPages = (totalItems / itemsPerPage).ceil();
 
                       return Column(
@@ -182,7 +162,7 @@ class HomeScreen extends StatelessWidget {
                               onPageChanged: (int page) {
                                 controller.currentPage.value = page;
                               },
-                              itemBuilder: (context, pageIndex) {
+                              itemBuilder: (BuildContext context, int pageIndex) {
                                 final int startIndex = pageIndex * itemsPerPage;
                                 final int endIndex =
                                 min(startIndex + itemsPerPage, totalItems);
@@ -230,7 +210,9 @@ class HomeScreen extends StatelessWidget {
 
                           /// Pagination Indicators :::::
                           Obx(() {
-                            if (totalPages <= 1) return const SizedBox.shrink();
+                            if (totalPages <= 1) {
+                              return const SizedBox.shrink();
+                            }
 
                             return Container(
                               margin: const EdgeInsets.only(top: 2),
