@@ -25,6 +25,12 @@ class AppUrl {
   static const String getUserProfileUrl = '$baseUrl/user/profile';
   static const String searchQuoteUrl = '$baseUrl/service/search';
   static const String getMyQuote = '$baseUrlV1/$version1/service-inquiry/self';
+  static String activeJob(int page) {
+    return '$baseUrlV1/$version1/booking/user/?status=pending&page=$page&limit=10';
+  }
+  static String ongoingJob(int page) {
+    return '$baseUrlV1/$version1/booking/user/?status=accepted&page=$page&limit=10';
+  }
   static const String bookingUrl = '$baseUrl/booking';
   static const String bookingUrlV1 = '$baseUrlV1/$version1/booking/user';
   static const String notificationUrl = '$baseUrl/notification';

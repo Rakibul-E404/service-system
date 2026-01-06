@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/network/network_caller.dart';
 import 'package:manx_mate/core/network/network_response.dart';
+import 'package:manx_mate/core/service/socket_service.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import 'package:manx_mate/core/utils/token_service/token_storage_service.dart';
 
@@ -18,6 +19,13 @@ class ActiveJobController extends GetxController {
   void onInit() {
     super.onInit();
     fetchActiveJobs();
+
+    // Listen for real-time updates via Socket.io
+    SocketServices().listen('OrderStatusUpdate', (data) {
+      print("OrderStatusUpdate -----------> $data");
+      // Refresh data when order status changes
+      fetchActiveJobs(isRefresh: true);
+    });
   }
 
   /// Fetch active jobs with pagination
@@ -31,7 +39,7 @@ class ActiveJobController extends GetxController {
         activeJobs.clear();
       }
 
-      if (!hasMore.value) return;
+      if (!hasMore.value && !isRefresh) return;
 
       isLoading.value = true;
 
@@ -50,8 +58,9 @@ class ActiveJobController extends GetxController {
         return;
       }
 
+      // Make API call using AppUrl helper
       final NetworkResponse response = await _networkCaller.getRequest(
-        '${AppUrl.bookingUrlV1}?status=accepted&page=${currentPage.value}&limit=10',
+        AppUrl.activeJob(currentPage.value),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',
@@ -68,13 +77,22 @@ class ActiveJobController extends GetxController {
         return;
       }
 
-      final json = response.jsonResponse!;
+      final Map<String, dynamic> json = response.jsonResponse!;
       final data = json['data'];
 
-      if (data == null || data['bookings'] is! List) return;
+      if (data == null || data['bookings'] is! List) {
+        return;
+      }
 
       final List<dynamic> list = data['bookings'];
-      activeJobs.addAll(list.whereType<Map<String, dynamic>>().toList());
+
+      if (isRefresh) {
+        // Replace all items on refresh
+        activeJobs.assignAll(list.whereType<Map<String, dynamic>>().toList());
+      } else {
+        // Add to existing items
+        activeJobs.addAll(list.whereType<Map<String, dynamic>>().toList());
+      }
 
       /// Pagination handling
       if (data['pagination'] != null) {
@@ -86,6 +104,8 @@ class ActiveJobController extends GetxController {
       activeJobs.assignAll({
         for (var job in activeJobs) job['_id']: job,
       }.values.toList());
+
+      debugPrint('✅ Fetched ${list.length} active jobs (Page ${currentPage.value})');
 
     } catch (e) {
       debugPrint('🔥 ActiveJobController Error: $e');
