@@ -26,6 +26,7 @@ class AppUrl {
   static const String searchQuoteUrl = '$baseUrl/service/search';
   static const String getMyQuote = '$baseUrlV1/$version1/service-inquiry/self';
   static const String bookingUrl = '$baseUrl/booking';
+  static const String bookingUrlV1 = '$baseUrlV1/$version1/booking/user';
   static const String notificationUrl = '$baseUrl/notification';
 
   static String getUserProfileImageUrl(String imagePath) {
