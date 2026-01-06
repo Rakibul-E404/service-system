@@ -65,7 +65,7 @@ class ActiveJobTab extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'When your booking requests are accepted by providers, they will appear here',
+                'When your booking requests are accepted by providers, they will appear here.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
