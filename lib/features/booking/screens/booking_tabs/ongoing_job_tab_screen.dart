@@ -236,29 +236,6 @@ class OngoingJobTab extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    // Status Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(status).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: _getStatusColor(status).withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        status.replaceAll('_', ' ').toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: _getStatusColor(status),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
                     // Location Row
                     Row(
                       children: [
@@ -327,22 +304,6 @@ class OngoingJobTab extends StatelessWidget {
     }
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'accepted':
-        return Colors.green;
-      case 'in_progress':
-        return Colors.blue;
-      case 'completed':
-        return Colors.purple;
-      case 'cancelled':
-        return Colors.red;
-      case 'pending':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
-  }
 
   void _showJobDetailsModal(Map<String, dynamic> job) {
     JobDetailsModal.show(
