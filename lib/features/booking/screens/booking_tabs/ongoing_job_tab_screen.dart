@@ -311,7 +311,7 @@ class OngoingJobTab extends StatelessWidget {
       job: job,
       showCancelButton: false, // Ongoing jobs typically can't be cancelled
       showContactButtons: true,
-      onContactPressed: () => _handleContactProvider(job),
+      // onContactPressed: () => _handleContactProvider(job),
       customTitle: 'Ongoing Job Details',
     );
   }

@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:url_launcher/url_launcher.dart'; // <-- ADD THIS
 
 class JobDetailsModal {
   static void show({
@@ -10,7 +13,6 @@ class JobDetailsModal {
     bool showCancelButton = true,
     bool showContactButtons = true,
     VoidCallback? onCancelPressed,
-    VoidCallback? onContactPressed,
     String? customTitle,
   }) {
     // Extract service and provider data
@@ -28,6 +30,10 @@ class JobDetailsModal {
         imageUrl = '${AppUrl.imageBaseUrl}/$imagePath';
       }
     }
+
+    // Extract contact info
+    final String? providerPhone = author['phone']?.toString();
+    final String? providerEmail = author['email']?.toString();
 
     Get.bottomSheet(
       Container(
@@ -152,8 +158,6 @@ class JobDetailsModal {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              // Status badge can be added here if needed
-                              // _buildStatusBadge(job['status']?.toString() ?? 'pending'),
                             ],
                           ),
                         ),
@@ -202,7 +206,7 @@ class JobDetailsModal {
                       const SizedBox(height: 24),
                       const Text(
                         'Job Details',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
@@ -231,36 +235,33 @@ class JobDetailsModal {
                     const SizedBox(height: 24),
 
                     // Action Buttons (Conditional)
-                    if (showCancelButton || showContactButtons) ...[
+                    if (showCancelButton) ...[
                       Row(
                         children: [
-                          if (showCancelButton) ...[
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Get.back();
-                                  onCancelPressed?.call();
-                                },
-                                label: const Text('Cancel Job'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Get.back();
+                                onCancelPressed?.call();
+                              },
+                              label: const Text('Cancel Job'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                             ),
-                            if (showContactButtons) const SizedBox(width: 12),
-                          ],
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
                     ],
 
                     // Additional Contact Options
-                    if (showContactButtons) ...[
+                    if (showContactButtons && (providerPhone != null || providerEmail != null)) ...[
                       const SizedBox(height: 16),
                       const Text(
                         'Quick Contact',
@@ -274,36 +275,42 @@ class JobDetailsModal {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          if (providerPhone != null)
+                            _buildContactOption(
+                              icon: Icons.call,
+                              label: 'Call',
+                              color: Colors.green,
+                              onTap: () {
+                                Get.back();
+                                _launchPhoneNumber(providerPhone);
+                              },
+                            ),
+                          if (providerPhone != null && providerEmail != null) const SizedBox(width: 16),
+                          if (providerEmail != null)
+                            _buildContactOption(
+                              icon: Icons.email,
+                              label: 'Email',
+                              color: Colors.blue,
+                              onTap: () {
+                                Get.back();
+                                _launchEmail(providerEmail);
+                              },
+                            ),
+                          if (providerPhone != null && providerEmail != null) const SizedBox(width: 16),
+                          // Message button can stay if you have chat, but we'll omit logic for now
+                          // You can keep it as a placeholder or remove
                           _buildContactOption(
-                            icon: Icons.call,
-                            label: 'Call',
-                            color: Colors.green,
-                            onTap: () {
-                              // Handle call action
-                              Get.back();
-                              onContactPressed?.call();
-                            },
-                          ),
-                          const SizedBox(width: 16),
-                          _buildContactOption(
-                            icon: Icons.email,
-                            label: 'Email',
-                            color: Colors.blue,
-                            onTap: () {
-                              // Handle email action
-                              Get.back();
-                              onContactPressed?.call();
-                            },
-                          ),
-                          const SizedBox(width: 16),
-                          _buildContactOption(
-                            icon: Icons.message_outlined,
+                            icon: CupertinoIcons.chat_bubble_text_fill,
                             label: 'Message',
                             color: Colors.purple,
                             onTap: () {
-                              // Handle message action
                               Get.back();
-                              onContactPressed?.call();
+                              Get.snackbar(
+                                'Coming Soon',
+                                'In-app messaging will be available soon.',
+                                backgroundColor: Colors.purple,
+                                colorText: Colors.white,
+                              );
                             },
                           ),
                         ],
@@ -323,6 +330,54 @@ class JobDetailsModal {
       enableDrag: true,
     );
   }
+
+  static Future<void> _launchPhoneNumber(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    } else {
+      Get.snackbar(
+        'Error',
+        'Could not launch dialer',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  static Future<void> _launchEmail(String email) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: email,
+    );
+
+    try {
+      final bool launched = await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        Get.snackbar(
+          'No Email App',
+          'No email app found. Please install one to contact the provider.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Unable to open email. Make sure an email app is installed.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // ========== Rest of the helper methods (unchanged) ==========
 
   static Widget _buildDetailItem({
     required IconData icon,

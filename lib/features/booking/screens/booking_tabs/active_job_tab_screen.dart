@@ -262,15 +262,25 @@ class ActiveJobTab extends StatelessWidget {
   }
 
   void _showJobDetailsModal(Map<String, dynamic> job) {
+    // JobDetailsModal.show(
+    //   context: Get.context!,
+    //   job: job,
+    //   showCancelButton: true,
+    //   showContactButtons: true,
+    //   onCancelPressed: () => _handleCancelJob(job),
+    //   onContactPressed: () => _handleContactProvider(job),
+    //   customTitle: 'Active Job Details',
+    // );
+
     JobDetailsModal.show(
       context: Get.context!,
       job: job,
       showCancelButton: true,
       showContactButtons: true,
       onCancelPressed: () => _handleCancelJob(job),
-      onContactPressed: () => _handleContactProvider(job),
       customTitle: 'Active Job Details',
     );
+
   }
 
   void _handleCancelJob(Map<String, dynamic> job) {
@@ -298,7 +308,7 @@ class ActiveJobTab extends StatelessWidget {
   void _handleContactProvider(Map<String, dynamic> job) {
     final Map<String, dynamic> service = job['service'] ?? {};
     final Map<String, dynamic> author = service['author'] ?? {};
-    final providerName = author['name']?.toString() ?? 'Provider';
+    final String providerName = author['name']?.toString() ?? 'Provider';
 
     Get.snackbar(
       'Contact Provider',

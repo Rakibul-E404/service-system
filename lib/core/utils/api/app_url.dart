@@ -34,6 +34,9 @@ class AppUrl {
   static String pastJob(int page) {
     return '$baseUrlV1/$version1/booking/user/?status=completed&page=$page&limit=10';
   }
+  static String userCanceledBooking(String bookingId) {
+    return '$baseUrlV1/$version1/booking/respond/$bookingId';
+  }
   static const String bookingUrl = '$baseUrl/booking';
   static const String bookingUrlV1 = '$baseUrlV1/$version1/booking/user';
   static const String notificationUrl = '$baseUrl/notification';
