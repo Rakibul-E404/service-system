@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:manx_mate/features/home/model/categor_model.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_sizes.dart';
 import '../controllers/home_controller.dart';
@@ -21,10 +23,10 @@ class CategorySubCategoryPicker extends StatefulWidget {
 class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
   final HomeController _homeCtrl = Get.find<HomeController>();
 
-  List<String> catNames = [];
-  List<String> catIds   = [];
-  List<String> subNames = [];
-  List<String> subIds   = [];
+  List<String> catNames = <String>[];
+  List<String> catIds   = <String>[];
+  List<String> subNames = <String>[];
+  List<String> subIds   = <String>[];
 
   String? selectedCatName;
   String? selectedCatId;
@@ -34,21 +36,21 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
   bool loadingCats = false;
   bool loadingSubs = false;
   String catError = '';
+  String subError = '';
 
   @override
   void initState() {
     super.initState();
-    // Use post frame callback to avoid calling setState during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCategories();
-    });
+    _loadCategories();
   }
 
   /// -------------------------------------------------------------
   /// Load categories (uses HomeController logic)
   /// -------------------------------------------------------------
   Future<void> _loadCategories() async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       loadingCats = true;
@@ -69,7 +71,7 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
       debugPrint('❌ Error loading categories: $e');
       if (mounted) {
         setState(() {
-          catError = e.toString();
+          catError = 'Failed to load categories: ${e.toString()}';
         });
       }
     } finally {
@@ -81,22 +83,27 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
 
   /// Extract category data from controller
   void _updateCategoryLists() {
-    final cats = _homeCtrl.categories;
-    catNames = cats.map((e) => e.name).toList();
-    catIds   = cats.map((e) => e.id).toList();
+    final RxList<CategoryModel> cats = _homeCtrl.categories;
+    catNames = cats.map((CategoryModel e) => e.name).toList();
+    catIds   = cats.map((CategoryModel e) => e.id).toList();
 
     debugPrint('📋 Categories loaded: ${catNames.length} items');
+    if (catNames.isNotEmpty) {
+      debugPrint('📝 Category names: ${catNames.join(', ')}');
+    }
   }
 
   /// -------------------------------------------------------------
   /// Load sub-categories for selected category
   /// -------------------------------------------------------------
-
   Future<void> _loadSubCategories(String catId) async {
     if (catId.isEmpty || !mounted) return;
 
+    debugPrint('📢 Loading subcategories for category ID: $catId');
+
     setState(() {
       loadingSubs = true;
+      subError = '';
       subNames.clear();
       subIds.clear();
       selectedSubName = null;
@@ -107,25 +114,52 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
       debugPrint('🔄 Fetching subcategories for category: $catId');
       await _homeCtrl.fetchSubcategories(catId);
 
-      if (mounted) {
-        final subs = _homeCtrl.subcategories;
-        setState(() {
-          subNames = subs.map((e) => e['name']?.toString() ?? 'Unnamed').toList();
-          subIds   = subs.map((e) => e['_id']?.toString() ?? '').toList();
-        });
+      if (!mounted) {
+        return;
+      }
 
-        debugPrint('📋 Subcategories loaded: ${subNames.length} items');
+      // Add a small delay to ensure state is updated
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final RxList<dynamic> subs = _homeCtrl.subcategories;
+      debugPrint('📦 Raw subcategories from controller: ${subs.length} items');
+
+      if (subs.isNotEmpty) {
+        for (int i = 0; i < subs.length; i++) {
+          debugPrint('   ${i + 1}. ID: ${subs[i]['_id']}, Name: ${subs[i]['name']}');
+        }
+      }
+
+      setState(() {
+        subNames = subs.map((e) => e['name']?.toString() ?? 'Unnamed').toList();
+        subIds   = subs.map((e) => e['_id']?.toString() ?? '').toList();
+
+        // Show error if any
+        if (_homeCtrl.subcategoryErrorMessage.isNotEmpty) {
+          subError = _homeCtrl.subcategoryErrorMessage.value;
+        }
+      });
+
+      debugPrint('📋 Subcategories processed: ${subNames.length} items');
+      debugPrint('📝 Subcategory names: ${subNames.join(', ')}');
+
+      // If no subcategories, show appropriate message
+      if (subNames.isEmpty && _homeCtrl.subcategoryErrorMessage.isEmpty) {
+        subError = 'No subcategories available for this category';
       }
     } catch (e) {
       debugPrint('❌ Error loading subcategories: $e');
+      if (mounted) {
+        setState(() {
+          subError = 'Failed to load subcategories: ${e.toString()}';
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => loadingSubs = false);
       }
     }
   }
-
-
 
   /// -------------------------------------------------------------
   /// UI – dropdown builder
@@ -140,36 +174,56 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
     VoidCallback? onRetry,
     ValueChanged<String?>? onChanged,
   }) {
+    // Determine if we should show error or empty state
+    final bool showError = error != null && error.isNotEmpty;
+    final bool showEmptyState = !loading && items.isEmpty && enabled;
+
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.primaryColor, width: 2),
+        border: Border.all(
+            color: showError ? Colors.red : AppColors.primaryColor,
+            width: 2
+        ),
         borderRadius: BorderRadius.circular(AppSizes.borderRadiusLg),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: loading
-          ? const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 12),
-            Text('Loading...'),
-          ],
-        ),
-      )
-          : error != null && error.isNotEmpty
-          ? Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: [
-            Text(
-              'Error: $error',
-              style: const TextStyle(color: Colors.red, fontSize: 12),
-            ),
+          ? _buildLoadingState()
+          : showError
+          ? _buildErrorState(error, onRetry)
+          : showEmptyState
+          ? _buildEmptyState(hint)
+          : _buildDropdownButton(hint, items, value, enabled, onChanged),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      child: Row(
+        children: <Widget>[
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 12),
+          Text('Loading...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error, VoidCallback? onRetry) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            error,
+            style: const TextStyle(color: Colors.red, fontSize: 12),
+          ),
+          if (onRetry != null) ...<Widget>[
             const SizedBox(height: 8),
             ElevatedButton(
               onPressed: onRetry,
@@ -183,24 +237,72 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
               child: const Text('Retry'),
             ),
           ],
-        ),
-      )
-          : DropdownButton<String>(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String hint) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      child: Text(
+        '$hint (No items available)',
+        style: const TextStyle(color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildDropdownButton(String hint, List<String> items, String? value,
+      bool enabled, ValueChanged<String?>? onChanged) {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
         isExpanded: true,
         value: value,
-        hint: Text(hint, style: TextStyle(color: Colors.grey[600])),
-        underline: const SizedBox(),
-        disabledHint: Text(
-          hint,
-          style: TextStyle(color: Colors.grey[400]),
+        hint: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            hint,
+            style: TextStyle(
+              color: enabled ? Colors.grey[600] : Colors.grey[400],
+            ),
+          ),
+        ),
+        disabledHint: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            hint,
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ),
+        icon: Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: Icon(
+            Icons.arrow_drop_down,
+            color: enabled ? AppColors.primaryColor : Colors.grey[400],
+          ),
         ),
         onChanged: enabled ? onChanged : null,
-        items: items
-            .map((e) => DropdownMenuItem(
-          value: e,
-          child: Text(e),
-        ))
-            .toList(),
+        items: items.map((String item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                item,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          );
+        }).toList(),
+        dropdownColor: Colors.white,
+        style: TextStyle(
+          color: enabled ? Colors.black : Colors.grey[600],
+          fontSize: 14,
+        ),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+        elevation: 4,
+        menuMaxHeight: 300,
       ),
     );
   }
@@ -208,8 +310,18 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: [
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
         /// ---------- Category ----------
+        Text(
+          'Category',
+          style: TextStyle(
+            color: AppColors.primaryColor,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 6),
         _buildDropdown(
           hint: 'Select Category',
           items: catNames,
@@ -217,10 +329,10 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
           loading: loadingCats,
           error: catError,
           onRetry: _loadCategories,
-          onChanged: (v) {
+          onChanged: (String? v) {
             if (v == null) return;
 
-            final idx = catNames.indexOf(v);
+            final int idx = catNames.indexOf(v);
             setState(() {
               selectedCatName = v;
               selectedCatId = idx != -1 ? catIds[idx] : null;
@@ -229,6 +341,7 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
               selectedSubId = null;
               subNames.clear();
               subIds.clear();
+              subError = '';
             });
 
             widget.onCategoryChanged(v, selectedCatId);
@@ -238,19 +351,31 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
             }
           },
         ),
-        const SizedBox(height: AppSizes.md),
+        const SizedBox(height: AppSizes.lg),
 
         /// ---------- Sub-Category ----------
+        Text(
+          'Sub-Category',
+          style: TextStyle(
+            color: selectedCatName != null ? AppColors.primaryColor : Colors.grey,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 6),
         _buildDropdown(
-          hint: 'Select Sub-Category',
+          hint: selectedCatName != null
+              ? 'Select Sub-Category'
+              : 'Select a category first',
           items: subNames,
           value: selectedSubName,
           loading: loadingSubs,
-          enabled: selectedCatName != null && subNames.isNotEmpty,
-          onChanged: (v) {
+          enabled: selectedCatName != null,
+          error: subError,
+          onChanged: (String? v) {
             if (v == null) return;
 
-            final idx = subNames.indexOf(v);
+            final int idx = subNames.indexOf(v);
             setState(() {
               selectedSubName = v;
               selectedSubId = idx != -1 ? subIds[idx] : null;
@@ -265,7 +390,6 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
 
   @override
   void dispose() {
-    // Clean up if needed
     super.dispose();
   }
 }

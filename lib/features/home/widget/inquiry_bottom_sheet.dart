@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -10,7 +11,7 @@ import '../../auth/widgets/app_custom_textfield.dart';
 import 'category_subCategory_picker.dart';
 
 class InquiryService {
-  static const String baseUrl = AppUrl.searchQuoteUrl;
+  static const String baseUrl = AppUrl.postInquiryQuote;
   static const String bookingUrl = AppUrl.bookingUrl;
 
   static Future<Map<String, dynamic>> submitInquiry({
@@ -608,3 +609,10 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
     );
   }
 }
+
+
+
+
+
+
+

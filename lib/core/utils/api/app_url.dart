@@ -23,7 +23,7 @@ class AppUrl {
   static const String selfProfileUrl = '$baseUrl/user/self';
   static const String updateSelfProfileUrl = '$baseUrl/user/update-profile';
   static const String getUserProfileUrl = '$baseUrl/user/profile';
-  static const String searchQuoteUrl = '$baseUrl/service/search';
+  static const String postInquiryQuote = '$baseUrlV1/$version1/service-inquiry';
   static const String getMyQuote = '$baseUrlV1/$version1/service-inquiry/self';
   static String activeJob(int page) {
     return '$baseUrlV1/$version1/booking/user/?status=pending&page=$page&limit=10';
@@ -59,7 +59,10 @@ class AppUrl {
   static const String contactUs = '$baseUrl/settings/contact_us';
 
   // Home screens URLs
-  static const String allCategory = '$baseUrl/category';
+  static const String allCategory = '$baseUrlV1/$version1/category';
+  static String allSubCategory(String categoryId) {
+    return '$baseUrlV1/$version1/category/$categoryId/subcategories';
+}
   static const String allService = '$baseUrl/service/all';
 
   static String getSubCategoriesUrl(String categoryId) {

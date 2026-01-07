@@ -229,6 +229,7 @@ class HomeController extends GetxController {
     }
   }
 
+
   /// Fetch subcategories for a specific category (without auth)
   Future<void> fetchSubcategories(String categoryId) async {
     if (categoryId.isEmpty) {
@@ -242,14 +243,17 @@ class HomeController extends GetxController {
 
     try {
       debugPrint('🔄 Fetching subcategories for category: $categoryId (no auth)');
-      debugPrint('📍 URL: ${AppUrl.baseUrl}/category/$categoryId/subcategories');
 
-      final String url = '${AppUrl.baseUrl}/category/$categoryId/subcategories';
+      // Use the correct URL format
+      final String url = AppUrl.allSubCategory(categoryId);
+      debugPrint('📍 URL: $url');
+
       final NetworkResponse response = await _networkCaller.getRequest(url);
 
       debugPrint('✅ Response received');
       debugPrint('📊 Success: ${response.isSuccess}');
       debugPrint('📄 Status Code: ${response.statusCode}');
+      debugPrint('📦 Response body: ${response.jsonResponse}');
 
       // Check if response is valid
       if (!_validateResponseStructure(response, apiName: 'Subcategories')) {
@@ -263,31 +267,60 @@ class HomeController extends GetxController {
         final responseData = _parseJsonSafely(response.jsonResponse);
         if (responseData == null) {
           subcategoryErrorMessage.value = 'Failed to process server response';
+          debugPrint('❌ Failed to parse JSON response');
           return;
         }
 
-        if (responseData['data'] != null &&
-            responseData['data']['data'] != null) {
+        // Check if request was successful
+        if (responseData['success'] != true) {
+          subcategoryErrorMessage.value = responseData['message']?.toString() ?? 'Failed to load subcategories';
+          debugPrint('❌ API returned error: ${responseData['message']}');
+          return;
+        }
 
-          final List<dynamic> subCatList = responseData['data']['data'];
+        // Handle the data structure - based on your JSON example
+        if (responseData['data'] != null) {
+          final subCatData = responseData['data'];
 
-          subcategories.value = subCatList.map((item) {
-            return {
-              '_id': item['_id']?.toString() ?? '',
-              'name': item['name']?.toString() ?? 'Unnamed',
-              'description': item['description']?.toString() ?? '',
-              'image': item['image']?.toString() ?? '',
-            };
-          }).toList();
+          // Check if data is a List
+          if (subCatData is List) {
+            // Direct list structure: {"success": true, "data": [...]}
+            final List<dynamic> subCatList = subCatData;
 
-          debugPrint('✨ Subcategories loaded successfully: ${subcategories.length} items');
+            subcategories.value = subCatList.map((item) {
+              return {
+                '_id': item['_id']?.toString() ?? '',
+                'name': item['name']?.toString() ?? 'Unnamed',
+                'description': item['description']?.toString() ?? '',
+                'image': item['image']?.toString() ?? '',
+              };
+            }).toList();
 
-          if (subcategories.isEmpty) {
-            subcategoryErrorMessage.value = 'No subcategories available for this category';
+            debugPrint('✨ Subcategories loaded (direct list): ${subcategories.length} items');
+          }
+          // Check if data has nested data field
+          else if (subCatData is Map && subCatData['data'] != null && subCatData['data'] is List) {
+            // Nested structure: {"success": true, "data": {"data": [...]}}
+            final List<dynamic> subCatList = subCatData['data'];
+
+            subcategories.value = subCatList.map((item) {
+              return {
+                '_id': item['_id']?.toString() ?? '',
+                'name': item['name']?.toString() ?? 'Unnamed',
+                'description': item['description']?.toString() ?? '',
+                'image': item['image']?.toString() ?? '',
+              };
+            }).toList();
+
+            debugPrint('✨ Subcategories loaded (nested structure): ${subcategories.length} items');
+          }
+          else {
+            subcategoryErrorMessage.value = 'Invalid subcategory data format';
+            debugPrint('❌ Unexpected data structure: $subCatData');
           }
         } else {
-          subcategoryErrorMessage.value = 'Invalid subcategory data format';
-          debugPrint('❌ Response missing data.data structure');
+          subcategoryErrorMessage.value = 'No data found in response';
+          debugPrint('❌ No data field in response');
         }
       } catch (parseError, stackTrace) {
         subcategoryErrorMessage.value = 'Failed to process subcategories data';
@@ -308,6 +341,18 @@ class HomeController extends GetxController {
       debugPrint('🏁 Subcategory loading finished. Total: ${subcategories.length}');
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
 
   /// Retry fetching categories
   void retry() {
