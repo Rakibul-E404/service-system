@@ -37,6 +37,9 @@ class AppUrl {
   static String userCanceledBooking(String bookingId) {
     return '$baseUrlV1/$version1/booking/respond/$bookingId';
   }
+  static String userQuoteDelete(String requestedQuoteId) {
+    return '$baseUrlV1/$version1/service-inquiry/$requestedQuoteId/delete';
+  }
   static const String bookingUrl = '$baseUrl/booking';
   static const String bookingUrlV1 = '$baseUrlV1/$version1/booking/user';
   static const String notificationUrl = '$baseUrl/notification';

@@ -356,6 +356,7 @@ class ActiveJobTab extends StatelessWidget {
 
         if (response.isSuccess) {
           Get.snackbar(
+            snackPosition: SnackPosition.BOTTOM,
             'Success',
             'Job has been cancelled successfully',
             backgroundColor: Colors.green,
