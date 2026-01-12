@@ -62,7 +62,7 @@ class AdvertisementController extends GetxController {
       errorMessage.value = '';
       advertisements.clear();
 
-      debugPrint('📍 Fetching ads from: ${AppUrl.getAllAdvertisement}');
+      debugPrint('📍  Fetching ads from: ${AppUrl.getAllAdvertisement}');
 
       final response = await GetConnect().get(
         AppUrl.getAllAdvertisement,
