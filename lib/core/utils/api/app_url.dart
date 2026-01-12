@@ -1,6 +1,3 @@
-
-
-
 class AppUrl {
   AppUrl._();
 

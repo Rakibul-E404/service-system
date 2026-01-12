@@ -1,11 +1,10 @@
-
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_sizes.dart';
+import '../../../core/network/network_caller.dart';
+import '../../../core/network/network_response.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 import '../../auth/widgets/app_custom_textfield.dart';
 import 'category_subCategory_picker.dart';
@@ -15,43 +14,67 @@ class InquiryService {
   static const String bookingUrl = AppUrl.bookingUrl;
 
   static Future<Map<String, dynamic>> submitInquiry({
-    required String serviceCategory,
+    required String category,
+    required String subCategory,
+    required String region,
     required String location,
-    required String additional,
+    required String date,
+    required String additionalInfo,
     String? accessToken,
   }) async {
     try {
-      final Map<String, String> headers = <String, String>{
-        'Content-Type': 'application/json',
+      debugPrint('🚀 ========== SUBMITTING INQUIRY ==========');
+      debugPrint('📋 Category: $category');
+      debugPrint('📋 SubCategory: $subCategory');
+      debugPrint('🌍 Region: $region');
+      debugPrint('📍 Location: $location');
+      debugPrint('📅 Date: $date');
+      debugPrint('📝 Additional Info: $additionalInfo');
+      debugPrint('🔑 Access Token: ${accessToken != null ? "Present" : "Not Present"}');
+
+      final Map<String, String>? headers = accessToken != null && accessToken.isNotEmpty
+          ? {'Authorization': 'Bearer $accessToken'}
+          : null;
+
+      final Map<String, dynamic> body = {
+        'category': category,
+        'subCategory': subCategory,
+        'region': region,
+        'location': location,
+        'date': date,
+        'additionalInfo': additionalInfo,
       };
 
-      if (accessToken != null && accessToken.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $accessToken';
-      }
+      debugPrint('📦 Request Body: $body');
 
-      final http.Response response = await http.post(
-        Uri.parse(baseUrl),
+      final NetworkResponse response = await NetworkCaller().postRequest(
+        baseUrl,
+        body: body,
         headers: headers,
-        body: jsonEncode({
-          'serviceCategory': serviceCategory,
-          'location': location.toLowerCase(),
-          'additional': additional,
-        }),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      debugPrint('📬 Response Status Code: ${response.statusCode}');
+      debugPrint('✅ Response Success: ${response.isSuccess}');
+      debugPrint('📄 Response JSON: ${response.jsonResponse}');
+      debugPrint('🚫 Response Error: ${response.errorMessage}');
+
+      if (response.isSuccess) {
+        debugPrint('✅ ========== INQUIRY SUBMITTED SUCCESSFULLY ==========');
         return {
           'success': true,
-          'data': jsonDecode(response.body),
+          'data': response.jsonResponse,
         };
       } else {
+        debugPrint('❌ ========== INQUIRY SUBMISSION FAILED ==========');
         return {
           'success': false,
-          'message': 'Failed to submit inquiry: ${response.statusCode}',
-          'error': response.body,
+          'message': response.errorMessage ?? 'Failed to submit inquiry',
+          'error': response.jsonResponse,
         };
       }
     } catch (e) {
+      debugPrint('💥 ========== INQUIRY SUBMISSION ERROR ==========');
+      debugPrint('❌ Exception: $e');
       return {
         'success': false,
         'message': 'Error submitting inquiry: $e',
@@ -67,38 +90,54 @@ class InquiryService {
     String? accessToken,
   }) async {
     try {
-      final headers = <String, String>{
-        'Content-Type': 'application/json',
+      debugPrint('🚀 ========== SUBMITTING BOOKING ==========');
+      debugPrint('🛠️ Service: $service');
+      debugPrint('📝 Description: $description');
+      debugPrint('📅 Booking Date: $bookingDate');
+      debugPrint('📍 Location: $location');
+      debugPrint('🔑 Access Token: ${accessToken != null ? "Present" : "Not Present"}');
+
+      final Map<String, String>? headers = accessToken != null && accessToken.isNotEmpty
+          ? {'Authorization': 'Bearer $accessToken'}
+          : null;
+
+      final Map<String, dynamic> body = {
+        'service': service,
+        'description': description,
+        'bookingDate': bookingDate,
+        'location': location.toLowerCase(),
       };
 
-      if (accessToken != null && accessToken.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $accessToken';
-      }
+      debugPrint('📦 Request Body: $body');
 
-      final response = await http.post(
-        Uri.parse(bookingUrl),
+      final NetworkResponse response = await NetworkCaller().postRequest(
+        bookingUrl,
+        body: body,
         headers: headers,
-        body: jsonEncode({
-          'service': service,
-          'description': description,
-          'bookingDate': bookingDate,
-          'location': location.toLowerCase(),
-        }),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      debugPrint('📬 Response Status Code: ${response.statusCode}');
+      debugPrint('✅ Response Success: ${response.isSuccess}');
+      debugPrint('📄 Response JSON: ${response.jsonResponse}');
+      debugPrint('🚫 Response Error: ${response.errorMessage}');
+
+      if (response.isSuccess) {
+        debugPrint('✅ ========== BOOKING SUBMITTED SUCCESSFULLY ==========');
         return {
           'success': true,
-          'data': jsonDecode(response.body),
+          'data': response.jsonResponse,
         };
       } else {
+        debugPrint('❌ ========== BOOKING SUBMISSION FAILED ==========');
         return {
           'success': false,
-          'message': 'Failed to submit booking: ${response.statusCode}',
-          'error': response.body,
+          'message': response.errorMessage ?? 'Failed to submit booking',
+          'error': response.jsonResponse,
         };
       }
     } catch (e) {
+      debugPrint('💥 ========== BOOKING SUBMISSION ERROR ==========');
+      debugPrint('❌ Exception: $e');
       return {
         'success': false,
         'message': 'Error submitting booking: $e',
@@ -272,26 +311,59 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
   }
 
   bool _validateFields() {
-    if (widget.isFromHomeScreen && (_subId == null || _subId!.isEmpty)) {
-      _showSnackBar('Please select a service category', isError: true);
-      return false;
+    debugPrint('🔍 ========== VALIDATING FIELDS ==========');
+
+    if (widget.isFromHomeScreen) {
+      if (_catId == null || _catId!.isEmpty) {
+        debugPrint('❌ Validation Failed: Category not selected');
+        _showSnackBar('Please select a category', isError: true);
+        return false;
+      }
+      debugPrint('✅ Category ID: $_catId');
+
+      if (_subId == null || _subId!.isEmpty) {
+        debugPrint('❌ Validation Failed: Sub-category not selected');
+        _showSnackBar('Please select a sub-category', isError: true);
+        return false;
+      }
+      debugPrint('✅ Sub-category ID: $_subId');
     }
+
     if (_selectedLocation == null || _selectedLocation!.isEmpty) {
-      _showSnackBar('Please select a location', isError: true);
+      debugPrint('❌ Validation Failed: Region not selected');
+      _showSnackBar('Please select a region', isError: true);
       return false;
     }
+    debugPrint('✅ Region: $_selectedLocation');
+
     if (_addressController.text.trim().isEmpty) {
+      debugPrint('❌ Validation Failed: Address is empty');
       _showSnackBar('Please enter your address', isError: true);
       return false;
     }
+    debugPrint('✅ Address: ${_addressController.text.trim()}');
+
+    if (widget._dateTEController.text.trim().isEmpty) {
+      debugPrint('❌ Validation Failed: Date is empty');
+      _showSnackBar('Please select a date', isError: true);
+      return false;
+    }
+    debugPrint('✅ Date: ${widget._dateTEController.text.trim()}');
+
     if (widget._additionalNoteTEController.text.trim().isEmpty) {
+      debugPrint('❌ Validation Failed: Additional notes are empty');
       _showSnackBar('Please add additional notes', isError: true);
       return false;
     }
+    debugPrint('✅ Additional Notes: ${widget._additionalNoteTEController.text.trim()}');
+
     if (!widget.isFromHomeScreen && widget.preSelectedServiceId == null) {
+      debugPrint('❌ Validation Failed: Service ID is required');
       _showSnackBar('Service ID is required', isError: true);
       return false;
     }
+
+    debugPrint('✅ ========== ALL FIELDS VALIDATED SUCCESSFULLY ==========');
     return true;
   }
 
@@ -300,7 +372,12 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
     DateTime? selectedDate,
     String? selectedTime,
   }) async {
-    if (!_validateFields()) return;
+    debugPrint('🎬 ========== SUBMIT INQUIRY INITIATED ==========');
+
+    if (!_validateFields()) {
+      debugPrint('⚠️ Validation failed, submission aborted');
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
@@ -310,19 +387,26 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
       final sharedPrefService = SharedPrefService();
       final accessToken = await sharedPrefService.getAccessToken();
 
+      debugPrint('🔐 Retrieved Access Token: ${accessToken != null ? "Present (${accessToken.substring(0, 20)}...)" : "Not Found"}');
+
       Map<String, dynamic> result;
 
       if (widget.isFromHomeScreen) {
-        // Combine location and address
-        final fullLocation = '${_selectedLocation} - ${_addressController.text.trim()}';
+        debugPrint('🏠 Submitting from HOME SCREEN');
+        // Get the date from the controller
+        final String dateString = widget._dateTEController.text.trim();
 
         result = await InquiryService.submitInquiry(
-          serviceCategory: _subId!,
-          location: fullLocation,
-          additional: widget._additionalNoteTEController.text.trim(),
+          category: _catId!,
+          subCategory: _subId!,
+          region: _selectedLocation!,
+          location: _addressController.text.trim(),
+          date: dateString,
+          additionalInfo: widget._additionalNoteTEController.text.trim(),
           accessToken: accessToken,
         );
       } else {
+        debugPrint('📋 Submitting BOOKING from Service Details');
         final String finalServiceId = serviceId ?? widget.preSelectedServiceId!;
         final DateTime finalDate = selectedDate ?? widget.preSelectedDate!;
         final String finalTime = selectedTime ?? widget.preSelectedTime ?? '10:00';
@@ -346,15 +430,19 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
         _isSubmitting = false;
       });
 
+      debugPrint('📊 Final Result: $result');
+
       if (result['success'] == true) {
         final successMessage = widget.isFromHomeScreen
             ? 'Inquiry submitted successfully!'
             : 'Booking submitted successfully!';
 
+        debugPrint('🎉 $successMessage');
         _showSnackBar(successMessage);
 
         // Clear fields after success
         widget._additionalNoteTEController.clear();
+        widget._dateTEController.clear();
         _addressController.clear();
         setState(() {
           _selectedLocation = null;
@@ -364,20 +452,25 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
           _catName = null;
         });
 
+        debugPrint('🧹 Fields cleared after successful submission');
+
         widget.onSubmitSuccess?.call();
 
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) {
+            debugPrint('👋 Closing bottom sheet');
             Navigator.pop(context);
           }
         });
       } else {
+        debugPrint('❌ Submission failed with message: ${result['message']}');
         _showSnackBar(
           result['message'] ?? 'Failed to submit',
           isError: true,
         );
       }
     } catch (e) {
+      debugPrint('💥 Exception caught in submitInquiry: $e');
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
@@ -387,6 +480,7 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    debugPrint('${isError ? "❌" : "✅"} SnackBar: $message');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -434,185 +528,242 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          /// ==================== CATEGORY + SUB-CATEGORY ====================
-          if (widget.isFromHomeScreen) ...[
-            CategorySubCategoryPicker(
-              onCategoryChanged: (name, id) {
-                setState(() {
-                  _catName = name;
-                  _catId = id;
-                });
-              },
-              onSubCategoryChanged: (name, id) {
-                setState(() {
-                  _subName = name;
-                  _subId = id;
-                });
-              },
-            ),
-            const SizedBox(height: AppSizes.md),
-          ],
+    return Scrollbar(
+      thumbVisibility: true, // Always show the scroll thumb
+      thickness: 6,          // Width of the scrollbar
+      radius: const Radius.circular(8), // Rounded edges
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            /// ==================== CATEGORY + SUB-CATEGORY ====================
+            if (widget.isFromHomeScreen) ...[
+              CategorySubCategoryPicker(
+                onCategoryChanged: (name, id) {
+                  setState(() {
+                    _catName = name;
+                    _catId = id;
+                  });
+                  debugPrint('🏷️ Category Selected: $_catName (ID: $_catId)');
+                },
+                onSubCategoryChanged: (name, id) {
+                  setState(() {
+                    _subName = name;
+                    _subId = id;
+                  });
+                  debugPrint('🏷️ Sub-Category Selected: $_subName (ID: $_subId)');
+                },
+              ),
+              const SizedBox(height: AppSizes.md),
+            ],
 
-          /// ==================== LOCATION DROPDOWN ====================
-          AppCustomContainerField(
-            containerChild: DropdownButtonFormField<String>(
-              value: _selectedLocation,
-              onChanged: _isLocationDisabled
-                  ? null
-                  : (String? newValue) {
-                setState(() {
-                  _selectedLocation = newValue ?? '';
-                });
-              },
-              items: ['north', 'south', 'east', 'west']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              decoration: InputDecoration(
-                labelText: 'Location',
-                labelStyle: TextStyle(color: AppColors.primaryColor),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide:
-                  BorderSide(color: AppColors.primaryColor, width: 1.8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide:
-                  BorderSide(color: AppColors.primaryColor, width: 1.8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide:
-                  BorderSide(color: AppColors.primaryColor, width: 2.0),
-                ),
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: Colors.grey, width: 1.8),
+            /// ==================== LOCATION DROPDOWN ====================
+            AppCustomContainerField(
+              containerChild: DropdownButtonFormField<String>(
+                value: _selectedLocation,
+                onChanged: _isLocationDisabled
+                    ? null
+                    : (String? newValue) {
+                  setState(() {
+                    _selectedLocation = newValue ?? '';
+                  });
+                  debugPrint('🌍 Region Selected: $_selectedLocation');
+                },
+                items: ['north', 'south', 'east', 'west']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                decoration: InputDecoration(
+                  labelText: 'Location',
+                  labelStyle: TextStyle(color: AppColors.primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide:
+                    BorderSide(color: AppColors.primaryColor, width: 1.8),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide:
+                    BorderSide(color: AppColors.primaryColor, width: 1.8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide:
+                    BorderSide(color: AppColors.primaryColor, width: 2.0),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1.8),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(height: AppSizes.md),
+            const SizedBox(height: AppSizes.md),
 
-          /// ==================== ADDRESS FIELD WITH DROPDOWN SUGGESTIONS ====================
-          OverlayPortal(
-            controller: _overlayController,
-            overlayChildBuilder: (BuildContext context) {
-              return Positioned(
-                width: MediaQuery.of(context).size.width - 32, // Match padding
-                child: _buildSuggestionsOverlay(context),
-              );
-            },
-            child: CompositedTransformTarget(
-              link: _layerLink,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.primaryColor, width: 1.8),
-                ),
-                child: TextFormField(
-                  controller: _addressController,
-                  focusNode: _addressFocusNode,
-                  decoration: InputDecoration(
-                    labelText: 'Address',
-                    hintText: 'Enter your address (e.g., Dhaka, Bangladesh)',
-                    prefixIcon: const Icon(Icons.location_on, color: AppColors.primaryColor),
-                    suffixIcon: _filteredSuggestions.isNotEmpty && _addressFocusNode.hasFocus
-                        ? const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor)
-                        : null,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    disabledBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 20,
+            /// ==================== ADDRESS FIELD WITH DROPDOWN SUGGESTIONS ====================
+            OverlayPortal(
+              controller: _overlayController,
+              overlayChildBuilder: (BuildContext context) {
+                return Positioned(
+                  width: MediaQuery.of(context).size.width - 32, // Match padding
+                  child: _buildSuggestionsOverlay(context),
+                );
+              },
+              child: CompositedTransformTarget(
+                link: _layerLink,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.whiteColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.primaryColor, width: 1.8),
+                  ),
+                  child: TextFormField(
+                    controller: _addressController,
+                    focusNode: _addressFocusNode,
+                    decoration: InputDecoration(
+                      labelText: 'Address',
+                      hintText: 'Enter your address (e.g., Dhaka, Bangladesh)',
+                      prefixIcon: const Icon(Icons.location_on, color: AppColors.primaryColor),
+                      suffixIcon: _filteredSuggestions.isNotEmpty && _addressFocusNode.hasFocus
+                          ? const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor)
+                          : null,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 20,
+                      ),
+                      labelStyle: TextStyle(
+                        color: _addressFocusNode.hasFocus
+                            ? AppColors.primaryColor
+                            : Colors.grey[600],
+                      ),
                     ),
-                    labelStyle: TextStyle(
-                      color: _addressFocusNode.hasFocus
-                          ? AppColors.primaryColor
-                          : Colors.grey[600],
+                    onTap: () {
+                      if (_addressController.text.isNotEmpty) {
+                        _filterSuggestions(_addressController.text);
+                        _overlayController.show();
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.md),
+
+            /// ==================== DATE PICKER ====================
+            if (widget.isFromHomeScreen) ...[
+              GestureDetector(
+                onTap: () async {
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (pickedDate != null) {
+                    setState(() {
+                      widget._dateTEController.text = _formatDate(pickedDate);
+                    });
+                    debugPrint('📅 Date Selected: ${widget._dateTEController.text}');
+                  }
+                },
+                child: AbsorbPointer(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.whiteColor,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.primaryColor, width: 1.8),
+                    ),
+                    child: TextFormField(
+                      controller: widget._dateTEController,
+                      decoration: InputDecoration(
+                        labelText: 'Date',
+                        hintText: 'Select date',
+                        prefixIcon: const Icon(Icons.calendar_today, color: AppColors.primaryColor),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
+                        labelStyle: const TextStyle(
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
                     ),
                   ),
-                  onTap: () {
-                    if (_addressController.text.isNotEmpty) {
-                      _filterSuggestions(_addressController.text);
-                      _overlayController.show();
-                    }
-                  },
+                ),
+              ),
+              const SizedBox(height: AppSizes.md),
+            ],
+
+            /// ==================== ADDITIONAL NOTE ====================
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.whiteColor,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.primaryColor, width: 1.8),
+              ),
+              child: TextFormField(
+                controller: widget._additionalNoteTEController,
+                textInputAction: TextInputAction.done,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Colors.transparent),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Colors.transparent),
+                  ),
+                  border: InputBorder.none,
+                  hintText: "Additional note",
+                  contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(height: AppSizes.md),
+            const SizedBox(height: AppSizes.xxxL),
+            const SizedBox(height: AppSizes.xxxL),
+            const SizedBox(height: AppSizes.xxxL),
+            const SizedBox(height: AppSizes.xxxL),
+            const SizedBox(height: AppSizes.xxxL),
 
-          /// ==================== ADDITIONAL NOTE ====================
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.whiteColor,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.primaryColor, width: 1.8),
-            ),
-            child: TextFormField(
-              controller: widget._additionalNoteTEController,
-              textInputAction: TextInputAction.done,
-              maxLines: 5,
-              decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: Colors.transparent),
+            /// Show loading indicator when submitting
+            if (_isSubmitting)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 8),
+                    Text('Submitting...'),
+                  ],
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: const BorderSide(color: Colors.transparent),
-                ),
-                border: InputBorder.none,
-                hintText: "Additional note",
-                contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               ),
-            ),
-          ),
-
-          const SizedBox(height: AppSizes.md),
-
-          /// Show loading indicator when submitting
-          if (_isSubmitting)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 8),
-                  Text('Submitting...'),
-                ],
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
-
-
-
-
-
-
-
