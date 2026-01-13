@@ -38,7 +38,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
           onTap: () {
             CustomModalBottomSheet.show(
               title: 'Immediate Help',
-              height: context.screenHeight * 0.6,
+              height: context.screenHeight * 0.9,
               context: context,
               buttonText: 'Send',
               onButtonPressed: () {
@@ -46,6 +46,7 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
                 Navigator.pop(context);
               },
               child: InquiryBottomSheet(
+                isFromHomeScreen: true,
                 serviceNameTEController: _serviceNameTEController,
                 dateTEController: _dateTEController,
                 timeController: timeController,
