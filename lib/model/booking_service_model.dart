@@ -50,11 +50,11 @@
 // booking_service_model.dart
 class BookingServiceModel {
   final String id;
-  final String author;
-  final SubCategory subCategory; // Changed from String to SubCategory object
+  final Author author; // Changed from String to Author object
+  final SubCategory subCategory;
   final DateTime date;
   final String region;
-  final String location; // New field
+  final String location;
   final String status;
   final String additionalInfo;
   final DateTime createdAt;
@@ -72,27 +72,35 @@ class BookingServiceModel {
   });
 
   factory BookingServiceModel.fromJson(Map<String, dynamic> json) {
+    // Helper to safely parse dates and avoid crashes
+    DateTime parseSafeDate(dynamic value) {
+      if (value == null) return DateTime.now();
+      return DateTime.tryParse(value.toString()) ?? DateTime.now();
+    }
+
     return BookingServiceModel(
       id: json['_id'] ?? '',
-      author: json['author'] ?? '',
+      // Handles author as an Object
+      author: Author.fromJson(json['author'] is Map<String, dynamic> ? json['author'] : {}),
+      // Handles 'subcategory' or 'subCategory'
       subCategory: SubCategory.fromJson(
-        json['subCategory'] is String
-            ? {'_id': json['subCategory']} // Handle old format
-            : (json['subCategory'] as Map<String, dynamic>?) ?? {},
+        json['subcategory'] ?? json['subCategory'] ?? {},
       ),
-      date: DateTime.parse(json['date']),
+      // Handles 'bookingDate' or 'date'
+      date: parseSafeDate(json['bookingDate'] ?? json['date']),
       region: json['region'] ?? '',
       location: json['location'] ?? '',
       status: json['status'] ?? '',
-      additionalInfo: json['additionalInfo'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']),
+      // Handles 'details' or 'additionalInfo'
+      additionalInfo: json['details'] ?? json['additionalInfo'] ?? '',
+      createdAt: parseSafeDate(json['createdAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
-      'author': author,
+      'author': author.toJson(),
       'subCategory': subCategory.toJson(),
       'date': date.toIso8601String(),
       'region': region,
@@ -100,6 +108,38 @@ class BookingServiceModel {
       'status': status,
       'additionalInfo': additionalInfo,
       'createdAt': createdAt.toIso8601String(),
+    };
+  }
+}
+
+class Author {
+  final String id;
+  final String name;
+  final String image;
+  final String email;
+
+  Author({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.email,
+  });
+
+  factory Author.fromJson(Map<String, dynamic> json) {
+    return Author(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? 'Unknown User',
+      image: json['image'] ?? '',
+      email: json['email'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'image': image,
+      'email': email,
     };
   }
 }

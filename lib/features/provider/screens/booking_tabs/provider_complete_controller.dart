@@ -20,11 +20,20 @@ class ProviderCompleteController extends GetxController {
     }
   }
 
-  Future<void> fetchBookings() async {
+  // UPDATED: Added named parameter to match your Screen's fetch call
+  Future<void> fetchBookings({bool refresh = false}) async {
     try {
-      isLoading.value = true;
+      // Only show main loading if not refreshing
+      if (!refresh) {
+        isLoading.value = true;
+      }
+      
       errorMessage.value = '';
-      bookings.clear();
+
+      // Clear data if refreshing to prevent "Ghost" items
+      if (refresh) {
+        bookings.clear();
+      }
 
       final token = await _getAuthToken();
       final url = Uri.parse('$baseUrl/booking/provider?status=completed');
@@ -40,20 +49,23 @@ class ProviderCompleteController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('📊 Full API Response: ${json.encode(data)}');
 
         if (data['success'] == true) {
           final responseData = data['data'];
+          List<Map<String, dynamic>> fetchedList = [];
+
+          // Parse logic
           if (responseData is Map<String, dynamic>) {
             final List<dynamic> list = responseData['data'] ?? [];
-            bookings.value = list.cast<Map<String, dynamic>>();
-            print('✅ Loaded ${bookings.length} completed bookings');
+            fetchedList = list.cast<Map<String, dynamic>>();
           } else if (responseData is List) {
-            bookings.value = responseData.cast<Map<String, dynamic>>();
-            print('✅ Loaded ${bookings.length} completed bookings (direct list)');
-          } else {
-            errorMessage.value = 'Unexpected data format';
+            fetchedList = responseData.cast<Map<String, dynamic>>();
           }
+
+          // UPDATED: assignAll replaces the list entirely, fixing the 15-vs-4 count issue
+          bookings.assignAll(fetchedList);
+          
+          print('✅ Loaded ${bookings.length} completed bookings');
         } else {
           errorMessage.value = data['message'] ?? 'Failed to fetch data';
         }

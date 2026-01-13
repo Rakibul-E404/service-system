@@ -465,21 +465,26 @@ class CompleteTab extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (controller.isLoading.value) {
+@override
+Widget build(BuildContext context) {
+  return Obx(() {
+    // 1. PRIORITY: Show loader first if we are actively fetching
+    // This prevents the "No complete bookings" message from flashing 
+    // for a split second before the data arrives.
+    if (controller.isLoading.value && controller.bookings.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primaryColor),
       );
     }
 
+    // 2. ERROR: Show error state if something went wrong
     if (controller.errorMessage.isNotEmpty) {
       return RefreshIndicator(
         onRefresh: () async => controller.fetchBookings(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
             child: _buildErrorState(
               controller.errorMessage.value,
               controller.fetchBookings,
@@ -489,13 +494,14 @@ class CompleteTab extends StatelessWidget {
       );
     }
 
+    // 3. EMPTY: Show empty state ONLY after loading is done and list is still empty
     if (controller.bookings.isEmpty) {
       return RefreshIndicator(
         onRefresh: () async => controller.fetchBookings(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
             child: _buildEmptyState(
               'No completed bookings',
               controller.fetchBookings,
@@ -505,14 +511,17 @@ class CompleteTab extends StatelessWidget {
       );
     }
 
+    // 4. DATA: Show the list when bookings are available
     return RefreshIndicator(
       onRefresh: () async => controller.fetchBookings(),
       child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 16),
         itemCount: controller.bookings.length,
         itemBuilder: (context, i) => _buildCompleteCard(context, controller.bookings[i]),
         separatorBuilder: (_, __) => const SizedBox(height: 8),
       ),
     );
-  }
+  });
+}
 }

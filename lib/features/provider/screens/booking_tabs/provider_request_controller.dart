@@ -137,24 +137,23 @@ class ProviderRequestController extends GetxController {
   }
 }*/
 
-
-
-
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:manx_mate/model/booking_service_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 
 class ProviderRequestController extends GetxController {
   var isLoading = false.obs;
-  var bookings = <Map<String, dynamic>>[].obs;
+
+  // FIXED: Changed from Map to BookingServiceModel
+  var bookings = <BookingServiceModel>[].obs;
+
   var errorMessage = ''.obs;
   var processingIds = <String>[].obs;
 
-  // Pagination properties
   var currentPage = 1.obs;
   var hasMore = true.obs;
   var isRefreshing = false.obs;
@@ -165,27 +164,23 @@ class ProviderRequestController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('accessToken');
     } catch (e) {
-      print('❌ Error retrieving token: $e');
       return null;
     }
   }
 
-  bool isProcessing(String bookingId) {
-    return processingIds.contains(bookingId);
-  }
+  bool isProcessing(String bookingId) => processingIds.contains(bookingId);
 
   Future<void> fetchBookings({bool refresh = false}) async {
     try {
       if (refresh) {
-        isRefreshing.value = true;
         currentPage.value = 1;
         hasMore.value = true;
-        bookings.clear();
-      } else {
+        isRefreshing.value = true;
+      } else if (currentPage.value == 1) {
         isLoading.value = true;
       }
-      errorMessage.value = '';
 
+      errorMessage.value = '';
       final token = await _getAuthToken();
       if (token == null) {
         errorMessage.value = 'Authentication required';
@@ -193,58 +188,40 @@ class ProviderRequestController extends GetxController {
       }
 
       final url = Uri.parse(AppUrl.providerJObRequested(currentPage.value));
-      print('🌐 Fetching request bookings from: $url');
-
       final response = await http.get(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('📊 Full API Response: ${json.encode(data)}');
-
         if (data['success'] == true) {
           final responseData = data['data'];
+          final List<dynamic> rawList = responseData['data'] ?? [];
 
-          if (responseData is Map<String, dynamic>) {
-            // Handle paginated response
-            final List<dynamic> list = responseData['data'] ?? [];
-            final meta = responseData['meta'] ?? {};
+          final List<BookingServiceModel> parsedList = rawList
+              .map((e) => BookingServiceModel.fromJson(e))
+              .toList();
 
-            // Check if there are more pages
-            final totalPages = meta['totalPages'] ?? 1;
-            hasMore.value = currentPage.value < totalPages;
+          // FIX: Logic check for pagination
+          final pagination = responseData['meta'] ?? responseData['pagination'] ?? {};
+          final totalPages = pagination['totalPages'] ?? 1;
+          hasMore.value = currentPage.value < totalPages;
 
-            if (refresh) {
-              bookings.value = list.cast<Map<String, dynamic>>();
-            } else {
-              bookings.addAll(list.cast<Map<String, dynamic>>());
-            }
-
-            print('✅ Loaded ${list.length} request bookings (Page ${currentPage.value}/$totalPages)');
-          } else if (responseData is List) {
-            // Handle direct list response (fallback)
-            bookings.value = responseData.cast<Map<String, dynamic>>();
-            print('✅ Loaded ${bookings.length} request bookings (direct list)');
-            hasMore.value = false;
+          if (refresh || currentPage.value == 1) {
+            // This removes the "15-20" old items and sets exactly the "4" new ones
+            bookings.assignAll(parsedList);
           } else {
-            errorMessage.value = 'Unexpected data format';
+            // This only happens during "Load More"
+            bookings.addAll(parsedList);
           }
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to fetch data';
         }
-      } else if (response.statusCode == 401) {
-        errorMessage.value = 'Session expired. Please login again.';
       } else {
-        errorMessage.value = 'Server Error: ${response.statusCode}';
+        errorMessage.value = 'Error: ${response.statusCode}';
       }
     } catch (e) {
-      errorMessage.value = 'Connection Error: $e';
-      print('❌ Exception in fetchBookings: $e');
+      errorMessage.value = 'Connection Error';
+      debugPrint('🔥 Fetch Error: $e');
     } finally {
       isLoading.value = false;
       isRefreshing.value = false;
@@ -257,100 +234,46 @@ class ProviderRequestController extends GetxController {
     try {
       isLoadMore.value = true;
       currentPage.value++;
-
       await fetchBookings();
     } catch (e) {
-      currentPage.value--; // Revert page increment on error
-      print('❌ Error loading more bookings: $e');
+      currentPage.value--;
     } finally {
       isLoadMore.value = false;
     }
   }
 
-  Future<void> respondToBooking({
-    required String bookingId,
-    required String status,
-  }) async {
+  Future<void> respondToBooking({required String bookingId, required String status}) async {
     try {
       processingIds.add(bookingId);
-
       final token = await _getAuthToken();
-      if (token == null) {
-        Get.snackbar(
-          'Error',
-          'Authentication required',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
       final url = Uri.parse('${AppUrl.baseUrlV1}/booking/respond/$bookingId');
-      print('🌐 Updating booking status: $url');
 
       final response = await http.patch(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         body: json.encode({'status': status}),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          print('✅ Booking $bookingId $status successfully');
-
-          // Remove the booking from the list
-          bookings.removeWhere((booking) => booking['_id'] == bookingId);
-
+          // FIXED: Use .id instead of ['_id']
+          bookings.removeWhere((booking) => booking.id == bookingId);
           Get.snackbar(
             'Success',
-            'Booking ${status == 'accepted' ? 'approved' : 'rejected'} successfully',
+            'Booking $status successfully',
             backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
-          );
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to update booking';
-          Get.snackbar(
-            'Error',
-            data['message'] ?? 'Failed to update booking',
-            backgroundColor: Colors.red,
             colorText: Colors.white,
           );
         }
-      } else if (response.statusCode == 401) {
-        Get.snackbar(
-          'Error',
-          'Session expired. Please login again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      } else {
-        errorMessage.value = 'Server Error: ${response.statusCode}';
-        Get.snackbar(
-          'Error',
-          'Server Error: ${response.statusCode}',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
       }
     } catch (e) {
-      errorMessage.value = 'Error: $e';
-      Get.snackbar(
-        'Error',
-        'Error: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      debugPrint('🔥 Exception in respondToBooking: $e');
     } finally {
       processingIds.remove(bookingId);
     }
   }
 
-  // Refresh function
   Future<void> refreshBookings() async {
     await fetchBookings(refresh: true);
   }

@@ -30,39 +30,56 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
   final ProviderOngoingController pendingController = Get.put(ProviderOngoingController());
   final ProviderCompleteController completeController = Get.put(ProviderCompleteController());
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
 
-    _tabController.addListener(() {
-      // Fetch data when switching tabs
-      if (!_tabController.indexIsChanging) {
-        final int index = _tabController.index;
-        switch (index) {
-          case 0:
-            quoteController.fetchBookings();
-            break;
-          case 1:
-            requestController.fetchBookings();
-            break;
-          case 2:
-            pendingController.fetchBookings();
-            break;
-          case 3:
-            completeController.fetchBookings();
-            break;
-        }
+void _fetchDataForIndex(int index) {
+  switch (index) {
+    case 0:
+      if (quoteController.bookings.isEmpty) {
+        quoteController.fetchBookings(refresh: true);
       }
-    });
-
-    // Initial data fetch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      quoteController.fetchBookings();
-      requestController.fetchBookings();
-      pendingController.fetchBookings();
-    });
+      break;
+    case 1:
+      if (requestController.bookings.isEmpty) {
+        requestController.fetchBookings(refresh: true);
+      }
+      break;
+    case 2:
+      if (pendingController.bookings.isEmpty) {
+        pendingController.fetchBookings(refresh: true);
+      }
+      break;
+    case 3:
+      if (completeController.bookings.isEmpty) {
+        completeController.fetchBookings(refresh: true);
+      }
+      break;
   }
+}
+
+
+@override
+void initState() {
+  super.initState();
+  _tabController = TabController(length: 4, vsync: this);
+
+  // 1. Force clear everything so the UI starts at 0 items
+  quoteController.bookings.clear();
+  requestController.bookings.clear();
+  pendingController.bookings.clear();
+  completeController.bookings.clear();
+
+  // 2. Listener for tab switches
+  _tabController.addListener(() {
+    if (!_tabController.indexIsChanging) {
+      _fetchDataForIndex(_tabController.index);
+    }
+  });
+
+  // 3. Initial fetch for the first tab
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _fetchDataForIndex(0);
+  });
+}
 
   @override
   void dispose() {
