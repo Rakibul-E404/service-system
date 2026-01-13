@@ -1832,7 +1832,7 @@ class FavoriteScreen extends GetView<FavoriteController> {
                               },
                               child: InquiryBottomSheet(
                                 key: inquirySheetKey,
-                                // isFromHomeScreen: false,
+                                isFromHomeScreen: false,
                                 serviceNameTEController: serviceNameTEController,
                                 dateTEController: dateTEController,
                                 timeController: timeController,
