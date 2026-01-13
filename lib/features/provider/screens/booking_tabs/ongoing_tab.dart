@@ -4,228 +4,146 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/common/widgets/reusable_button.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:manx_mate/features/booking/controllers/booking_action_controller.dart';
 import 'package:manx_mate/features/provider/screens/booking_tabs/provider_ongoing_controller.dart';
+import 'package:manx_mate/model/booking_service_model.dart';
 import '../provider_services.dart';
 
 class OngoingTab extends StatelessWidget {
   const OngoingTab({super.key});
 
-  ProviderOngoingController get controller => Get.find<ProviderOngoingController>();
-
-  String _getImageUrl(String? imagePath) {
+ProviderOngoingController get controller => Get.find<ProviderOngoingController>();
+  // Inject the Action Controller to handle button states
+  BookingActionController get actionController => Get.find<BookingActionController>();
+  
+ String _getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
       return 'https://via.placeholder.com/150';
     }
-
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-
-    if (imagePath.contains('cloudinary.com')) {
-      if (imagePath.startsWith('https://')) {
-        return imagePath;
-      } else {
-        return 'https://$imagePath';
-      }
-    }
-
     return '${AppUrl.imageBaseUrl}/$imagePath';
   }
 
+  // UPDATED: Now accepts BookingServiceModel instead of Map
+ Widget _buildOngoingCard(BuildContext context, BookingServiceModel booking) {
+    final String bookingId = booking.id;
+    final String location = booking.location.isEmpty ? 'Unknown' : booking.location;
+    final String description = booking.additionalInfo.isEmpty ? 'No description' : booking.additionalInfo;
+    final String formattedDate = '${booking.date.day}/${booking.date.month}/${booking.date.year}';
+    final String authorName = booking.author.name;
+    final String? authorImagePath = booking.author.image;
 
-  Widget _buildOngoingCard(BuildContext context, Map<String, dynamic> booking) {
-    final author = booking['author'] is Map ? booking['author'] : {};
-    final location = booking['location'] ?? 'Unknown';
-    final description = booking['description'] ?? 'No description';
-    final bookingDate = booking['bookingDate'] ?? '';
-    final status = booking['status'] ?? 'N/A';
-    final bookingId = booking['_id']?.toString() ?? '';
+    return Obx(() {
+      // Logic to check which specific button is loading
+      final bool isThisCardBusy = actionController.loadingBookingId.value == bookingId;
+      final bool isCancelLoading = isThisCardBusy && actionController.processingStatus.value == 'cancelled';
+      final bool isCompleteLoading = isThisCardBusy && actionController.processingStatus.value == 'completed';
 
-    String formattedDate = '';
-    try {
-      final date = DateTime.parse(bookingDate);
-      formattedDate = '${date.day}/${date.month}/${date.year}';
-    } catch (_) {
-      formattedDate = 'Invalid date';
-    }
-
-    final authorName = author is Map ? author['name'] ?? 'Unknown' : 'Unknown';
-    final authorImagePath = author is Map ? author['image'] : null;
-    final isProcessing = controller.isProcessing(bookingId);
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[300]!, width: 1),
-      ),
-      child: InkWell(
-        onTap: () => _showBookingDetails(context, booking),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // User Info Row with Avatar
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: NetworkImage(_getImageUrl(authorImagePath?.toString())),
-                    onBackgroundImageError: (_, __) {},
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          authorName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+      return Card(
+        color: Colors.white,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!, width: 1),
+        ),
+        child: InkWell(
+          onTap: isThisCardBusy ? null : () => _showBookingDetails(context, booking),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: NetworkImage(_getImageUrl(authorImagePath)),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Service Title
-              Text(
-                description.length > 50
-                    ? '${description.substring(0, 50)}...'
-                    : description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(authorName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 2),
+                          Text(formattedDate, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Location Row
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 14,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      location,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 16),
+                Text(
+                  description.length > 50 ? '${description.substring(0, 50)}...' : description,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(location, style: TextStyle(fontSize: 12, color: Colors.grey[600]), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-              Divider(height: 1, color: Colors.grey[300]),
-              const SizedBox(height: 12),
-
-              // Action Buttons for Ongoing Bookings
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: isProcessing ? null : () {
-                        _showConfirmationDialog(
-                          context,
-                          'Cancel Booking',
-                          'Are you sure you want to cancel this ongoing booking?',
-                              () => controller.respondToBooking(bookingId, 'cancelled'),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Divider(height: 1, color: Colors.grey[300]),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    // CANCEL BUTTON
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: isThisCardBusy ? null : () {
+                          _showConfirmationDialog(context, 'Cancel Booking', 'Are you sure?', () async {
+                            bool success = await actionController.updateBookingStatus(bookingId, 'cancelled');
+                            if (success) controller.fetchBookings(refresh: true);
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                      ),
-                      child: isProcessing
-                          ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                          : const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        child: isCancelLoading 
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+                            : const Text('Cancel'),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: isProcessing ? null : () {
-                        _showConfirmationDialog(
-                          context,
-                          'Complete Booking',
-                          'Are you sure you want to mark this booking as completed?',
-                              () => controller.respondToBooking(bookingId, 'completed'),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 12),
+                    // COMPLETE BUTTON
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isThisCardBusy ? null : () {
+                          _showConfirmationDialog(context, 'Complete Booking', 'Mark as finished?', () async {
+                            bool success = await actionController.updateBookingStatus(bookingId, 'completed');
+                            if (success) controller.fetchBookings(refresh: true);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                      ),
-                      child: isProcessing
-                          ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                          : const Text(
-                        'Complete',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        child: isCompleteLoading 
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Complete'),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   void _showConfirmationDialog(BuildContext context, String title, String message, VoidCallback onConfirm) {
@@ -253,128 +171,87 @@ class OngoingTab extends StatelessWidget {
     );
   }
 
-  void _showBookingDetails(BuildContext context, Map<String, dynamic> booking) {
-    final dynamic authorRaw = booking['author'];
-    final Map<String, dynamic> author = (authorRaw is Map<String, dynamic>) ? authorRaw : {};
-    final location = booking['location']?.toString() ?? 'Unknown';
-    final description = booking['description']?.toString() ?? booking['additionalInfo']?.toString() ?? 'No description';
-    final bookingDate = booking['bookingDate']?.toString() ?? booking['date']?.toString() ?? '';
+  // UPDATED: Now accepts BookingServiceModel instead of Map
+void _showBookingDetails(BuildContext context, BookingServiceModel booking) {
+  debugPrint('📑 Showing Details Sheet for: ${booking.id}');
+  
+  // No need for 'authorRaw' or 'try-catch' parsing anymore! 
+  // The model has already done the heavy lifting.
+  final String authorName = booking.author.name;
+  final String authorImageUrl = _getImageUrl(booking.author.image);
+  
+  final String location = booking.location.isEmpty ? 'Unknown' : booking.location;
+  final String description = booking.additionalInfo.isEmpty ? 'No description' : booking.additionalInfo;
+  
+  // Cleanly format the date from the model's DateTime object
+  final String formattedDate = '${booking.date.day}/${booking.date.month}/${booking.date.year}';
 
-    String formattedDate = '';
-    try {
-      final date = DateTime.parse(bookingDate);
-      formattedDate = '${date.day}/${date.month}/${date.year}';
-    } catch (_) {
-      formattedDate = 'Invalid date';
-    }
-
-    final authorName = author['name']?.toString() ?? 'Unknown';
-    final authorImagePath = author['image']?.toString();
-    final authorImageUrl = _getImageUrl(authorImagePath);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Padding(
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Booking Details', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Booking Details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: NetworkImage(authorImageUrl),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(authorName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text('Client', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(icon: Icons.description, label: 'Service Description', value: description),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(icon: Icons.location_on, label: 'Location', value: location),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(icon: Icons.calendar_today, label: 'Date', value: formattedDate),
                 ],
               ),
             ),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // User Info
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage: NetworkImage(authorImageUrl),
-                          onBackgroundImageError: (_, __) {},
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                authorName,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Client',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 16),
-
-                    // Booking Details
-                    _buildDetailRow(
-                      icon: Icons.description,
-                      label: 'Service Description',
-                      value: description,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow(
-                      icon: Icons.location_on,
-                      label: 'Location',
-                      value: location,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow(
-                      icon: Icons.calendar_today,
-                      label: 'Date',
-                      value: formattedDate,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDetailRow({
     required IconData icon,
@@ -418,38 +295,17 @@ class OngoingTab extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.inbox_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: AppSizes.md),
           Text(
             message,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 16),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.lg),
           SizedBox(
             width: 150,
-            child: ReusableButton(
-              onTap: onRefresh,
-              label: "Refresh",
-            ),
-          ),
-          const SizedBox(height: AppSizes.md),
-          TextButton(
-            onPressed: onRefresh,
-            child: const Text(
-              "Pull down to refresh",
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
+            child: ReusableButton(onTap: onRefresh, label: "Refresh"),
           ),
         ],
       ),
@@ -461,92 +317,74 @@ class OngoingTab extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red[400],
-          ),
+          Icon(Icons.error_outline, size: 80, color: Colors.red[400]),
           const SizedBox(height: AppSizes.md),
           Text(
             error,
-            style: TextStyle(
-              color: Colors.red[600],
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.red[600], fontSize: 16),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.lg),
           SizedBox(
             width: 150,
-            child: ReusableButton(
-              onTap: onRetry,
-              label: "Try Again",
-            ),
+            child: ReusableButton(onTap: onRetry, label: "Try Again"),
           ),
         ],
       ),
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  // 1. Wrap in Obx to listen to controller changes reactively
-  return Obx(() {
-    // 2. Check loading first. 
-    // Show spinner if loading and we don't have data yet.
-    if (controller.isLoading.value && controller.bookings.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryColor),
-      );
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoading.value && controller.bookings.isEmpty) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryColor),
+        );
+      }
 
-    // 3. Handle Error State
-    if (controller.errorMessage.isNotEmpty) {
-      return RefreshIndicator(
-        onRefresh: () async => controller.fetchBookings(refresh: true),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: _buildErrorState(
-              controller.errorMessage.value,
-              () => controller.fetchBookings(refresh: true),
+      if (controller.errorMessage.isNotEmpty) {
+        return RefreshIndicator(
+          onRefresh: () async => controller.fetchBookings(refresh: true),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: _buildErrorState(
+                controller.errorMessage.value,
+                () => controller.fetchBookings(refresh: true),
+              ),
             ),
           ),
-        ),
-      );
-    }
+        );
+      }
 
-    // 4. Handle Empty State 
-    // Only shows if NOT loading (or finished loading) and list is still empty
-    if (controller.bookings.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: () async => controller.fetchBookings(refresh: true),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: _buildEmptyState(
-              'No ongoing bookings',
-              () => controller.fetchBookings(refresh: true),
+      if (controller.bookings.isEmpty) {
+        return RefreshIndicator(
+          onRefresh: () async => controller.fetchBookings(refresh: true),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: _buildEmptyState(
+                'No ongoing bookings',
+                () => controller.fetchBookings(refresh: true),
+              ),
             ),
           ),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () async => controller.fetchBookings(refresh: true),
+        child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          itemCount: controller.bookings.length,
+          itemBuilder: (context, i) => _buildOngoingCard(context, controller.bookings[i]),
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
         ),
       );
-    }
-
-    // 5. Show the Data List
-    return RefreshIndicator(
-      onRefresh: () async => controller.fetchBookings(refresh: true),
-      child: ListView.separated(
-        // Ensure pull-to-refresh works even with few items
-        physics: const AlwaysScrollableScrollPhysics(), 
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        itemCount: controller.bookings.length,
-        itemBuilder: (context, i) => _buildOngoingCard(context, controller.bookings[i]),
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-      ),
-    );
-  });
-}
+    });
+  }
 }
