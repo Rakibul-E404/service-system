@@ -317,7 +317,7 @@ class HomeScreen extends StatelessWidget {
                                         ?.submitInquiry();
                                   },
                                   child: InquiryBottomSheet(
-                                    isFromHomeScreen: true,
+                                    // isFromHomeScreen: true,
                                     key: inquirySheetKey,
                                     serviceNameTEController:
                                     serviceNameTEController,
