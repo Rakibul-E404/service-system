@@ -23,6 +23,18 @@ class AppUrl {
   static const String postInquiryQuote = '$baseUrlV1/$version1/service-inquiry';
   static const String getMyQuote = '$baseUrlV1/$version1/service-inquiry/self';
   static const String getAllAdvertisement = '$baseUrlV1/$version1/adds/all';
+  static String providerJObRequested(int page) {
+    return '$baseUrlV1/$version1/booking/provider?status=pending&page=$page&limit=10';
+  }
+  static String providerJObOngoing(int page) {
+    return '$baseUrlV1/$version1/booking/provider?status=accepted&page=$page&limit=10';
+  }
+  static String providerJobCompleted(int page) {
+    return '$baseUrlV1/$version1/booking/provider?status=completed&page=$page&limit=10';
+  }
+
+
+
   static String activeJob(int page) {
     return '$baseUrlV1/$version1/booking/user/?status=pending&page=$page&limit=10';
   }
