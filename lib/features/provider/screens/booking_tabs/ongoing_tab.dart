@@ -4,6 +4,7 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/common/widgets/reusable_button.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:manx_mate/features/booking/controllers/booking_action_controller.dart';
 import 'package:manx_mate/features/provider/screens/booking_tabs/provider_ongoing_controller.dart';
 import 'package:manx_mate/model/booking_service_model.dart';
 import '../provider_services.dart';
@@ -11,195 +12,139 @@ import '../provider_services.dart';
 class OngoingTab extends StatelessWidget {
   const OngoingTab({super.key});
 
-  ProviderOngoingController get controller => Get.find<ProviderOngoingController>();
-
-  String _getImageUrl(String? imagePath) {
+ProviderOngoingController get controller => Get.find<ProviderOngoingController>();
+  // Inject the Action Controller to handle button states
+  BookingActionController get actionController => Get.find<BookingActionController>();
+  
+ String _getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
       return 'https://via.placeholder.com/150';
     }
-
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-
-    if (imagePath.contains('cloudinary.com')) {
-      if (imagePath.startsWith('https://')) {
-        return imagePath;
-      } else {
-        return 'https://$imagePath';
-      }
-    }
-
     return '${AppUrl.imageBaseUrl}/$imagePath';
   }
 
   // UPDATED: Now accepts BookingServiceModel instead of Map
-  Widget _buildOngoingCard(BuildContext context, BookingServiceModel booking) {
-  // Accessing properties directly from the Model
-  final String bookingId = booking.id;
-  final String location = booking.location.isEmpty ? 'Unknown' : booking.location;
-  
-  // The model already handles the 'details' vs 'additionalInfo' logic
-  final String description = booking.additionalInfo.isEmpty ? 'No description' : booking.additionalInfo;
-  
-  // Format date safely using the DateTime object from the model
-  final String formattedDate = '${booking.date.day}/${booking.date.month}/${booking.date.year}';
+ Widget _buildOngoingCard(BuildContext context, BookingServiceModel booking) {
+    final String bookingId = booking.id;
+    final String location = booking.location.isEmpty ? 'Unknown' : booking.location;
+    final String description = booking.additionalInfo.isEmpty ? 'No description' : booking.additionalInfo;
+    final String formattedDate = '${booking.date.day}/${booking.date.month}/${booking.date.year}';
+    final String authorName = booking.author.name;
+    final String? authorImagePath = booking.author.image;
 
-  // Access nested Author object
-  final String authorName = booking.author.name;
-  final String? authorImagePath = booking.author.image;
-  
-  final bool isProcessing = controller.isProcessing(bookingId);
+    return Obx(() {
+      // Logic to check which specific button is loading
+      final bool isThisCardBusy = actionController.loadingBookingId.value == bookingId;
+      final bool isCancelLoading = isThisCardBusy && actionController.processingStatus.value == 'cancelled';
+      final bool isCompleteLoading = isThisCardBusy && actionController.processingStatus.value == 'completed';
 
-  return Card(
-    color: Colors.white,
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-      side: BorderSide(color: Colors.grey[300]!, width: 1),
-    ),
-    child: InkWell(
-      onTap: () {
-        debugPrint('🖱️ Card Tapped: BookingID $bookingId');
-        _showBookingDetails(context, booking);
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: NetworkImage(_getImageUrl(authorImagePath)),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    debugPrint('🖼️ Image Load Error: $authorImagePath');
-                  },
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        authorName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        formattedDate,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              description.length > 50 ? '${description.substring(0, 50)}...' : description,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    location,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Divider(height: 1, color: Colors.grey[300]),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: isProcessing
-                        ? null
-                        : () {
-                            _showConfirmationDialog(
-                              context,
-                              'Reject Request',
-                              'Are you sure you want to reject this booking request?',
-                              () => controller.respondToBooking(
-                                bookingId: bookingId,
-                                status: 'rejected',
-                              ),
-                            );
-                          },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: isProcessing
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
-                        : const Text('Reject', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: isProcessing
-                        ? null
-                        : () {
-                            _showConfirmationDialog(
-                              context,
-                              'Accept Request',
-                              'Are you sure you want to accept this booking request?',
-                              () => controller.respondToBooking(
-                                bookingId: bookingId,
-                                status: 'accepted',
-                              ),
-                            );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: isProcessing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Accept', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
-            ),
-          ],
+      return Card(
+        color: Colors.white,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!, width: 1),
         ),
-      ),
-    ),
-  );
-}
+        child: InkWell(
+          onTap: isThisCardBusy ? null : () => _showBookingDetails(context, booking),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: NetworkImage(_getImageUrl(authorImagePath)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(authorName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 2),
+                          Text(formattedDate, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  description.length > 50 ? '${description.substring(0, 50)}...' : description,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(location, style: TextStyle(fontSize: 12, color: Colors.grey[600]), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Divider(height: 1, color: Colors.grey[300]),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    // CANCEL BUTTON
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: isThisCardBusy ? null : () {
+                          _showConfirmationDialog(context, 'Cancel Booking', 'Are you sure?', () async {
+                            bool success = await actionController.updateBookingStatus(bookingId, 'cancelled');
+                            if (success) controller.fetchBookings(refresh: true);
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: isCancelLoading 
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+                            : const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // COMPLETE BUTTON
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isThisCardBusy ? null : () {
+                          _showConfirmationDialog(context, 'Complete Booking', 'Mark as finished?', () async {
+                            bool success = await actionController.updateBookingStatus(bookingId, 'completed');
+                            if (success) controller.fetchBookings(refresh: true);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: isCompleteLoading 
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Complete'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
 
   void _showConfirmationDialog(BuildContext context, String title, String message, VoidCallback onConfirm) {
     showDialog(
