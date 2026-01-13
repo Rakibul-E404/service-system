@@ -28,67 +28,69 @@ class CustomModalBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return SafeArea(
+      child: Container(
+        height: height,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Title (optional)
-          if (title != null) ...<Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text(title ?? '', style: context.txtTheme.labelLarge),
-            ),
-           ],
-
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: child,
-            ),
-          ),
-
-          // Bottom button
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            child: ElevatedButton(
-              onPressed: isButtonEnabled ? onButtonPressed : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: buttonColor ?? AppColors.primaryColor,
-                foregroundColor: buttonTextColor ?? AppColors.textBlackColor,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-                disabledBackgroundColor: AppColors.greyColor,
-                disabledForegroundColor: AppColors.greyColor,
-              ),
-              child: Text(
-                buttonText,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        ],
+
+            // Title (optional)
+            if (title != null) ...<Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(title ?? '', style: context.txtTheme.labelLarge),
+              ),
+             ],
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: child,
+              ),
+            ),
+
+            // Bottom button
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              child: ElevatedButton(
+                onPressed: isButtonEnabled ? onButtonPressed : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor ?? AppColors.primaryColor,
+                  foregroundColor: buttonTextColor ?? AppColors.textBlackColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  disabledBackgroundColor: AppColors.greyColor,
+                  disabledForegroundColor: AppColors.greyColor,
+                ),
+                child: Text(
+                  buttonText,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -129,3 +131,5 @@ class CustomModalBottomSheet extends StatelessWidget {
     );
   }
 }
+
+

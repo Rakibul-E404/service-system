@@ -12,7 +12,7 @@ class AppConstants{
   static const String imageBaseUrl = '';
 
   static const String viewsType = 'viewsType';
-  
+
   // tokens
   static const String token = 'token';
   static const String authToken = 'authToken';
@@ -20,8 +20,10 @@ class AppConstants{
   static const String refressToken = 'refressToken';
   static const String refressTokenExpiry = 'refressTokenExpiry';
 
-
-    static const String roleType = 'roleType';
-    static const String isLoggedIn = 'isLoggedIn';
-
+  // user data
+  static const String roleType = 'roleType';
+  static const String isLoggedIn = 'isLoggedIn';
+  static const String userId = 'userId'; // Add this line
+  static const String userName = 'userName'; // Optional: add if you need it
+  static const String userEmail = 'userEmail'; // Optional: add if you need it
 }

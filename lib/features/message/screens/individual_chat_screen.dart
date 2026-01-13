@@ -1,19 +1,16 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../auth/widgets/app_custom_modal.dart';
+import '../../home/screens/provider_details_screen.dart';
+import '../../profile/screens/report_page.dart';
 import '../controllers/message_controller.dart';
-import '../model/chat_user.dart';
-import '../model/message.dart';
 
-class IndividualChatScreen extends GetView <MessageController> {
+class IndividualChatScreen extends GetView<MessageController> {
   IndividualChatScreen({super.key});
 
   final TextEditingController messageController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -29,7 +26,12 @@ class IndividualChatScreen extends GetView <MessageController> {
 
           return Row(
             children: <Widget>[
-              CircleAvatar(radius: 18, backgroundImage: NetworkImage(user.avatar)),
+              CircleAvatar(
+                radius: 18,
+                backgroundImage: user.avatar.isNotEmpty
+                    ? NetworkImage(user.avatar)
+                    : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+              ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,39 +54,112 @@ class IndividualChatScreen extends GetView <MessageController> {
           );
         }),
         actions: <Widget>[
-          IconButton(
-            icon: const Icon(CupertinoIcons.delete, color: Colors.red),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ), // Curved top border
+          const Padding(
+            padding:  EdgeInsets.all(8.0),
+            child: Icon(Icons.call),
+          ),
+          const Padding(
+            padding:  EdgeInsets.all(8.0),
+            child: Icon(Icons.attach_email_outlined),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.black),
+            onSelected: (String value) => _handleMenuSelection(value, context),
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text('View Profile'),
+                  ],
                 ),
-                builder: (BuildContext context) {
-                  return AppDeleteModal(onTap: () {});
-                },
-              );
-            },
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'report',
+                child: Row(
+                  children: [
+                    Icon(Icons.report, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Report User'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       body: Column(
         children: <Widget>[
+          // Banner Loading Indicator
+          Obx(() => controller.showBannerLoading.value
+              ? Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            color: Colors.amber[100],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.amber[700]!),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Loading messages...',
+                  style: TextStyle(
+                    color: Colors.amber[800],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          )
+              : const SizedBox.shrink()),
+
           // Messages List
           Expanded(
-            child: Obx(
-                  () => ListView.builder(
-                reverse: true,
-                padding: const EdgeInsets.all(16),
-                itemCount: controller.messages.reversed.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final Message message = controller.messages.reversed.toList()[index];
-                  return _buildMessageBubble(message);
-                },
-              ),
-            ),
+            child: Obx(() {
+              if (controller.messages.isEmpty && !controller.showBannerLoading.value) {
+                return const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'No messages yet',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      Text(
+                        'Start a conversation',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () => controller.refreshMessages(),
+                child: ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.messages.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final Message message = controller.messages[index];
+                    return _buildMessageBubble(message);
+                  },
+                ),
+              );
+            }),
           ),
 
           // Message Input
@@ -94,7 +169,7 @@ class IndividualChatScreen extends GetView <MessageController> {
               color: Colors.white,
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -108,7 +183,14 @@ class IndividualChatScreen extends GetView <MessageController> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        Get.snackbar(
+                          'Info',
+                          'Attachment feature coming soon',
+                          backgroundColor: Colors.blue,
+                          colorText: Colors.white,
+                        );
+                      },
                       child: Icon(Icons.attach_file, color: Colors.amber[600], size: 24),
                     ),
                   ),
@@ -141,7 +223,10 @@ class IndividualChatScreen extends GetView <MessageController> {
                     onTap: () => _sendMessage(controller, messageController.text),
                     child: Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.amber[600], shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: Colors.amber[600],
+                        shape: BoxShape.circle,
+                      ),
                       child: const Icon(Icons.send, color: Colors.white, size: 20),
                     ),
                   ),
@@ -155,6 +240,8 @@ class IndividualChatScreen extends GetView <MessageController> {
   }
 
   Widget _buildMessageBubble(Message message) {
+    final ChatUser? selectedUser = controller.selectedUser.value;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -162,11 +249,11 @@ class IndividualChatScreen extends GetView <MessageController> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
           if (!message.isSentByMe) ...<Widget>[
-            const CircleAvatar(
+            CircleAvatar(
               radius: 12,
-              backgroundImage: NetworkImage(
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-              ),
+              backgroundImage: selectedUser != null && selectedUser.avatar.isNotEmpty
+                  ? NetworkImage(selectedUser.avatar)
+                  : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
             ),
             const SizedBox(width: 8),
           ],
@@ -180,7 +267,7 @@ class IndividualChatScreen extends GetView <MessageController> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: Colors.black.withValues(alpha:  0.05),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -189,9 +276,15 @@ class IndividualChatScreen extends GetView <MessageController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(message.text, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                  Text(
+                    message.text,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                   const SizedBox(height: 4),
-                  Text(message.time, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                  Text(
+                    message.time,
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  ),
                 ],
               ),
             ),
@@ -210,7 +303,53 @@ class IndividualChatScreen extends GetView <MessageController> {
   }
 
   void _sendMessage(MessageController controller, String text) {
+    if (text.trim().isEmpty) return;
+
     controller.sendMessage(text);
     messageController.clear();
+  }
+
+  void _handleMenuSelection(String value, BuildContext context) {
+    final ChatUser? selectedUser = controller.selectedUser.value;
+
+    switch (value) {
+      case 'profile':
+        _viewProfile(selectedUser);
+        break;
+      case 'report':
+        _navigateToReportScreen(selectedUser);
+        break;
+    }
+  }
+
+  void _navigateToReportScreen(ChatUser? user) {
+    if (user == null) {
+      Get.snackbar('Error', 'User not found');
+      return;
+    }
+
+    // Navigate directly to ReportPage with the author ID
+    Get.to(
+          () => ReportPage(),
+      arguments: {
+        'reportedUserId': user.id, // Pass the author ID
+        'userName': user.name, // Pass user name for context
+      },
+    );
+  }
+
+  void _viewProfile(ChatUser? user) {
+    if (user == null) {
+      Get.snackbar('Error', 'User not found');
+      return;
+    }
+
+    // Navigate to ProviderDetailsScreen with the user ID as authId
+    Get.to(
+          () => ProviderDetailsScreen(),
+      arguments: {
+        'authId': user.id, // This matches what ProviderDetailsController expects
+      },
+    );
   }
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/core/extensions/context_extensions.dart';
 import '../../config/app_colors.dart';
-import 'custom_network_image.dart';
 
 class ImageSliderController extends GetxController {
   RxInt currentIndex = 0.obs;
@@ -16,25 +14,30 @@ class ImageSlider extends StatefulWidget {
   final List<String> imgList;
   final double height;
   final double indicatorWidth;
-  final double borderRadius;
   final double indicatorHeight;
+  final double borderRadius;
+  final double indicatorSpacing;
   final Color activeIndicatorColor;
   final Color inactiveIndicatorColor;
   final bool isBorder;
   final bool isInfiniteSlide;
+  final Function(int index)? onImageTap;
 
-  const ImageSlider({
+  ImageSlider({
     super.key,
     required this.imgList,
-    this.height = 300.0,
+    this.height = 500.0,
     this.indicatorWidth = 20.0,
     this.indicatorHeight = 10.0,
+    this.borderRadius = 12,
+    this.indicatorSpacing = 12,
+    this.activeIndicatorColor = AppColors.primaryColor,
+    Color? inactiveIndicatorColor, // runtime default
     this.isBorder = false,
     this.isInfiniteSlide = true,
-    this.borderRadius = 12,
-    this.activeIndicatorColor = AppColors.primaryColor,
-    this.inactiveIndicatorColor = AppColors.greyColor,
-  });
+    this.onImageTap,
+  }) : inactiveIndicatorColor =
+      inactiveIndicatorColor ?? AppColors.greyColor.withOpacity(0.3);
 
   @override
   State<ImageSlider> createState() => _ImageSliderState();
@@ -59,12 +62,12 @@ class _ImageSliderState extends State<ImageSlider> {
   }
 
   void _startInfiniteSlide() {
-    Future<dynamic>.delayed(const Duration(seconds: 3), _nextPage);
+    Future.delayed(const Duration(seconds: 3), _nextPage);
   }
 
   void _nextPage() {
     if (_controller.currentIndex.value == widget.imgList.length - 1) {
-      Future<dynamic>.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         _controller.updateIndex = 0;
         _pageController.jumpToPage(0);
       });
@@ -79,7 +82,7 @@ class _ImageSliderState extends State<ImageSlider> {
     );
 
     if (widget.isInfiniteSlide) {
-      Future<dynamic>.delayed(const Duration(seconds: 3), _nextPage);
+      Future.delayed(const Duration(seconds: 3), _nextPage);
     }
   }
 
@@ -87,6 +90,7 @@ class _ImageSliderState extends State<ImageSlider> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
+        // Image Container
         SizedBox(
           height: widget.height,
           child: PageView.builder(
@@ -96,74 +100,66 @@ class _ImageSliderState extends State<ImageSlider> {
               _controller.updateIndex = index;
             },
             itemBuilder: (BuildContext context, int index) {
-              return Stack(
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(widget.borderRadius),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Expanded(
-                            child: CustomCachedImage(
-                              imageUrl: widget.imgList[index],
-                              height: widget.height,
-                              width: context.screenWidth,
-                            ),
-                          ),
-                        ],
+              return GestureDetector(
+                onTap: () {
+                  widget.onImageTap?.call(index);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(widget.borderRadius),
+                    child: SizedBox(
+                      height: widget.height,
+                      width: double.infinity,
+                      child: Image.asset(
+                        widget.imgList[index],
+                        fit: BoxFit.cover,
                       ),
-
-                      // CustomNetworkImage(
-                      //   imageUrl: widget.imgList[index],
-                      //   boxShape: BoxShape.rectangle,
-                      //   height: widget.height,
-                      //   width: context.screenWidth,
-                      // ),
                     ),
                   ),
-                  Positioned(
-                    left: 20,
-                    bottom: 50,
-                    child: Obx(() {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List<AnimatedContainer>.generate(widget.imgList.length, (
-                              int index,
-                            ) {
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 500),
-                                width: _controller.currentIndex.value == index
-                                    ? widget.indicatorWidth * 1.5
-                                    : widget.indicatorWidth * 0.6,
-                                height: widget.indicatorHeight,
-                                margin: const EdgeInsets.symmetric(horizontal: 3),
-                                decoration: BoxDecoration(
-                                  color: _controller.currentIndex.value == index
-                                      ? widget.activeIndicatorColor
-                                      : widget.inactiveIndicatorColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: widget.isBorder ? Border.all(color: Colors.black) : null,
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
-                      );
-                    }),
-                  ),
-                ],
+                ),
               );
             },
           ),
         ),
 
-        const SizedBox(height: 12),
+        // Space between image and indicators
+        SizedBox(height: widget.indicatorSpacing),
+
+        // Indicators
+        Obx(() {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.imgList.length, (dotIndex) {
+              return GestureDetector(
+                onTap: () {
+                  _pageController.animateToPage(
+                    dotIndex,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: _controller.currentIndex.value == dotIndex
+                      ? widget.indicatorWidth * 1.5
+                      : widget.indicatorWidth * 0.8,
+                  height: widget.indicatorHeight,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: _controller.currentIndex.value == dotIndex
+                        ? widget.activeIndicatorColor
+                        : widget.inactiveIndicatorColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: widget.isBorder
+                        ? Border.all(color: Colors.black)
+                        : null,
+                  ),
+                ),
+              );
+            }),
+          );
+        }),
       ],
     );
   }

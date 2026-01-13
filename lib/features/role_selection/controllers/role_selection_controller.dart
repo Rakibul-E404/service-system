@@ -1,10 +1,10 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/core/config/app_constants.dart';
-import 'package:manx_mate/core/routes/app_routes.dart';
-
+import '../../../core/config/app_constants.dart';
 import '../../../core/data/secured_storage.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/custom_snack_bar.dart';
 
 class RoleSelectionController extends GetxController {
@@ -15,13 +15,14 @@ class RoleSelectionController extends GetxController {
   }
 
   Future<void> continueWithRole() async {
-    // save it to the secured storage
+    // Save it to the secured storage
+    await SecureStorageService().write(AppConstants.roleType, selectedRole.value);
 
-    SecureStorageService().write(AppConstants.roleType, selectedRole.value);
-
-    /// [final savedRole = await SecureStorageService().read(AppConstants.roleType);] is the method to fetch the saved role
-
-    Get.toNamed(AppRoutes.loginRoute);
+    /// Navigate to signup and pass the role
+    Get.toNamed(
+      AppRoutes.loginRoute,
+      arguments: {'role': selectedRole.value}, // Make sure role is passed here
+    );
   }
 
   void continueWithoutRole() {
@@ -36,3 +37,11 @@ class RoleSelectionController extends GetxController {
     );
   }
 }
+
+
+
+
+
+
+
+

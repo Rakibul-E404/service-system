@@ -1,3 +1,4 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,7 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/config/app_strings.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
- import '../controllers/role_selection_controller.dart';
+import '../controllers/role_selection_controller.dart';
 
 // Role Selection Page
 class RoleSelectionScreen extends GetView<RoleSelectionController> {
@@ -16,12 +17,13 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
   Widget build(BuildContext context) {
     Get.put(RoleSelectionController());
     return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: SizedBox(
         height: 50,
         width: context.screenWidth * 0.9,
         child: Obx(
-          ()=> ReusableButton(
+              () => ReusableButton(
             onTap: () {
               controller.selectedRole.value.isNotEmpty
                   ? controller.continueWithRole()
@@ -40,7 +42,11 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
         automaticallyImplyLeading: false,
         title: const Text(
           'Choose Your Role',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
       ),
@@ -53,15 +59,14 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
             // Continue As Section
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: AppSizes.sm),
-
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.sm,
+                vertical: AppSizes.sm,
+              ),
               child: const Column(
                 children: <Widget>[
-                  // Text('Continue As', style: context.txtTheme.titleLarge),
-                  // const SizedBox(height: 8),
                   Text(
                     'Please select an option to begin your journey',
-                    // style: context.txtTheme.titleMedium,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -74,16 +79,16 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
             Expanded(
               child: Column(
                 children: <Widget>[
-                  // User Role
+                  // User Role - Store as lowercase "user"
                   Obx(
-                    () => _buildRoleOption(
+                        () => _buildRoleOption(
                       icon: CupertinoIcons.person_crop_circle,
                       title: AppStrings.user,
                       subtitle: 'Create your account as a User',
-                      isSelected: controller.selectedRole.value == AppStrings.user,
-                      onTap: () => controller.selectRole(AppStrings.user),
+                      isSelected: controller.selectedRole.value == 'user',
+                      onTap: () => controller.selectRole('user'), // Changed to lowercase
                       backgroundColor: Colors.white,
-                      iconColor: controller.selectedRole.value == AppStrings.user
+                      iconColor: controller.selectedRole.value == 'user'
                           ? AppColors.primaryColor
                           : Colors.grey[700]!,
                     ),
@@ -91,49 +96,22 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
 
                   const SizedBox(height: 16),
 
-                  // Provider Role
+                  // Provider Role - Store as lowercase "provider"
                   Obx(
-                    () => _buildRoleOption(
+                        () => _buildRoleOption(
                       icon: Icons.business_center_outlined,
                       title: AppStrings.provider,
-                      subtitle: 'Create your account as a Provider',
-                      isSelected: controller.selectedRole.value == AppStrings.provider,
-                      onTap: () => controller.selectRole(AppStrings.provider),
+                      subtitle: 'Create your account as Business',
+                      isSelected: controller.selectedRole.value == 'provider',
+                      onTap: () => controller.selectRole('provider'), // Changed to lowercase
                       backgroundColor: Colors.white,
-                      iconColor: controller.selectedRole.value == AppStrings.provider
+                      iconColor: controller.selectedRole.value == 'provider'
                           ? AppColors.primaryColor
                           : Colors.grey[700]!,
                     ),
                   ),
 
                   const Spacer(),
-
-                  // Continue Button
-                  // Obx(
-                  //   () => SizedBox(
-                  //     width: double.infinity,
-                  //     child: ElevatedButton(
-                  //       onPressed: controller.selectedRole.value.isNotEmpty
-                  //           ? () => controller.continueWithRole()
-                  //           : null,
-                  //       style: ElevatedButton.styleFrom(
-                  //         backgroundColor: controller.selectedRole.value.isNotEmpty
-                  //             ? Colors.amber[600]
-                  //             : Colors.grey[300],
-                  //         foregroundColor: controller.selectedRole.value.isNotEmpty
-                  //             ? Colors.black
-                  //             : Colors.grey[600],
-                  //         padding: const EdgeInsets.symmetric(vertical: 16),
-                  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  //         elevation: 0,
-                  //       ),
-                  //       child: const Text(
-                  //         'Continue',
-                  //         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -198,7 +176,10 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
                 ],
               ),
             ),
@@ -215,7 +196,9 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
                 ),
                 color: isSelected ? AppColors.primaryColor : Colors.white,
               ),
-              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+              child: isSelected
+                  ? const Icon(Icons.check, color: Colors.white, size: 14)
+                  : null,
             ),
           ],
         ),
@@ -223,3 +206,16 @@ class RoleSelectionScreen extends GetView<RoleSelectionController> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

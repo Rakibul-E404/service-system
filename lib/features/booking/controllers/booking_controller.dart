@@ -1,3 +1,5 @@
+/**
+
 import 'package:get/get.dart';
 
 class BookingController extends GetxController {
@@ -7,12 +9,12 @@ class BookingController extends GetxController {
   void increment() => count.value++;
 
 
-  
+
   /// [onInit] Lifecycle method called when the controller is initialized.
   ///
   /// Resets loading states, clears existing data, and triggers and more..
   /// initial fetch
-  /// 
+  ///
   @override
   void onInit() {
     super.onInit();
@@ -28,3 +30,165 @@ class BookingController extends GetxController {
     count.value = 0;
   }
 }
+
+
+
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import '../../auth/screens/profile_service.dart';
+// import '../screens/booking_tabs/tab_controllers/active_job_tab_controller.dart';
+// import '../screens/booking_tabs/tab_controllers/ongoing_job_tab_controller.dart';
+// import '../screens/booking_tabs/tab_controllers/past_job_tab_controller.dart';
+// import '../screens/booking_tabs/tab_controllers/quote_job_tab_controller.dart';
+//
+// class BookingScreenController extends GetxController
+//     with GetSingleTickerProviderStateMixin {
+//   late TabController tabController;
+//
+//   final ProfileService profileService = Get.find<ProfileService>();
+//
+//   // Tab Controllers
+//   final QuoteController quoteController = Get.put(QuoteController());
+//   final ActiveJobController activeController = Get.put(ActiveJobController());
+//   final OngoingJobController ongoingController = Get.put(OngoingJobController());
+//   final PastJobController pastController = Get.put(PastJobController());
+//
+//   @override
+//   void onInit() {
+//     super.onInit();
+//     tabController = TabController(length: 4, vsync: this);
+//
+//     tabController.addListener(_handleTabChange);
+//
+//     // Initial fetch after first frame
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       if (profileService.isLoggedIn.value) {
+//         fetchAllTabs();
+//       }
+//     });
+//   }
+//
+//   void _handleTabChange() {
+//     if (!profileService.isLoggedIn.value) {
+//       return;
+//     }
+//
+//     switch (tabController.index) {
+//       case 0:
+//         quoteController.fetchQuotes();
+//         break;
+//       case 1:
+//         activeController.fetchActiveJobs();
+//         break;
+//       case 2:
+//         ongoingController.fetchOngoingJobs();
+//         break;
+//       case 3:
+//         pastController.fetchPastJobs();
+//         break;
+//     }
+//   }
+//
+//   void fetchAllTabs() {
+//     quoteController.fetchQuotes();
+//     activeController.fetchActiveJobs();
+//     ongoingController.fetchOngoingJobs();
+//     pastController.fetchPastJobs();
+//   }
+//
+//   @override
+//   void onClose() {
+//     tabController.dispose();
+//     super.onClose();
+//   }
+// }
+
+
+
+
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../auth/screens/profile_service.dart';
+import '../screens/booking_tabs/tab_controllers/active_job_tab_controller.dart';
+import '../screens/booking_tabs/tab_controllers/ongoing_job_tab_controller.dart';
+import '../screens/booking_tabs/tab_controllers/past_job_tab_controller.dart';
+import '../screens/booking_tabs/tab_controllers/quote_job_tab_controller.dart';
+
+class BookingScreenController extends GetxController
+    with GetSingleTickerProviderStateMixin {
+  late TabController tabController;
+
+  final ProfileService profileService = Get.find<ProfileService>();
+
+  // Tab Controllers
+  final QuoteController quoteController = Get.put(QuoteController());
+  final ActiveJobController activeController = Get.put(ActiveJobController());
+  final OngoingJobController ongoingController =
+  Get.put(OngoingJobController());
+  final PastJobController pastController = Get.put(PastJobController());
+
+  @override
+  void onInit() {
+    super.onInit();
+    tabController = TabController(length: 4, vsync: this);
+
+    tabController.addListener(_handleTabChange);
+
+    // Initial fetch after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (profileService.isLoggedIn.value) {
+        fetchAllTabs();
+      }
+    });
+  }
+
+  void _handleTabChange() {
+    if (!profileService.isLoggedIn.value) return;
+
+    switch (tabController.index) {
+      case 0:
+        quoteController.fetchQuotes();
+        break;
+      case 1:
+        activeController.fetchActiveJobs();
+        break;
+      case 2:
+        ongoingController.fetchOngoingJobs();
+        break;
+      case 3:
+        pastController.fetchPastJobs();
+        break;
+    }
+  }
+
+  void fetchAllTabs() {
+    quoteController.fetchQuotes();
+    activeController.fetchActiveJobs();
+    ongoingController.fetchOngoingJobs();
+    pastController.fetchPastJobs();
+  }
+
+  @override
+  void onClose() {
+    tabController.dispose();
+    super.onClose();
+  }
+}
+
+
+

@@ -1,3 +1,4 @@
+/**
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,8 +13,8 @@ class AgreementLayout extends StatelessWidget {
   final Function(bool? value) onChange;
 
   const AgreementLayout({
-    super.key, 
-    required this.value, 
+    super.key,
+    required this.value,
     required this.onChange
   });
 
@@ -35,7 +36,7 @@ class AgreementLayout extends StatelessWidget {
               return Colors.transparent;
             }
           }),
-          value: value, 
+          value: value,
           onChanged: onChange,
         ),
         Expanded(
@@ -79,6 +80,128 @@ class AgreementLayout extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}*/
+
+
+
+
+
+
+///
+///
+///
+/// todo:: with the navigation api
+///
+///
+///
+
+
+
+
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:manx_mate/core/extensions/context_extensions.dart';
+
+import '../../config/app_colors.dart';
+import '../../config/app_strings.dart';
+import '../../routes/app_routes.dart';
+
+class AgreementLayout extends StatelessWidget {
+  final bool value;
+  final Function(bool? value) onChange;
+
+  const AgreementLayout({
+    super.key,
+    required this.value,
+    required this.onChange
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Checkbox(
+          side: const BorderSide(
+            color: AppColors.primaryColor,
+          ),
+          checkColor: value ? AppColors.whiteColor : AppColors.primaryColor,
+          fillColor: WidgetStateProperty.resolveWith((Set<WidgetState> states) {
+            if(states.contains(WidgetState.selected)) {
+              return AppColors.primaryColor;
+            } else {
+              return Colors.transparent;
+            }
+          }),
+          value: value,
+          onChanged: onChange,
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              onChange(!value);
+            },
+            child: RichText(
+              text: TextSpan(
+                text: AppStrings.agreeToThe,
+                style: context.txtTheme.bodyLarge,
+                children: <TextSpan>[
+                  // Terms & Conditions TextSpan
+                  TextSpan(
+                      text: " ${AppStrings.termsAndCondition}",
+                      style: context.txtTheme.bodyLarge?.copyWith(
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      recognizer: TapGestureRecognizer()..onTap = () {
+                        _navigateToTermsAndConditions();
+                      }
+                  ),
+                  TextSpan(
+                      text: " ${AppStrings.and} ",
+                      style: context.txtTheme.bodyLarge
+                  ),
+                  // Privacy Policy TextSpan
+                  TextSpan(
+                      text: " ${AppStrings.privacyPolicy}",
+                      style: context.txtTheme.bodyLarge?.copyWith(
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      recognizer: TapGestureRecognizer()..onTap = () {
+                        _navigateToPrivacyPolicy();
+                      }
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _navigateToTermsAndConditions() {
+    Get.toNamed(
+      AppRoutes.privacyPolicyTemplatePage,
+      arguments: {
+        'type': 'terms_and_conditions',
+        'title': 'Terms and Conditions',
+      },
+    );
+  }
+
+  void _navigateToPrivacyPolicy() {
+    Get.toNamed(
+      AppRoutes.privacyPolicyTemplatePage,
+      arguments: {
+        'type': 'privacy_policy',
+        'title': 'Privacy Policy',
+      },
     );
   }
 }

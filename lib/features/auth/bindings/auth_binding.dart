@@ -6,7 +6,7 @@ import '../controllers/change_password_controller.dart';
 import '../controllers/reset_password_controller.dart';
 import '../controllers/sign_in_controller.dart';
 import '../controllers/sign_up_controller.dart';
-import '../controllers/taking_email_controller.dart';
+import '../controllers/forgot_password_controller.dart';
 import '../controllers/verify_email_controller.dart';
 
 class AuthBinding extends Bindings {

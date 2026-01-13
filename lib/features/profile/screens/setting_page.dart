@@ -1,9 +1,12 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/features/profile/widgets/profile_common_tile.dart';
+
+import '../../auth/screens/delete_screen.dart';
 
 class SettingPage extends StatelessWidget {
   const SettingPage({super.key});
@@ -39,9 +42,9 @@ class SettingPage extends StatelessWidget {
                 onTap: () {
                   Get.toNamed(
                     AppRoutes.privacyPolicyTemplatePage,
-                    arguments: <String, String>{
+                    arguments: {
+                      'type': 'privacy_policy',
                       'title': 'Privacy Policy',
-                      'bodyText': '2025-08-13',
                     },
                   );
                 },
@@ -53,9 +56,9 @@ class SettingPage extends StatelessWidget {
                 onTap: () {
                   Get.toNamed(
                     AppRoutes.privacyPolicyTemplatePage,
-                    arguments: <String, String>{
+                    arguments: {
+                      'type': 'terms_and_conditions',
                       'title': 'Terms and Conditions',
-                      'bodyText': '2025-08-13',
                     },
                   );
                 },
@@ -67,18 +70,24 @@ class SettingPage extends StatelessWidget {
                 onTap: () {
                   Get.toNamed(
                     AppRoutes.privacyPolicyTemplatePage,
-                    arguments: <String, String>{'title': 'About Us', 'bodyText': '2025-08-13'},
+                    arguments: {
+                      'type': 'about_us',
+                      'title': 'About Us',
+                    },
                   );
                 },
                 leadingIcon: const Icon(Icons.info, color: Colors.grey),
-                title: 'About Us ',
+                title: 'About Us',
               ),
               const SizedBox(height: AppSizes.sm),
               ProfileCommonTile(
                 onTap: () {
                   Get.toNamed(
                     AppRoutes.privacyPolicyTemplatePage,
-                    arguments: <String, String>{'title': 'Host Policy', 'bodyText': '2025-08-13'},
+                    arguments: {
+                      'type': 'host_policy',
+                      'title': 'Host Policy',
+                    },
                   );
                 },
                 leadingIcon: const Icon(Icons.help, color: Colors.grey),
@@ -87,17 +96,21 @@ class SettingPage extends StatelessWidget {
               const SizedBox(height: AppSizes.sm),
               ProfileCommonTile(
                 onTap: () {
-                  Get.toNamed(AppRoutes.reportPage);
+                  Get.to(const DeleteAccountScreen());
+
                 },
-                leadingIcon: const Icon(Icons.description, color: Colors.grey),
-                title: 'Report',
+                leadingIcon: const Icon(Icons.folder_delete_rounded, color: Colors.grey),
+                title: 'Delete Account',
               ),
               const SizedBox(height: AppSizes.sm),
               ProfileCommonTile(
                 onTap: () {
                   Get.toNamed(
                     AppRoutes.privacyPolicyTemplatePage,
-                    arguments: <String, String>{'title': 'Contact Us', 'bodyText': '2025-08-13'},
+                    arguments: {
+                      'type': 'contact_us',
+                      'title': 'Contact Us',
+                    },
                   );
                 },
                 leadingIcon: const Icon(Icons.contact_page_sharp, color: Colors.grey),

@@ -1,165 +1,351 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/common/widgets/time_picker_widget.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/features/home/model/categor_model.dart';
+import 'package:manx_mate/features/home/screens/user_advertisement.dart';
 import '../../../core/common/components/image_carousel.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/config/app_images.dart';
+import '../../profile/controllers/profile_controller.dart';
 import '../controllers/home_controller.dart';
 import '../widget/home_top_bar.dart';
 import '../widget/inquiry_bottom_sheet.dart';
 import '../widget/reusable_small_card.dart';
 
-class HomeScreen extends GetView<HomeController> {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-
 
   @override
   Widget build(BuildContext context) {
+    Get.lazyPut(() => ProfileController());
+    final HomeController controller = Get.put(HomeController());
     final TimeController timeController = Get.put(TimeController());
-    final TextEditingController _serviceNameTEController = TextEditingController();
-    final TextEditingController _locationTEController = TextEditingController();
-    final TextEditingController _additionalNoteTEController = TextEditingController();
-    final TextEditingController _dateTEController = TextEditingController();
+    final TextEditingController serviceNameTEController =
+    TextEditingController();
+    final TextEditingController locationTEController = TextEditingController();
+    final TextEditingController additionalNoteTEController =
+    TextEditingController();
+    final TextEditingController dateTEController = TextEditingController();
+
+    final GlobalKey<InquiryBottomSheetState> inquirySheetKey =
+    GlobalKey<InquiryBottomSheetState>();
+
+    // ✅ Now includes both category and subcategory
+    final Map<int, Map<String, String>> imageIndexToSearchMap = {
+      0: {'category': 'Cleaning', 'subcategory': 'Home Cleaning'},
+      1: {'category': 'Gardening', 'subcategory': 'Garden Maintenance'},
+      2: {'category': 'Electrical', 'subcategory': 'Electrical Services'},
+      3: {'category': 'Plumbing', 'subcategory': 'Plumbing Services'},
+      4: {'category': 'Painting', 'subcategory': 'Painting Services'},
+      5: {'category': 'Carpentry', 'subcategory': 'Carpentry Services'},
+      6: {'category': 'Moving', 'subcategory': 'Moving Services'},
+    };
 
     return Scaffold(
-      body: Scaffold(
-        body: SingleChildScrollView(
-          // padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
+      body: RefreshIndicator(
+        onRefresh: () => controller.refreshAll(),
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              /// ===========> Top Card =================>
               const HomeTopBar(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
-                child: Column(
-                  children: <Widget>[
-                    const ImageSlider(
-                      imgList: <String>[
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                        AppImages.loginImage,
-                      ],
-                      height: 220,
-                    ),
-                    const SizedBox(height: AppSizes.md),
-                    Text('Categories', style: context.txtTheme.headlineLarge),
-                    const SizedBox(height: AppSizes.md),
 
-                    /// ============================> Gridview ===============>
-                    MasonryGridView.count(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 18,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 10,
-                      itemBuilder: (BuildContext context, int index) {
+              ImageSlider(
+                imgList: const <String>[
+                  AppImages.loginImage1,
+                  AppImages.loginImage2,
+                  AppImages.loginImage3,
+                  AppImages.loginImage4,
+                  AppImages.loginImage5,
+                  AppImages.loginImage6,
+                  AppImages.loginImage7,
+                ],
+                height: 200,
+                onImageTap: (int index) {
+                  final Map<String, String>? data = imageIndexToSearchMap[index];
+                  if (data != null) {
+                    Get.toNamed(
+                      AppRoutes.homeSearchRoute,
+                      arguments: {
+                        'initialCategory': data['category'],
+                        'initialSubCategory': data['subcategory'],
+                      },
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: AppSizes.xl),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.screenHorizontal),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Categories',
+                            style: context.txtTheme.headlineLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            )),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    Obx(() {
+                      if (controller.isLoadingCategories.value) {
+                        return const SizedBox(
+                          height: 150,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      if (controller.errorMessage.value.isNotEmpty) {
                         return SizedBox(
                           height: 150,
-                          child: ReusableSmallCard(
-                            imagePath: '',
-                            title: 'Service ',
-                            onTap: () {
-                              Get.toNamed(
-                                AppRoutes.homeSubCategoriesPage,
-                                arguments: "Main Category ",
-                              );
-                            },
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.error_outline,
+                                    size: 32, color: Colors.grey[400]),
+                                const SizedBox(height: 8),
+                                Text(
+                                  controller.errorMessage.value,
+                                  style: const TextStyle(
+                                      color: Colors.red, fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () => controller.retry(),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 8),
+                                  ),
+                                  child: const Text('Retry',
+                                      style: TextStyle(fontSize: 14)),
+                                ),
+                              ],
+                            ),
                           ),
                         );
-                      },
-                    ),
-                    /* GridView.builder(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        childAspectRatio: .6,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: AppSizes.md.toInt(),
+                      }
+                      if (controller.categories.isEmpty) {
+                        return const SizedBox(
+                          height: 150,
+                          child: Center(
+                              child: Text('No categories available',
+                                  style: TextStyle(color: AppColors.greyColor))),
+                        );
+                      }
 
-                      /// for fun
-                      itemBuilder: (BuildContext context, int index) {
-                        return const ReusableSmallCard(imagePath: '', title: 'Service ');
-                      },
-                    ),*/
-                    const SizedBox(height: AppSizes.md),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
-                        color: AppColors.whiteColor,
-                        boxShadow: const <BoxShadow>[
-                          BoxShadow(offset: Offset(0, 3), color: Colors.red),
-                        ],
-                      ),
-                      child: Column(
-                        children: <Widget>[
-                          Row(
-                            spacing: AppSizes.md,
-                            children: <Widget>[
-                              Image.asset(AppImages.phoneImage),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text(
-                                      "Looking for immediate expert help?",
-                                      style: context.txtTheme.labelLarge,
+                      // Calculate page count for pagination
+                      final int totalItems = controller.categories.length;
+                      const int itemsPerPage = 3;
+                      final int totalPages = (totalItems / itemsPerPage).ceil();
+
+                      return Column(
+                        children: [
+                          // Categories Grid with Pagination
+                          SizedBox(
+                            height: 140,
+                            child: PageView.builder(
+                              controller: controller.pageController,
+                              itemCount: totalPages,
+                              onPageChanged: (int page) {
+                                controller.currentPage.value = page;
+                              },
+                              itemBuilder: (BuildContext context, int pageIndex) {
+                                final int startIndex = pageIndex * itemsPerPage;
+                                final int endIndex =
+                                min(startIndex + itemsPerPage, totalItems);
+
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                                  child: GridView.builder(
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    padding: EdgeInsets.zero,
+                                    gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 6,
+                                      mainAxisSpacing: 6,
+                                      childAspectRatio: 0.9,
                                     ),
-                                    const Text(
-                                      "Share more details and let businesses get in touch with you.",
-                                    ),
-                                  ],
+                                    itemCount: endIndex - startIndex,
+                                    itemBuilder:
+                                        (BuildContext context, int gridIndex) {
+                                      final int actualIndex = startIndex + gridIndex;
+                                      final CategoryModel category =
+                                      controller.categories[actualIndex];
+
+                                      return ReusableSmallCard(
+                                        imagePath: category.fullImageUrl,
+                                        title: category.name,
+                                        elevation: 2.0,
+                                        onTap: () {
+                                          Get.toNamed(
+                                            AppRoutes.homeSubCategoriesPage,
+                                            arguments: {
+                                              'categoryId': category.id,
+                                              'categoryName': category.name,
+                                            },
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
+
+                          /// Pagination Indicators :::::
+                          Obx(() {
+                            if (totalPages <= 1) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              margin: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List<Widget>.generate(
+                                  totalPages,
+                                      (int index) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        controller.pageController.animateToPage(
+                                          index,
+                                          duration:
+                                          const Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      },
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 200),
+                                        width: controller.currentPage.value == index
+                                            ? 24
+                                            : 6,
+                                        height: 6,
+                                        margin:
+                                        const EdgeInsets.symmetric(horizontal: 3),
+                                        decoration: BoxDecoration(
+                                          color: controller.currentPage.value ==
+                                              index
+                                              ? AppColors.primaryColor
+                                              : AppColors.greyColor.withValues(alpha: 0.3),
+                                          borderRadius: BorderRadius.circular(3),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSizes.md),
-
-                          ReusableButton(
-                            onTap: () {
-                              CustomModalBottomSheet.show(
-                                title: 'Immediate Help',
-                                height: context.screenHeight * 0.6,
-                                context: context,
-                                buttonText: 'Send',
-                                onButtonPressed: () {
-                                  // Your action here
-                                  Navigator.pop(context);
-                                },
-                                child: InquiryBottomSheet(
-                                  serviceNameTEController: _serviceNameTEController,
-                                  dateTEController: _dateTEController,
-                                  timeController: timeController,
-                                  locationTEController: _locationTEController,
-                                  additionalNoteTEController: _additionalNoteTEController,
-                                ),
-                              );
-                            },
-                            label: 'Post an Inquiry',
-                          ),
-                          const SizedBox(height: AppSizes.md),
+                            );
+                          }),
                         ],
+                      );
+                    }),
+
+                    const SizedBox(height: 20),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius:
+                        BorderRadius.circular(AppSizes.borderRadiusMd),
+                        color: AppColors.whiteColor,
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.md),
+                        child: Column(
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                Image.asset(AppImages.phoneImage, height: 50),
+                                const SizedBox(width: AppSizes.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        "Looking for immediate expert help?",
+                                        style:
+                                        context.txtTheme.labelLarge?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.blackColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        "Share more details and let businesses get in touch with you.",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppColors.greyColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSizes.md),
+                            ReusableButton(
+                              onTap: () {
+                                CustomModalBottomSheet.show(
+                                  title: 'Quote',
+                                  height: context.screenHeight * 0.9,
+                                  context: context,
+                                  buttonText: 'Send',
+                                  onButtonPressed: () {
+                                    inquirySheetKey.currentState
+                                        ?.submitInquiry();
+                                  },
+                                  child: InquiryBottomSheet(
+                                    isFromHomeScreen: true,
+                                    key: inquirySheetKey,
+                                    serviceNameTEController:
+                                    serviceNameTEController,
+                                    dateTEController: dateTEController,
+                                    timeController: timeController,
+                                    locationTEController: locationTEController,
+                                    additionalNoteTEController:
+                                    additionalNoteTEController,
+                                    onSubmitSuccess: () {
+                                      debugPrint(
+                                          '✅ Inquiry submitted successfully!');
+                                    },
+                                  ),
+                                );
+                              },
+                              label: 'Post an Inquiry',
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSizes.xl),
                   ],
                 ),
               ),
+
+              const AdvertisementsSection(),
+              const SizedBox(height: AppSizes.xl),
             ],
           ),
         ),

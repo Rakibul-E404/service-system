@@ -7,12 +7,12 @@ import 'network_response.dart';
 class NetworkCaller {
   // Generic function to handle any HTTP request (GET, POST, PUT, DELETE)
   Future<NetworkResponse> _request(
-    String method,
-    String url, {
-    Map<String, dynamic>? body,
-    Map<String, String>? headers,
-    bool isLogin = false,
-  }) async {
+      String method,
+      String url, {
+        Map<String, dynamic>? body,
+        Map<String, String>? headers,
+        bool isLogin = false,
+      }) async {
     final Uri uri = Uri.parse(url);
     final Map<String, String> requestHeaders = <String, String>{
       'Content-Type': 'application/json',
@@ -20,6 +20,12 @@ class NetworkCaller {
     };
 
     try {
+      debugPrint('🌐 $method Request to: $url');
+      debugPrint('📋 Headers: $requestHeaders');
+      if (body != null) {
+        debugPrint('📦 Body: $body');
+      }
+
       // Make the request using a single method instead of multiple ones.
       Response response;
       switch (method.toUpperCase()) {
@@ -43,7 +49,7 @@ class NetworkCaller {
         case 'DELETE':
           response = await delete(uri, headers: requestHeaders);
           break;
-        case 'PATCH': // Add the PATCH case
+        case 'PATCH':
           response = await patch(
             uri,
             headers: requestHeaders,
@@ -54,10 +60,13 @@ class NetworkCaller {
           throw Exception('Unsupported HTTP method: $method');
       }
 
+      debugPrint('✅ Response Status: ${response.statusCode}');
+      debugPrint('📄 Response Body: ${response.body}');
+
       // Handle the response
       return _handleResponse(response, isLogin);
     } catch (e) {
-      debugPrint('Error: $e');
+      debugPrint('❌ Error: $e');
       return NetworkResponse(isSuccess: false, errorMessage: e.toString());
     }
   }
@@ -82,6 +91,7 @@ class NetworkCaller {
           isSuccess: false,
           statusCode: response.statusCode,
           jsonResponse: jsonResponse,
+          errorMessage: jsonResponse['message'] ?? 'Unauthorized',
         );
       }
 
@@ -90,6 +100,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         jsonResponse: jsonResponse,
+        errorMessage: jsonResponse['message'] ?? 'Request failed',
       );
     } catch (e) {
       return NetworkResponse(
@@ -99,13 +110,22 @@ class NetworkCaller {
     }
   }
 
+  // GET Request - removed body parameter as GET shouldn't have a body
+  Future<NetworkResponse> getRequest(
+      String url, {
+        Map<String, String>? headers,
+        bool isLogin = false,
+      }) async {
+    return _request('GET', url, headers: headers, isLogin: isLogin);
+  }
+
   // POST Request
   Future<NetworkResponse> postRequest(
-    String url, {
-    Map<String, dynamic>? body,
-    bool isLogin = false,
-    Map<String, String>? headers,
-  }) async {
+      String url, {
+        Map<String, dynamic>? body,
+        bool isLogin = false,
+        Map<String, String>? headers,
+      }) async {
     return _request(
       'POST',
       url,
@@ -115,33 +135,23 @@ class NetworkCaller {
     );
   }
 
-  // GET Request
-  Future<NetworkResponse> getRequest(
-    String url, {
-    Map<String, dynamic>? body,
-    bool isLogin = false,
-    Map<String, String>? headers,
-  }) async {
-    return _request('GET', url, body: body, isLogin: isLogin, headers: headers);
-  }
-
   // PUT Request
   Future<NetworkResponse> putRequest(
-    String url, {
-    Map<String, dynamic>? body,
-    bool isLogin = false,
-    Map<String, String>? headers,
-  }) async {
+      String url, {
+        Map<String, dynamic>? body,
+        bool isLogin = false,
+        Map<String, String>? headers,
+      }) async {
     return _request('PUT', url, body: body, isLogin: isLogin, headers: headers);
   }
 
   // DELETE Request
   Future<NetworkResponse> deleteRequest(
-    String url, {
-    Map<String, dynamic>? body,
-    bool isLogin = false,
-    Map<String, String>? headers,
-  }) async {
+      String url, {
+        Map<String, dynamic>? body,
+        bool isLogin = false,
+        Map<String, String>? headers,
+      }) async {
     return _request(
       'DELETE',
       url,
@@ -153,11 +163,11 @@ class NetworkCaller {
 
   // PATCH Request
   Future<NetworkResponse> patchRequest(
-    String url, {
-    Map<String, dynamic>? body,
-    bool isLogin = false,
-    Map<String, String>? headers,
-  }) async {
+      String url, {
+        Map<String, dynamic>? body,
+        bool isLogin = false,
+        Map<String, String>? headers,
+      }) async {
     return _request(
       'PATCH',
       url,

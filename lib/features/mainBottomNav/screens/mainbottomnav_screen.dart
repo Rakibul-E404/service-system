@@ -1,6 +1,7 @@
+
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:manx_mate/core/extensions/widget_extensions.dart';
 import 'package:manx_mate/features/booking/screens/booking_screen.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/screens/home_screen.dart';
@@ -20,17 +21,13 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
   final PageController _pageController = PageController();
 
   final List<Widget> _screens = <Widget>[
- // Text("Home").centered,
- // Text("Booking").centered,
- // Text("Fav").centered,
- // Text("Mesasge").centered,
- // Text("Profile").centered,
 
     const HomeScreen(),
     const BookingScreen(),
     const FavoriteScreen(),
     const MessageScreen(),
-    const ProfileScreen(),
+    // const ProfileScreen(),
+     ProfileScreen(),
   ];
 
   final List<IconData> _icons = <IconData>[
@@ -50,23 +47,6 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*      body: IndexedStack(
-        index: selectedIndex,
-        children: _screens
-      ),*/
-      // body: PageView.builder(
-      //   controller: _pageController,
-      //   onPageChanged: (int index) {
-      //     setState(() {
-      //       selectedIndex = index;
-      //     });
-      //   },
-      //   itemCount: _screens.length,
-      //   itemBuilder: (BuildContext context, int index) {
-      //     return _screens[index];
-      //     // return IndexedStack(index: selectedIndex, children: _screens);
-      //   },
-      // ),
       body: PageView.builder(
         controller: _pageController,
         onPageChanged: (int index) {
@@ -135,3 +115,17 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

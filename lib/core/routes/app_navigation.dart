@@ -5,7 +5,7 @@ import 'package:manx_mate/features/booking/screens/review_for_service.dart';
 import 'package:manx_mate/features/favorite/bindings/favorite_binding.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/bindings/home_binding.dart';
-import 'package:manx_mate/features/home/screens/home_screen.dart';
+import 'package:manx_mate/features/home/screens/home_screen.dart' hide HomeSearchScreen;
 import 'package:manx_mate/features/home/screens/home_service_details_page.dart';
 import 'package:manx_mate/features/home/screens/notification_page.dart';
 import 'package:manx_mate/features/home/screens/provider_details_screen.dart';
@@ -27,6 +27,7 @@ import 'package:manx_mate/features/profile/screens/profile_screen.dart';
 import 'package:manx_mate/features/provider/bindings/provider_binding.dart';
 import 'package:manx_mate/features/provider/screens/availablity_page.dart';
 import 'package:manx_mate/features/provider/screens/provider_dashboard_screen.dart';
+import 'package:manx_mate/features/provider/screens/subscription_page.dart';
 import 'package:manx_mate/features/role_selection/bindings/role_selection_binding.dart';
 import 'package:manx_mate/features/role_selection/screens/role_selection_screen.dart';
 import 'package:manx_mate/features/splash_screen/bindings/splash_screen_binding.dart';
@@ -37,7 +38,10 @@ import '../../features/auth/screens/reset_password.dart';
 import '../../features/auth/screens/sign_in_page.dart';
 import '../../features/auth/screens/sign_up_page.dart';
 import '../../features/auth/screens/verify_mail.dart';
-import '../../features/home/screens/search_screen.dart';
+import '../../features/home/controllers/sub_categories_controller.dart';
+import '../../features/home/screens/service_search_screen.dart';
+import '../../features/home/screens/service_page.dart';
+import '../../features/profile/controllers/privacy_policy_screen_controller.dart';
 import '../../features/provider/screens/provider_profile_page.dart';
 import 'app_routes.dart';
 
@@ -45,6 +49,15 @@ class AppNavigation {
   AppNavigation._();
 
   static final List<GetPage<dynamic>> routes = <GetPage<dynamic>>[
+
+    GetPage(
+      name: AppRoutes.servicesRoute, // ✅ Correct
+      page: () => ServicesPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<SubCategoriesController>(() => SubCategoriesController());
+      }),
+    ),
+
     GetPage<dynamic>(
       name: AppRoutes.initialRoute,
       page: () => const SignInScreen(),
@@ -65,7 +78,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.forgotPasswordRoute,
-      page: () => const ForgotPasswordScreen(),
+      page: () => ForgotPasswordScreen(),
       transition: Transition.rightToLeft,
       binding: AuthBinding(),
     ),
@@ -99,6 +112,7 @@ class AppNavigation {
       transition: Transition.noTransition,
       binding: HomeBinding(),
     ),
+
     GetPage<dynamic>(
       name: AppRoutes.homeSubCategoriesPage,
       page: () => SubCategoriesPage(),
@@ -119,7 +133,7 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.bookingPage,
-      page: () => BookingScreen(),
+      page: () => const BookingScreen(),
       transition: Transition.rightToLeftWithFade,
       binding: BookingBinding(),
     ),
@@ -133,7 +147,7 @@ class AppNavigation {
       name: AppRoutes.favoritePage,
       page: () => FavoriteScreen(),
       transition: Transition.leftToRightWithFade,
-      binding: FavoriteBinding(),
+      binding: FavoritesBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.messagePage,
@@ -149,85 +163,103 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.profilePage,
-      page: () => ProfileScreen(),
+      // page: () => const ProfileScreen(),
+      page: () =>  ProfileScreen(),
       transition: Transition.noTransition,
       binding: ProfileBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.personalProfileInformationPage,
-      page: () => PersonalInformationScreen(),
+      page: () => const PersonalInformationScreen(),
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.settingsPage,
-      page: () => SettingPage(),
+      page: () => const SettingPage(),
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.myReviewPage,
-      page: () => MyReviewRatingsPage(),
+      page: () => const MyReviewRatingsPage(),
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.changePasswordPage,
-      page: () => ChangePassword(),
+      page: () => const ChangePassword(),
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
+    /**GetPage<dynamic>(
+      name: AppRoutes.privacyPolicyTemplatePage,
+      page: () =>  const PrivacyPolicyTemplatePage(),
+      transition: Transition.rightToLeft,
+      binding: ProfileBinding(),
+    ),*/
     GetPage<dynamic>(
       name: AppRoutes.privacyPolicyTemplatePage,
-      page: () => PrivacyPolicyTemplatePage(),
+      page: () => const PrivacyPolicyTemplatePage(),
       transition: Transition.rightToLeft,
-      binding: ProfileBinding(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<PrivacyPolicyTemplateController>(
+              () => PrivacyPolicyTemplateController(),
+        );
+      }),
     ),
+
     GetPage<dynamic>(
       name: AppRoutes.reportPage,
-      page: () => ReportPage(),
+      page: () => const ReportPage(),
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.mainBottomNavPage,
-      page: () => MainBottomNavScreen(),
+      page: () => const MainBottomNavScreen(),
       transition: Transition.zoom,
       binding: MainBottomNavBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerDashboardRoute,
-      page: () => ProviderDashboardScreen(),
+      page: () => const ProviderDashboardScreen(),
       transition: Transition.rightToLeft,
       binding: ProviderBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerProfileRoute,
-      page: () => ProviderProfilePage(),
+      page: () => const ProviderProfilePage(),
       transition: Transition.rightToLeft,
       binding: ProviderBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerAvailabilityRoute,
-      page: () => ProviderAvailabilityPage(),
+      page: () => const ProviderAvailabilityPage(),
+      transition: Transition.rightToLeft,
+      binding: ProviderBinding(),
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.subscriptionPageRoute,
+      page: () => const SubscriptionPage(),
       transition: Transition.rightToLeft,
       binding: ProviderBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.roleSelectionRoute,
-      page: () => RoleSelectionScreen(),
+      page: () => const RoleSelectionScreen(),
       transition: Transition.upToDown,
       binding: RoleSelectionBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.providerMainBottomNavPage,
-      page: () => ProviderMainBottomNavScreen(),
+      page: () => const ProviderMainBottomNavScreen(),
       transition: Transition.zoom,
       binding: RoleSelectionBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.splashRoute,
-      page: () => SplashScreenScreen(),
+      page: () => const SplashScreenScreen(),
       transition: Transition.circularReveal,
       binding: SplashScreenBinding(),
     ),

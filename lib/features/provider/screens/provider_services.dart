@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:manx_mate/core/common/widgets/reusable_button.dart';
-import 'package:manx_mate/core/config/app_colors.dart';
-import 'package:manx_mate/core/config/app_sizes.dart';
-import 'package:manx_mate/core/extensions/context_extensions.dart';
-import 'package:manx_mate/features/provider/widgets/provider_top_card.dart';
+import 'package:manx_mate/features/provider/screens/booking_tabs/provider_ongoing_controller.dart';
+import '../../booking/screens/booking_tabs/quote_job_tab_screen.dart';
+import 'booking_tabs/complete_tab.dart';
+import 'booking_tabs/ongoing_tab.dart';
+import 'booking_tabs/provider_complete_controller.dart';
+import 'booking_tabs/provider_quote_controller.dart';
+import 'booking_tabs/provider_request_controller.dart';
+import 'booking_tabs/quote_tab.dart';
+import 'booking_tabs/request_tab.dart';
 
-import '../../../core/common/widgets/app_bottom_sheet.dart';
-import '../../../core/common/widgets/time_picker_widget.dart';
-import '../../home/widget/inquiry_bottom_sheet.dart';
-import '../widgets/provider_service_main_card.dart';
-import '../widgets/provider_service_secondary_card.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ProviderServicesScreen extends StatefulWidget {
   const ProviderServicesScreen({super.key});
@@ -24,219 +24,126 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // Initialize controllers
+  final ProviderQuoteController quoteController = Get.put(ProviderQuoteController());
+  final ProviderRequestController requestController = Get.put(ProviderRequestController());
+  final ProviderOngoingController pendingController = Get.put(ProviderOngoingController());
+  final ProviderCompleteController completeController = Get.put(ProviderCompleteController());
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 4, vsync: this);
 
-    _tabController = TabController(length: 5, vsync: this); // Initialize TabController with 3 tabs
     _tabController.addListener(() {
-      setState(() {});
+      // Fetch data when switching tabs
+      if (!_tabController.indexIsChanging) {
+        final int index = _tabController.index;
+        switch (index) {
+          case 0:
+            quoteController.fetchBookings();
+            break;
+          case 1:
+            requestController.fetchBookings();
+            break;
+          case 2:
+            pendingController.fetchBookings();
+            break;
+          case 3:
+            completeController.fetchBookings();
+            break;
+        }
+      }
+    });
+
+    // Initial data fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      quoteController.fetchBookings();
+      requestController.fetchBookings();
+      pendingController.fetchBookings();
     });
   }
 
   @override
   void dispose() {
-    _tabController.dispose(); // Dispose the TabController when done
+    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _serviceNameTEController = TextEditingController();
-    final TextEditingController _locationTEController = TextEditingController();
-    final TextEditingController _additionalNoteTEController = TextEditingController();
-    final TextEditingController _dateTEController = TextEditingController();
-    final TextEditingController _typeTEController = TextEditingController();
-    final TimeController timeController = Get.put(TimeController());
-
     return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _tabController.index == 0
-          ? SizedBox(
-              width: context.screenWidth * 0.9,
-              height: 50,
-              child: ReusableButton(
-                onTap: () {
-                  CustomModalBottomSheet.show(
-                    title: 'Add a new service',
-                    height: context.screenHeight * 0.6,
-                    context: context,
-                    buttonText: 'Add',
-                    onButtonPressed: () {
-                      // Your action here
-                      Navigator.pop(context);
-                    },
-                    child: AddServiceBottomSheet(
-                      serviceNameTEController: _serviceNameTEController,
-                      dateTEController: _dateTEController,
-                      timeController: timeController,
-                      locationTEController: _locationTEController,
-                      additionalNoteTEController: _additionalNoteTEController,
-                      typeTEController: _typeTEController,
-                    ),
-                  );
-                },
-                label: "Add Service",
-              ),
-            )
-          : const SizedBox.shrink(),
       body: SafeArea(
         child: Column(
-          children: <Widget>[
-            const ProviderTopBar(),
-            const SizedBox(height: AppSizes.md),
-
-            ///==================> Provider Listing Card ==============>
-            PreferredSize(
-              preferredSize: const Size.fromHeight(50.0),
-              child: Container(
+          children: [
+            // Top Bar with Title
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                child: TabBar(
-                  controller: _tabController,
-                  dividerColor: Colors.transparent,
-                  isScrollable: true,
-                  indicatorColor: AppColors.primaryColor,
-                  indicatorWeight: 5,
-                  tabAlignment: TabAlignment.center,
-                  labelColor: Colors.black87,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
-                  tabs: const <Widget>[
-                    Tab(text: "Listing"),
-                    Tab(text: "Quote"),
-                    Tab(text: "Cancel"),
-                    Tab(text: "Ongoing"),
-                    Tab(text: "Complete"),
-                  ],
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 3,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Bookings',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {},
+                  ),
+                ],
               ),
             ),
+
+            // Tab Bar
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                dividerColor: Colors.transparent,
+                isScrollable: true,
+                indicatorColor: Colors.blue,
+                indicatorWeight: 3,
+                labelColor: Colors.black87,
+                unselectedLabelColor: Colors.grey[600],
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
+                tabs: const <Widget>[
+                  Tab(text: "Quote"),
+                  Tab(text: "Request"),
+                  Tab(text: "Ongoing"),
+                  Tab(text: "Complete"),
+                ],
+              ),
+            ),
+
+            // Tab Content
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: <Widget>[
-                  /// ========= Listings ========>
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    shrinkWrap: true,
-                    itemCount: 5,
-                    // Increased count for testing
-                    itemBuilder: (BuildContext context, int index) {
-                      return const ProviderServiceMainCard(
-                        serviceImageUrl: "serviceImageUrl",
-                        serviceStatus: null,
-                        serviceTitle: "Tutor Pro Academy",
-                        serviceDetails: "Experts in Math & Science...",
-                        serviceLocation: "Cork ,IreLand",
-                        providerImageUrl:
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        providerName: "Afsana Hamid",
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const SizedBox(height: AppSizes.md);
-                    },
-                  ),
-
-                  /// ============= Secondary Card =========>
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    itemCount: 3,
-                    itemBuilder: (BuildContext context, int index) {
-                      return const ProviderServiceSecondaryCard(
-                        serviceImageUrl: "serviceImageUrl",
-                        serviceTitle: "serviceTitle",
-                        serviceDetails: "serviceDetails",
-                        providerName: "providerName",
-                        showBottomPart: true,
-                        time: "time",
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const SizedBox(height: AppSizes.md);
-                    },
-                  ),
-
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    itemCount: 8,
-                    itemBuilder: (BuildContext context, int index) {
-                      return const ProviderServiceMainCard(
-                        serviceImageUrl: "serviceImageUrl",
-                        serviceStatus: "cancelled",
-                        serviceTitle: "Tutor Pro Academy",
-                        serviceDetails: "Experts in Math & Science...",
-                        serviceLocation: "Cork ,IreLand",
-                        providerImageUrl:
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        providerName: "Afsana Hamid",
-                        showBottomPart: true,
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const SizedBox(height: AppSizes.md);
-                    },
-                  ),
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    itemCount: 8,
-                    itemBuilder: (BuildContext context, int index) {
-                      return const ProviderServiceMainCard(
-                        serviceImageUrl: "serviceImageUrl",
-                        serviceStatus: "requested",
-                        serviceTitle: "Tutor Pro Academy",
-                        serviceDetails: "Experts in Math & Science...",
-                        serviceLocation: "Cork ,IreLand",
-                        providerImageUrl:
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        providerName: "Afsana Hamid",
-                        showBottomPart: true,
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const SizedBox(height: AppSizes.md);
-                    },
-                  ),
-                  ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.md,
-                      vertical: AppSizes.lg,
-                    ),
-
-                    itemCount: 8,
-                    itemBuilder: (BuildContext context, int index) {
-                      return const ProviderServiceMainCard(
-                        serviceImageUrl: "serviceImageUrl",
-                        serviceStatus: "completed",
-                        serviceTitle: "Tutor Pro Academy",
-                        serviceDetails: "Experts in Math & Science...",
-                        serviceLocation: "Cork ,IreLand",
-                        providerImageUrl:
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-                        providerName: "Afsana Hamid",
-                        showBottomPart: true,
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) {
-                      return const SizedBox(height: AppSizes.md);
-                    },
-                  ),
+                children: const <Widget>[
+                  ProviderQuoteTab(),
+                  RequestTab(),
+                  OngoingTab(),
+                  CompleteTab(),
                 ],
               ),
             ),

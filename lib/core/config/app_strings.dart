@@ -13,7 +13,8 @@ class AppStrings{
   // Others
   // ============================================================// ============================================================
   static const String privacyPolicy = "Privacy Policy";
-  static const String provider = "Provider";
+  // static const String provider = "Provider";
+  static const String provider = "Business";
   static const String user = "User";
   static const String termsAndCondition = "Terms & Conditions";
   static const String aboutUs = "About us";
