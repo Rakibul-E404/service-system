@@ -148,7 +148,7 @@ import 'package:manx_mate/core/utils/api/app_url.dart';
 class ProviderRequestController extends GetxController {
   var isLoading = false.obs;
 
-  // FIXED: Changed from Map to BookingServiceModel
+  // FIXED: Standardized to BookingServiceModel
   var bookings = <BookingServiceModel>[].obs;
 
   var errorMessage = ''.obs;
@@ -187,10 +187,16 @@ class ProviderRequestController extends GetxController {
         return;
       }
 
+      // AppUrl.providerJObRequested should handle the page index
+      // and target status=pending internally
       final url = Uri.parse(AppUrl.providerJObRequested(currentPage.value));
+      
       final response = await http.get(
         url,
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json', 
+          'Authorization': 'Bearer $token'
+        },
       );
 
       if (response.statusCode == 200) {
@@ -199,29 +205,32 @@ class ProviderRequestController extends GetxController {
           final responseData = data['data'];
           final List<dynamic> rawList = responseData['data'] ?? [];
 
+          // Map to Model
           final List<BookingServiceModel> parsedList = rawList
               .map((e) => BookingServiceModel.fromJson(e))
               .toList();
 
-          // FIX: Logic check for pagination
+          // Pagination Logic
           final pagination = responseData['meta'] ?? responseData['pagination'] ?? {};
           final totalPages = pagination['totalPages'] ?? 1;
           hasMore.value = currentPage.value < totalPages;
 
           if (refresh || currentPage.value == 1) {
-            // This removes the "15-20" old items and sets exactly the "4" new ones
+            // Clean slate for new fetch/refresh
             bookings.assignAll(parsedList);
           } else {
-            // This only happens during "Load More"
+            // Append for lazy loading
             bookings.addAll(parsedList);
           }
+        } else {
+          errorMessage.value = data['message'] ?? 'Failed to load requests';
         }
       } else {
-        errorMessage.value = 'Error: ${response.statusCode}';
+        errorMessage.value = 'Server Error: ${response.statusCode}';
       }
     } catch (e) {
       errorMessage.value = 'Connection Error';
-      debugPrint('🔥 Fetch Error: $e');
+      debugPrint('🔥 Request Fetch Error: $e');
     } finally {
       isLoading.value = false;
       isRefreshing.value = false;
@@ -250,18 +259,22 @@ class ProviderRequestController extends GetxController {
 
       final response = await http.patch(
         url,
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json', 
+          'Authorization': 'Bearer $token'
+        },
         body: json.encode({'status': status}),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          // FIXED: Use .id instead of ['_id']
+          // Remove from list because it is no longer "Pending"
           bookings.removeWhere((booking) => booking.id == bookingId);
+          
           Get.snackbar(
             'Success',
-            'Booking $status successfully',
+            'Request ${status == "accepted" ? "Accepted" : "Declined"}',
             backgroundColor: Colors.green,
             colorText: Colors.white,
           );
