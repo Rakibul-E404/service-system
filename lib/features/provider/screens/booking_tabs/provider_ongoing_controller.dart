@@ -22,11 +22,20 @@ class ProviderOngoingController extends GetxController {
     }
   }
 
-  Future<void> fetchBookings() async {
+  // UPDATED: Added {bool refresh = false} named parameter
+  Future<void> fetchBookings({bool refresh = false}) async {
     try {
-      isLoading.value = true;
+      // If not a refresh, show the main loading indicator
+      if (!refresh) {
+        isLoading.value = true;
+      }
+      
       errorMessage.value = '';
-      bookings.clear();
+      
+      // Clear the list if it's a refresh to ensure we start fresh
+      if (refresh) {
+        bookings.clear();
+      }
 
       final token = await _getAuthToken();
       final url = Uri.parse('$baseUrl/booking/provider?status=accepted');
@@ -44,7 +53,10 @@ class ProviderOngoingController extends GetxController {
         final data = json.decode(response.body);
         if (data['success'] == true) {
           final List<dynamic> list = data['data']['data'] ?? [];
-          bookings.value = list.cast<Map<String, dynamic>>();
+          
+          // UPDATED: Use assignAll to replace old data with exactly what comes from the API
+          bookings.assignAll(list.cast<Map<String, dynamic>>());
+          
           print('✅ Loaded ${bookings.length} pending bookings');
         } else {
           errorMessage.value = data['message'] ?? 'Failed to fetch data';
@@ -54,6 +66,7 @@ class ProviderOngoingController extends GetxController {
       }
     } catch (e) {
       errorMessage.value = 'Error: $e';
+      print('❌ Exception: $e');
     } finally {
       isLoading.value = false;
     }
@@ -65,8 +78,6 @@ class ProviderOngoingController extends GetxController {
 
       final token = await _getAuthToken();
       final url = Uri.parse('$baseUrl/booking/respond/$bookingId');
-      print('🌐 Updating booking status: $url');
-      print('📦 Request data: {"status": "$status"}');
 
       final response = await http.patch(
         url,
@@ -74,54 +85,27 @@ class ProviderOngoingController extends GetxController {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode({
-          'status': status,
-        }),
+        body: json.encode({'status': status}),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          print('✅ Booking $bookingId $status successfully');
-          bookings.removeWhere((booking) => booking['_id'] == bookingId);
-          Get.snackbar(
-            'Success',
-            'Booking ${status == 'completed' ? 'completed' : 'cancelled'} successfully',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+          // Remove from list immediately upon success
+          bookings.removeWhere((booking) => 
+            booking['_id'] == bookingId || booking['id'] == bookingId
           );
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to update booking';
-          Get.snackbar(
-            'Error',
-            data['message'] ?? 'Failed to update booking',
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          
+          Get.snackbar('Success', 'Action performed successfully',
+            backgroundColor: Colors.green, colorText: Colors.white);
         }
-      } else {
-        errorMessage.value = 'Server Error: ${response.statusCode}';
-        Get.snackbar(
-          'Error',
-          'Server Error: ${response.statusCode}',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
       }
     } catch (e) {
-      errorMessage.value = 'Error: $e';
-      Get.snackbar(
-        'Error',
-        'Error: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print('❌ Error responding: $e');
     } finally {
       processingIds.remove(bookingId);
     }
   }
 
-  bool isProcessing(String bookingId) {
-    return processingIds.contains(bookingId);
-  }
+  bool isProcessing(String bookingId) => processingIds.contains(bookingId);
 }

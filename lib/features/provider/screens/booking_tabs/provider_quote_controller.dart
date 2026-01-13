@@ -25,53 +25,63 @@ class ProviderQuoteController extends GetxController {
     return processingIds.contains(bookingId);
   }
 
-  Future<void> fetchBookings() async {
-    try {
+// Change: Added {bool refresh = false} inside the parentheses
+Future<void> fetchBookings({bool refresh = false}) async {
+  try {
+    // 1. If it's a fresh load (not pull-to-refresh), show the big loader
+    if (!refresh) {
       isLoading.value = true;
-      errorMessage.value = '';
-      bookings.clear();
-
-      final token = await _getAuthToken();
-      final url = Uri.parse(AppUrl.postInquiryQuote);
-      print('🌐 Fetching pending quote bookings from: $url');
-
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('📊 Full API Response: ${json.encode(data)}');
-
-        if (data['success'] == true) {
-          final responseData = data['data'];
-          if (responseData is Map<String, dynamic>) {
-            final List<dynamic> list = responseData['data'] ?? [];
-            bookings.value = list.cast<Map<String, dynamic>>();
-            print('✅ Loaded ${bookings.length} quote bookings');
-          } else if (responseData is List) {
-            bookings.value = responseData.cast<Map<String, dynamic>>();
-            print('✅ Loaded ${bookings.length} quote bookings (direct list)');
-          } else {
-            errorMessage.value = 'Unexpected data format';
-          }
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to fetch data';
-        }
-      } else {
-        errorMessage.value = 'Server Error: ${response.statusCode}';
-      }
-    } catch (e) {
-      errorMessage.value = 'Error: $e';
-      print('❌ Exception in fetchBookings: $e');
-    } finally {
-      isLoading.value = false;
     }
+    
+    errorMessage.value = '';
+
+    // 2. If refresh is true, we clear the list so the UI resets
+    if (refresh) {
+      bookings.clear();
+    }
+
+    final token = await _getAuthToken();
+    final url = Uri.parse(AppUrl.postInquiryQuote);
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['success'] == true) {
+        final responseData = data['data'];
+        List<Map<String, dynamic>> fetchedList = [];
+
+        if (responseData is Map<String, dynamic>) {
+          final List<dynamic> rawList = responseData['data'] ?? [];
+          fetchedList = rawList.cast<Map<String, dynamic>>();
+        } else if (responseData is List) {
+          fetchedList = responseData.cast<Map<String, dynamic>>();
+        }
+
+        // 3. assignAll replaces whatever was there with EXACTLY what the API sent (the 4 items)
+        bookings.assignAll(fetchedList);
+        
+        print('✅ Accurate Count: ${bookings.length}');
+      } else {
+        errorMessage.value = data['message'] ?? 'Failed to fetch data';
+      }
+    } else {
+      errorMessage.value = 'Server Error: ${response.statusCode}';
+    }
+  } catch (e) {
+    errorMessage.value = 'Error: $e';
+    print('❌ Exception in fetchBookings: $e');
+  } finally {
+    isLoading.value = false;
   }
+}
 
   Future<void> respondToBooking({
     required String bookingId,
@@ -135,4 +145,7 @@ class ProviderQuoteController extends GetxController {
       processingIds.remove(bookingId);
     }
   }
+
+
+  
 }

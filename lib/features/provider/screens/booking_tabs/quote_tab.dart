@@ -497,54 +497,62 @@ class ProviderQuoteTab extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (controller.isLoading.value) {
+ @override
+Widget build(BuildContext context) {
+  // Wrap everything in Obx so it listens to changes in isLoading and bookings
+  return Obx(() {
+    // 1. Show loader ONLY during the initial fetch (not pull-to-refresh)
+    if (controller.isLoading.value && controller.bookings.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primaryColor),
       );
     }
 
+    // 2. Handle Error State
     if (controller.errorMessage.isNotEmpty) {
       return RefreshIndicator(
-        onRefresh: () async => controller.fetchBookings(),
+        onRefresh: () async => controller.fetchBookings(refresh: true),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
             child: _buildErrorState(
               controller.errorMessage.value,
-              controller.fetchBookings,
+              () => controller.fetchBookings(refresh: true),
             ),
           ),
         ),
       );
     }
 
+    // 3. Handle Empty State (Only shows if loading is finished and list is still empty)
     if (controller.bookings.isEmpty) {
       return RefreshIndicator(
-        onRefresh: () async => controller.fetchBookings(),
+        onRefresh: () async => controller.fetchBookings(refresh: true),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
             child: _buildEmptyState(
               'No pending quotes',
-              controller.fetchBookings,
+              () => controller.fetchBookings(refresh: true),
             ),
           ),
         ),
       );
     }
 
+    // 4. Show Data List
     return RefreshIndicator(
-      onRefresh: () async => controller.fetchBookings(),
+      onRefresh: () async => controller.fetchBookings(refresh: true),
       child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 16),
         itemCount: controller.bookings.length,
         itemBuilder: (context, i) => _buildQuoteCard(context, controller.bookings[i]),
         separatorBuilder: (_, __) => const SizedBox(height: 8),
       ),
     );
-  }
+  });
+}
 }
