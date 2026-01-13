@@ -32,22 +32,6 @@ class ProviderQuoteTab extends StatelessWidget {
     return '${AppUrl.imageBaseUrl}/$imagePath';
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-      case 'active':
-        return Colors.orange;
-      case 'accepted':
-        return Colors.green;
-      case 'completed':
-        return Colors.blue;
-      case 'cancelled':
-      case 'rejected':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 
   Widget _buildQuoteCard(BuildContext context, Map<String, dynamic> booking) {
     final dynamic authorRaw = booking['author'];
@@ -118,21 +102,6 @@ class ProviderQuoteTab extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(status),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      status.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
                   ),
                 ],
