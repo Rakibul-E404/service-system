@@ -32,12 +32,15 @@ class ProviderCompleteController extends GetxController {
 
   Future<void> fetchBookings({bool refresh = false}) async {
     try {
+      // Always show loader when fetching data
+      if (currentPage.value == 1) {
+        isLoading.value = true;
+      }
+
       if (refresh) {
         currentPage.value = 1;
         hasMore.value = true;
         isRefreshing.value = true;
-      } else if (currentPage.value == 1) {
-        isLoading.value = true;
       }
 
       errorMessage.value = '';

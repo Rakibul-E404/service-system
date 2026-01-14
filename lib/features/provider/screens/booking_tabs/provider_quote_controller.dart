@@ -28,10 +28,8 @@ class ProviderQuoteController extends GetxController {
 // Change: Added {bool refresh = false} inside the parentheses
 Future<void> fetchBookings({bool refresh = false}) async {
   try {
-    // 1. If it's a fresh load (not pull-to-refresh), show the big loader
-    if (!refresh) {
-      isLoading.value = true;
-    }
+    // Always show loader when fetching data
+    isLoading.value = true;
 
     errorMessage.value = '';
 

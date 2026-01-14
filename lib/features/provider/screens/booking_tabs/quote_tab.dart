@@ -499,8 +499,8 @@ class ProviderQuoteTab extends StatelessWidget {
 Widget build(BuildContext context) {
   // Wrap everything in Obx so it listens to changes in isLoading and bookings
   return Obx(() {
-    // 1. Show loader ONLY during the initial fetch (not pull-to-refresh)
-    if (controller.isLoading.value && controller.bookings.isEmpty) {
+    // 1. Show loader when loading (regardless of whether list is empty or has data)
+    if (controller.isLoading.value) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primaryColor),
       );

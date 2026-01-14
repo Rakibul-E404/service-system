@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:manx_mate/features/booking/controllers/booking_action_controller.dart';
 import 'package:manx_mate/features/provider/screens/booking_tabs/provider_ongoing_controller.dart';
 import '../../booking/screens/booking_tabs/quote_job_tab_screen.dart';
 import 'booking_tabs/complete_tab.dart';
@@ -29,6 +30,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
   final ProviderRequestController requestController = Get.put(ProviderRequestController());
   final ProviderOngoingController pendingController = Get.put(ProviderOngoingController());
   final ProviderCompleteController completeController = Get.put(ProviderCompleteController());
+  // Initialize the BookingActionController for tabs that need it
+  final BookingActionController actionController = Get.put(BookingActionController());
 
 
 void _fetchDataForIndex(int index) {
