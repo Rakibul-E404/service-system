@@ -148,7 +148,9 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                         const Text("Sub-Categories", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         InkWell(
-                          onTap: () => _showSubCategoryPicker(context),
+                          onTap: () {
+                            profileCtrl.fetchSelfServices();
+                            _showSubCategoryPicker(context);},
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
@@ -257,9 +259,15 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
             const Divider(),
             Expanded(
               child: Obx(() {
-                if (categoryCtrl.isSubLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
+                // Show loader if the main list OR the selection states are loading
+                if (categoryCtrl.isSubLoading.value || profileCtrl.isSelfServiceLoading.value) {
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
                 }
+
+                if (categoryCtrl.subCategories.isEmpty) {
+                  return const Center(child: Text("No sub-categories available"));
+                }
+
                 return ListView.builder(
                   itemCount: categoryCtrl.subCategories.length,
                   itemBuilder: (context, index) {
@@ -271,12 +279,15 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                       return CheckboxListTile(
                         activeColor: AppColors.primaryColor,
                         title: Text(sub.name),
+                        // Visual feedback for the POST request
                         secondary: isProcessing
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
                             : null,
                         value: isSelected,
-                        // Call the new API-hitting method here
-                        onChanged: isProcessing ? null : (val) => profileCtrl.toggleSubCategoryService(sub.id),
+                        onChanged: isProcessing
+                            ? null
+                            : (val) => profileCtrl.toggleSubCategoryService(sub.id),
                       );
                     });
                   },

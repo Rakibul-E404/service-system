@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../model/sub_category_service_response.dart';
 import 'category_controller.dart';
 
 class ProviderProfileController extends GetxController {
@@ -51,7 +52,7 @@ class ProviderProfileController extends GetxController {
 
 
   final processingId = ''.obs;
-
+  final isSelfServiceLoading = false.obs;
   // --- Text Controllers ---
   late TextEditingController nameController;
   late TextEditingController locationController;
@@ -232,15 +233,47 @@ class ProviderProfileController extends GetxController {
   }
 
 
+  Future<void> fetchSelfServices() async {
+    try {
+      isSelfServiceLoading.value = true;
+      final token = await _getAuthToken();
+
+      debugPrint('🚀 Fetching Self Services: ${AppUrl.subCategorySelfService}');
+
+      final response = await http.get(
+        Uri.parse(AppUrl.subCategorySelfService),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decodedData = jsonDecode(response.body);
+        final serviceResponse = ServiceResponse.fromJson(decodedData);
+
+        // Extract the sub-category IDs from the existing services
+        final List<String> existingIds = serviceResponse.data
+            .map((service) => service.subCategory.id)
+            .toList();
+
+        // Update the observable list
+        selectedSubCategoryIds.assignAll(existingIds);
+        debugPrint('✅ Initialized Selected IDs: $selectedSubCategoryIds');
+      }
+    } catch (e) {
+      debugPrint('🧨 Fetch Self Service Error: $e');
+    } finally {
+      isSelfServiceLoading.value = false;
+    }
+  }
+
+
   Future<void> toggleSubCategoryService(String subCategoryId) async {
     try {
       processingId.value = subCategoryId;
       final token = await _getAuthToken();
-
-      // Construct the URL dynamically with the ID
       final String url = "${AppUrl.baseUrl}/service/$subCategoryId";
-
-      debugPrint('🚀 Hitting Self-Service API: $url');
 
       final response = await http.post(
         Uri.parse(url),
@@ -250,33 +283,20 @@ class ProviderProfileController extends GetxController {
         },
       );
 
-      debugPrint('📥 Status Code: ${response.statusCode}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Toggle the local ID in the list only after a successful API hit
+        // Toggle locally on success
         if (selectedSubCategoryIds.contains(subCategoryId)) {
           selectedSubCategoryIds.remove(subCategoryId);
         } else {
           selectedSubCategoryIds.add(subCategoryId);
         }
-
-        Get.snackbar('Success', 'Service updated',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 1));
       } else {
-        Get.snackbar('Error', 'Failed to update service (${response.statusCode})',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar('Error', 'Failed to update service');
       }
-    } catch (e) {
-      debugPrint('🧨 API Error: $e');
-      Get.snackbar('Error', 'Check your internet connection');
     } finally {
-      processingId.value = ''; // Reset processing state
+      processingId.value = '';
     }
   }
-
   // --- EXISTING CODE REMAINS THE SAME ---
 
   String get todayHours {
