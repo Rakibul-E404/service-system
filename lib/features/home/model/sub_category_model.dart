@@ -5,6 +5,7 @@ class SubCategoryModel {
   final String name;
   final String image;
   final String description;
+  final String categoryId; // Add this field
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -13,6 +14,7 @@ class SubCategoryModel {
     required this.name,
     required this.image,
     required this.description,
+    required this.categoryId, // Add this
     this.createdAt,
     this.updatedAt,
   });
@@ -24,6 +26,7 @@ class SubCategoryModel {
       name: json['name'] ?? '',
       image: json['image'] ?? '',
       description: json['description'] ?? '',
+      categoryId: json['categoryId'] ?? json['category_id'] ?? json['category'] ?? '', // Handle different field names
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'])
           : null,
@@ -40,6 +43,7 @@ class SubCategoryModel {
       'name': name,
       'image': image,
       'description': description,
+      'categoryId': categoryId,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };

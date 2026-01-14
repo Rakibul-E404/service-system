@@ -5,7 +5,7 @@ import 'package:manx_mate/features/booking/screens/review_for_service.dart';
 import 'package:manx_mate/features/favorite/bindings/favorite_binding.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/bindings/home_binding.dart';
-import 'package:manx_mate/features/home/screens/home_screen.dart' hide HomeSearchScreen;
+import 'package:manx_mate/features/home/screens/home_screen.dart';
 import 'package:manx_mate/features/home/screens/home_service_details_page.dart';
 import 'package:manx_mate/features/home/screens/notification_page.dart';
 import 'package:manx_mate/features/home/screens/provider_details_screen.dart';
@@ -52,7 +52,7 @@ class AppNavigation {
 
     GetPage(
       name: AppRoutes.servicesRoute, // ✅ Correct
-      page: () => ServicesPage(),
+      page: () =>  const ServicesPage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<SubCategoriesController>(() => SubCategoriesController());
       }),
@@ -96,13 +96,13 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.homeRoute,
-      page: () => HomeScreen(),
+      page: () => const HomeScreen(),
       transition: Transition.downToUp,
       binding: HomeBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.homeSearchRoute,
-      page: () => HomeSearchScreen(),
+      page: () => const HomeSearchScreen(),
       transition: Transition.noTransition,
       binding: HomeBinding(),
     ),
@@ -139,19 +139,19 @@ class AppNavigation {
     ),
     GetPage<dynamic>(
       name: AppRoutes.reviewPage,
-      page: () => ReviewForServiceScreen(),
+      page: () => const ReviewForServiceScreen(),
       transition: Transition.rightToLeftWithFade,
       binding: BookingBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.favoritePage,
-      page: () => FavoriteScreen(),
+      page: () => const FavoriteScreen(),
       transition: Transition.leftToRightWithFade,
       binding: FavoritesBinding(),
     ),
     GetPage<dynamic>(
       name: AppRoutes.messagePage,
-      page: () => MessageScreen(),
+      page: () => const MessageScreen(),
       transition: Transition.fadeIn,
       binding: MessageBinding(),
     ),
@@ -164,7 +164,7 @@ class AppNavigation {
     GetPage<dynamic>(
       name: AppRoutes.profilePage,
       // page: () => const ProfileScreen(),
-      page: () =>  ProfileScreen(),
+      page: () =>  const ProfileScreen(),
       transition: Transition.noTransition,
       binding: ProfileBinding(),
     ),

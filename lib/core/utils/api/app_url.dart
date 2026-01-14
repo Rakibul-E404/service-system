@@ -28,6 +28,13 @@ class AppUrl {
 
 
 
+  static String serviceByCategorySubcategory(String category, String subCategory,int page) {
+    return '$baseUrlV1/$version1/service/all?category=$category&subCategory=$subCategory&page=$page&limit=10';
+  }
+  static String serviceBySubcategoryOnly(String subCategory, int page) {
+    return '$baseUrlV1/$version1/service/all?subCategory=$subCategory&page=$page&limit=10';
+  }
+
   static String providerJObRequested(int page) {
     return '$baseUrlV1/$version1/booking/provider?status=pending&page=$page&limit=10';
   }

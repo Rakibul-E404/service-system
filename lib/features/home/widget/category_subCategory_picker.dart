@@ -351,7 +351,7 @@ class _CategorySubCategoryPickerState extends State<CategorySubCategoryPicker> {
             }
           },
         ),
-        const SizedBox(height: AppSizes.lg),
+        const SizedBox(height: AppSizes.md),
 
         /// ---------- Sub-Category ----------
         Text(

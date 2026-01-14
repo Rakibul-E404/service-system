@@ -1,22 +1,35 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:manx_mate/core/config/app_sizes.dart';
-import 'package:manx_mate/core/config/app_colors.dart';
-import 'package:manx_mate/core/common/components/custom_network_image.dart';
-import 'package:manx_mate/core/extensions/context_extensions.dart';
-import 'package:manx_mate/core/extensions/widget_extensions.dart';
-import 'package:manx_mate/features/home/controllers/home_controller.dart';
-// import 'package:manx_mate/features/home/model/category_model.dart';
-import '../controllers/sub_categories_controller.dart';
+import '../model/categor_model.dart';
+import 'package:flutter/material.dart';
 import '../../auth/widgets/service_card.dart';
 import '../../../core/routes/app_routes.dart';
-import '../model/categor_model.dart';
+import 'package:manx_mate/core/config/app_sizes.dart';
+import 'package:manx_mate/core/config/app_colors.dart';
+import '../controllers/sub_categories_controller.dart';
+import 'package:manx_mate/core/extensions/widget_extensions.dart';
+import 'package:manx_mate/core/extensions/context_extensions.dart';
+import 'package:manx_mate/features/home/controllers/home_controller.dart';
+import 'package:manx_mate/core/common/components/custom_network_image.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class SubCategoriesPage extends GetView<SubCategoriesController> {
   SubCategoriesPage({super.key});
 
   final HomeController homeController = Get.find<HomeController>();
+  final RxString _selectedCategoryId = ''.obs;
+  final RxString _selectedCategoryName = ''.obs;
+
+  // Method to update UI when category changes
+  void _updateUIForNewCategory(String categoryId, String categoryName) {
+    debugPrint('🔄 Updating UI for new category: $categoryName ($categoryId)');
+
+    // Update local state
+    _selectedCategoryId.value = categoryId;
+    _selectedCategoryName.value = categoryName;
+
+    // Update controller with new category
+    controller.refreshWithNewCategory(categoryId, categoryName);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,19 +42,13 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
         ? (args['categoryId']?.toString() ?? '')
         : '';
 
-    // Find selected category
-    CategoryModel? selectedCategory;
-    if (selectedCategoryId.isNotEmpty) {
-      selectedCategory = homeController.categories.firstWhere(
-            (cat) => cat.id == selectedCategoryId,
-        orElse: () => CategoryModel(
-          id: selectedCategoryId,
-          name: selectedCategoryName,
-          description: '',
-          image: '',
-        ),
-      );
-    }
+    // Initialize local state with current arguments if empty
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_selectedCategoryId.value.isEmpty && selectedCategoryId.isNotEmpty) {
+        _selectedCategoryId.value = selectedCategoryId;
+        _selectedCategoryName.value = selectedCategoryName;
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -78,8 +85,35 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
             ),
 
             // Selected Category Section
-            if (selectedCategory != null)
-              Container(
+            Obx(() {
+              // Use local state for selected category display
+              final String displayCategoryId = _selectedCategoryId.value;
+              final String displayCategoryName = _selectedCategoryName.value;
+
+              // Fallback to arguments if local state is empty
+              final String currentCategoryId = displayCategoryId.isNotEmpty
+                  ? displayCategoryId
+                  : selectedCategoryId;
+              final String currentCategoryName = displayCategoryName.isNotEmpty
+                  ? displayCategoryName
+                  : selectedCategoryName;
+
+              // Find the category to display
+              CategoryModel? displayCategory;
+              if (currentCategoryId.isNotEmpty) {
+                displayCategory = homeController.categories.firstWhere(
+                      (cat) => cat.id == currentCategoryId,
+                  orElse: () => CategoryModel(
+                    id: currentCategoryId,
+                    name: currentCategoryName,
+                    description: '',
+                    image: '',
+                  ),
+                );
+              }
+
+              return displayCategory != null
+                  ? Container(
                 margin: const EdgeInsets.symmetric(
                   horizontal: AppSizes.md,
                   vertical: AppSizes.sm,
@@ -91,21 +125,21 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                       'Selected category',
                       style: context.txtTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textBlackColor.withOpacity(0.7),
+                        color: AppColors.textBlackColor.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(AppSizes.sm),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withOpacity(0.1),
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                         border: Border.all(
-                          color: AppColors.primaryColor.withOpacity(0.3),
+                          color: AppColors.primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
-                        children: [
+                        children: <Widget>[
                           // Category Image
                           Container(
                             width: 60,
@@ -116,9 +150,9 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                              child: selectedCategory.fullImageUrl.isNotEmpty
+                              child: displayCategory.fullImageUrl.isNotEmpty
                                   ? CustomCachedImage(
-                                imageUrl: selectedCategory.fullImageUrl,
+                                imageUrl: displayCategory.fullImageUrl,
                                 fit: BoxFit.cover,
                               )
                                   : Container(
@@ -138,7 +172,7 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  selectedCategory.name,
+                                  displayCategory.name,
                                   style: context.txtTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textBlackColor,
@@ -146,11 +180,11 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                if (selectedCategory.description.isNotEmpty)
+                                if (displayCategory.description.isNotEmpty)
                                   Text(
-                                    selectedCategory.description,
+                                    displayCategory.description,
                                     style: context.txtTheme.bodySmall?.copyWith(
-                                      color: AppColors.textBlackColor.withOpacity(0.6),
+                                      color: AppColors.textBlackColor.withValues(alpha: 0.6),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -168,7 +202,9 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                     ),
                   ],
                 ),
-              ),
+              )
+                  : const SizedBox.shrink();
+            }),
 
             const SizedBox(height: AppSizes.sm),
 
@@ -177,14 +213,14 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
               padding: const EdgeInsets.only(left: AppSizes.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(right: AppSizes.md),
                     child: Text(
                       'Other categories',
                       style: context.txtTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textBlackColor.withOpacity(0.7),
+                        color: AppColors.textBlackColor.withValues(alpha: 0.7),
                       ),
                     ),
                   ),
@@ -205,9 +241,14 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                         );
                       }
 
+                      // Get current category ID (use local state first, then arguments)
+                      final String currentCategoryId = _selectedCategoryId.value.isNotEmpty
+                          ? _selectedCategoryId.value
+                          : selectedCategoryId;
+
                       // Filter out selected category
-                      final otherCategories = homeController.categories
-                          .where((cat) => cat.id != selectedCategoryId)
+                      final List<CategoryModel> otherCategories = homeController.categories
+                          .where((CategoryModel cat) => cat.id != currentCategoryId)
                           .toList();
 
                       return ListView.builder(
@@ -217,14 +258,11 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                           final category = otherCategories[index];
                           return GestureDetector(
                             onTap: () {
-                              // Navigate to same screen with new category
-                              Get.offAndToNamed(
-                                AppRoutes.homeSubCategoriesPage,
-                                arguments: {
-                                  'categoryId': category.id,
-                                  'categoryName': category.name,
-                                },
-                              );
+                              debugPrint('🔄 Switching to category: ${category.name} (${category.id})');
+                              debugPrint('🔄 Previous category: ${_selectedCategoryName.value} (${_selectedCategoryId.value})');
+
+                              // Update UI for new category
+                              _updateUIForNewCategory(category.id, category.name);
                             },
                             child: Container(
                               width: 90,
@@ -244,7 +282,7 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                                       color: Colors.white,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
+                                          color: Colors.black.withValues(alpha: 0.1),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
@@ -296,13 +334,19 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
             const SizedBox(height: AppSizes.sm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-              child: Text(
-                'Select a subcategory',
-                style: context.txtTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textBlackColor,
-                ),
-              ),
+              child: Obx(() {
+                final String displayCategoryName = _selectedCategoryName.value.isNotEmpty
+                    ? _selectedCategoryName.value
+                    : selectedCategoryName;
+
+                return Text(
+                  'Select a subcategory for $displayCategoryName',
+                  style: context.txtTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textBlackColor,
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: AppSizes.sm),
 
@@ -311,10 +355,26 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
                 child: Obx(() {
+                  // Show debug info
+                  debugPrint('📊 Current category in controller: ${controller.categoryName.value}');
+                  debugPrint('📊 Current category ID in controller: ${controller.categoryId.value}');
+                  debugPrint('📊 Local selected category: ${_selectedCategoryName.value}');
+                  debugPrint('📊 Subcategories count: ${controller.subCategories.length}');
+
                   // Loading State
                   if (controller.isLoadingSubCategories.value) {
                     return const Center(
-                      child: CircularProgressIndicator(),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Loading subcategories...',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     );
                   }
 
@@ -330,13 +390,16 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                             color: Colors.red[300],
                           ),
                           const SizedBox(height: AppSizes.md),
-                          Text(
-                            controller.errorMessage.value,
-                            style: TextStyle(
-                              color: Colors.red[600],
-                              fontSize: 16,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
+                            child: Text(
+                              controller.errorMessage.value,
+                              style: TextStyle(
+                                color: Colors.red[600],
+                                fontSize: 16,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: AppSizes.md),
                           ElevatedButton(
@@ -377,11 +440,31 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                             ),
                           ),
                           const SizedBox(height: AppSizes.sm),
-                          Text(
-                            'Check back later or try another category',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 14,
+                          Obx(() {
+                            final String displayCategoryName = _selectedCategoryName.value.isNotEmpty
+                                ? _selectedCategoryName.value
+                                : selectedCategoryName;
+
+                            return Text(
+                              'No subcategories found for "$displayCategoryName"',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 14,
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: AppSizes.md),
+                          ElevatedButton(
+                            onPressed: () => controller.retry(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                              ),
+                            ),
+                            child: const Text(
+                              'Refresh',
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
                         ],
@@ -414,6 +497,7 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                           Get.toNamed(
                             AppRoutes.servicesRoute,
                             arguments: {
+                              'categoryId': controller.categoryId.value,
                               'subCategoryId': subCategory.id,
                               'subCategoryName': subCategory.name,
                             },
