@@ -233,12 +233,12 @@ class AppNavigation {
       transition: Transition.rightToLeft,
 
     ),
-    GetPage<dynamic>(
-      name: AppRoutes.providerAvailabilityRoute,
-      page: () => const ProviderAvailabilityPage(),
-      transition: Transition.rightToLeft,
-      binding: ProviderBinding(),
-    ),
+    // GetPage<dynamic>(
+    //   name: AppRoutes.providerAvailabilityRoute,
+    //   page: () => const ProviderAvailabilityPage(),
+    //   transition: Transition.rightToLeft,
+    //   binding: ProviderBinding(),
+    // ),
     GetPage<dynamic>(
       name: AppRoutes.subscriptionPageRoute,
       page: () => const SubscriptionPage(),
