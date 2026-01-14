@@ -22,82 +22,108 @@ class PublishAdvertisementScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Advertisement"),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Get.back(), // Close the overlay
+        ),
+        title: const Text("Create Advertisement"),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // Take only the needed height
-          children: [
-            /// 🔹 Banner Image / Placeholder / Selected Image
-            Obx(() {
-              if (createController.selectedImage.value != null) {
-                return _localBanner(createController.selectedImage.value!);
-              }
-              if (adsController.isLoading.value) {
-                return _loadingBanner();
-              }
-              if (adsController.adsList.isNotEmpty &&
-                  adsController.adsList.first.content.isNotEmpty) {
-                final content = adsController.adsList.first.content;
-                final imageUrl = content.startsWith('http')
-                    ? content
-                    : '${AppUrl.imageBaseUrl}/$content';
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              /// 🔹 Banner Image / Placeholder / Selected Image
+              Obx(() {
+                if (createController.selectedImage.value != null) {
+                  return _localBanner(createController.selectedImage.value!);
+                }
+                if (adsController.isLoading.value) {
+                  return _loadingBanner();
+                }
+                if (adsController.adsList.isNotEmpty &&
+                    adsController.adsList.first.content.isNotEmpty) {
+                  final content = adsController.adsList.first.content;
+                  final imageUrl = content.startsWith('http')
+                      ? content
+                      : '${AppUrl.imageBaseUrl}/$content';
 
-                return _bannerImage(imageUrl);
-              }
-              return _placeholderBanner();
-            }),
+                  return _bannerImage(imageUrl);
+                }
+                return _placeholderBanner();
+              }),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            /// 🔹 Pick Image Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => createController.pickAdImage(
-                      source: ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text("Gallery"),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () =>
-                      createController.pickAdImage(source: ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text("Camera"),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 60),
-
-            /// 🔹 Publish Advertisement Button
-            Obx(() {
-              return SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: createController.isLoading.value
-                      ? null
-                      : () => createController
-                      .createAdvertisement()
-                      .then((_) => adsController.fetchSelfAds()),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              /// 🔹 Pick Image Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => createController.pickAdImage(
+                          source: ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text("Gallery"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[200],
+                        foregroundColor: Colors.black,
+                      ),
                     ),
                   ),
-                  child: createController.isLoading.value
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                    "Publish Advertisement",
-                    style: TextStyle(fontSize: 16),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          createController.pickAdImage(source: ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text("Camera"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[200],
+                        foregroundColor: Colors.black,
+                      ),
+                    ),
                   ),
-                ),
-              );
-            }),
-          ],
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              /// 🔹 Publish Advertisement Button
+              Obx(() {
+                return SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: createController.isLoading.value
+                        ? null
+                        : () => createController
+                        .createAdvertisement()
+                        .then((_) => adsController.fetchSelfAds())
+                        .then((_) => Get.back()), // Navigate back after successful creation
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber[600],
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: createController.isLoading.value
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      "Publish Advertisement",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
