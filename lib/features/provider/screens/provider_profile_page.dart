@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/features/provider/controllers/provider_profile_controller.dart';
 import 'package:manx_mate/features/provider/screens/availablity_page.dart';
+import 'package:manx_mate/features/provider/screens/edit_business_profile_screen.dart';
 import 'package:manx_mate/features/provider/screens/provider_availablity_screen.dart';
 
 class ProviderProfilePage extends StatelessWidget {
@@ -27,6 +28,32 @@ class ProviderProfilePage extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
+
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0), // Padding from the screen edge
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(8), // Internal padding for the icon
+                decoration: BoxDecoration(
+                  color: Colors.grey[100], // Radius background color
+                  borderRadius: BorderRadius.circular(10), // The radius
+                  border: Border.all(color: Colors.grey[300]!, width: 0.5), // Optional subtle border
+                ),
+                child: InkWell(
+                  onTap: () {
+                    Get.to(const EditBusinessProfileScreen());
+                  },
+                  child: const Icon(
+                    Icons.edit,
+                    color: AppColors.primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value && !controller.isEditing.value) {
