@@ -319,7 +319,7 @@ void _showBookingDetails(BuildContext context, BookingServiceModel booking) {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isLoading.value && controller.bookings.isEmpty) {
+      if (controller.isLoading.value) {
         return const Center(
           child: CircularProgressIndicator(color: AppColors.primaryColor),
         );
