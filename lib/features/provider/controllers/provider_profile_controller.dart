@@ -48,6 +48,9 @@ class ProviderProfileController extends GetxController {
   final availability = <String, AvailabilityDay>{}.obs;
   final selectedSubCategoryIds = <String>[].obs;
   final subToServiceMap = <String, String>{}.obs;
+
+  final subscriptionAccess = <String>[].obs; // Make this observable
+  final isSubscribed = false.obs;
   // --- Network Service ---
   final NetworkCaller _networkCaller = NetworkCaller();
 
@@ -398,6 +401,8 @@ class ProviderProfileController extends GetxController {
     addressController.text = address.value;
     emailController.text = email.value;
 
+    isSubscribed.value = data.isSubscribed;
+    subscriptionAccess.assignAll(data.subscriptionAccess);
     availability.value = data.availability;
   }
 
