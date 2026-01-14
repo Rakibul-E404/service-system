@@ -196,7 +196,7 @@ class ProviderQuoteTab extends StatelessWidget {
                           'Are you sure you want to accept this booking?',
                               () => controller.respondToBooking(
                             bookingId: bookingId,
-                            status: 'accepted',
+
                           ),
                         );
                       },

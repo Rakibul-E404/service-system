@@ -96,33 +96,32 @@ Future<void> fetchBookings({bool refresh = false}) async {
 
   Future<void> respondToBooking({
     required String bookingId,
-    required String status,
   }) async {
     try {
       processingIds.add(bookingId);
 
       final token = await _getAuthToken();
-      final url = Uri.parse('https://d7001.sobhoy.com/api/v1/booking/respond/$bookingId');
+      final url = Uri.parse('https://d7001.sobhoy.com/api/v1/service-inquiry/$bookingId/accept');
       print('🌐 Updating booking status: $url');
 
-      final response = await http.patch(
+      final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode({'status': status}),
+
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          print('✅ Booking $bookingId $status successfully');
+
           bookings.removeWhere((booking) => booking['_id'] == bookingId);
 
           Get.snackbar(
             'Success',
-            'Booking ${status == 'accepted' ? 'approved' : 'cancelled'} successfully',
+            'Accepted successfully',
             backgroundColor: Colors.green,
             colorText: Colors.white,
           );
