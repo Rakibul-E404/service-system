@@ -161,10 +161,7 @@ class ProviderQuoteTab extends StatelessWidget {
                           context,
                           'Cancel Booking',
                           'Are you sure you want to cancel this booking?',
-                              () => controller.respondToBooking(
-                            bookingId: bookingId,
-                            status: 'cancelled',
-                          ),
+                          () => controller.cancelBookingLocally(bookingId),
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -261,6 +258,7 @@ class ProviderQuoteTab extends StatelessWidget {
       },
     );
   }
+
 
   void _showBookingDetails(BuildContext context, Map<String, dynamic> booking) {
     final dynamic authorRaw = booking['author'];
@@ -501,8 +499,8 @@ class ProviderQuoteTab extends StatelessWidget {
 Widget build(BuildContext context) {
   // Wrap everything in Obx so it listens to changes in isLoading and bookings
   return Obx(() {
-    // 1. Show loader ONLY during the initial fetch (not pull-to-refresh)
-    if (controller.isLoading.value && controller.bookings.isEmpty) {
+    // 1. Show loader when loading (regardless of whether list is empty or has data)
+    if (controller.isLoading.value) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primaryColor),
       );

@@ -28,11 +28,9 @@ class ProviderQuoteController extends GetxController {
 // Change: Added {bool refresh = false} inside the parentheses
 Future<void> fetchBookings({bool refresh = false}) async {
   try {
-    // 1. If it's a fresh load (not pull-to-refresh), show the big loader
-    if (!refresh) {
-      isLoading.value = true;
-    }
-    
+    // Always show loader when fetching data
+    isLoading.value = true;
+
     errorMessage.value = '';
 
     // 2. If refresh is true, we clear the list so the UI resets
@@ -65,9 +63,22 @@ Future<void> fetchBookings({bool refresh = false}) async {
           fetchedList = responseData.cast<Map<String, dynamic>>();
         }
 
+        // Get locally cancelled booking IDs from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        String? cancelledIdsJson = prefs.getString('cancelled_booking_ids');
+        List<String> cancelledIds = <String>[];
+
+        if (cancelledIdsJson != null) {
+          List<dynamic> decodedList = json.decode(cancelledIdsJson);
+          cancelledIds = decodedList.cast<String>();
+        }
+
+        // Filter out locally cancelled bookings
+        fetchedList = fetchedList.where((booking) => !cancelledIds.contains(booking['_id'])).toList();
+
         // 3. assignAll replaces whatever was there with EXACTLY what the API sent (the 4 items)
         bookings.assignAll(fetchedList);
-        
+
         print('✅ Accurate Count: ${bookings.length}');
       } else {
         errorMessage.value = data['message'] ?? 'Failed to fetch data';
@@ -143,6 +154,40 @@ Future<void> fetchBookings({bool refresh = false}) async {
       );
     } finally {
       processingIds.remove(bookingId);
+    }
+  }
+
+  Future<void> cancelBookingLocally(String bookingId) async {
+    try {
+      // Store the cancelled booking ID in SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      String? cancelledIdsJson = prefs.getString('cancelled_booking_ids');
+      List<String> cancelledIds = <String>[];
+
+      if (cancelledIdsJson != null) {
+        List<dynamic> decodedList = json.decode(cancelledIdsJson);
+        cancelledIds = decodedList.cast<String>();
+      }
+
+      cancelledIds.add(bookingId);
+      await prefs.setString('cancelled_booking_ids', json.encode(cancelledIds));
+
+      // Remove the booking from the local list
+      bookings.removeWhere((booking) => booking['_id'] == bookingId);
+
+      Get.snackbar(
+        'Cancelled',
+        'Booking cancelled Successfully',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to cancel booking',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
