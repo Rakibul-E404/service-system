@@ -11,6 +11,11 @@ import '../../../core/utils/token_service/token_storage_service.dart';
 import '../model/business_profile_response_model.dart';
 
 
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+
 class ProviderProfileController extends GetxController {
   // --- Loading States ---
   final isLoading = false.obs;
@@ -26,34 +31,10 @@ class ProviderProfileController extends GetxController {
   final email = ''.obs;
   final businessImage = ''.obs;
   final address = ''.obs;
+  final category = ''.obs;
 
-
+  final Rx<File?> selectedImageFile = Rx<File?>(null); // Added for update
   final availability = <String, AvailabilityDay>{}.obs;
-
-  String get todayHours {
-    if (availability.isEmpty) return 'Loading hours...';
-
-    // 1. Get current day name with Capitalized first letter (e.g., "Wednesday")
-    // Your API uses "Wednesday", not "wednesday"
-    String dayName = DateFormat('EEEE').format(DateTime.now());
-
-    // 2. Look up in availability map
-    final todayData = availability[dayName];
-
-    // 3. Handle Null or Closed status
-    if (todayData == null || !todayData.isAvailable) {
-      return 'Today: Closed';
-    }
-
-    // 4. Format and Return
-    return 'Today: ${_formatTime(todayData.openingTime)} - ${_formatTime(todayData.closingTime)}';
-  }
-
-  String _formatTime(int hour) {
-    // Since your API sends 9 instead of 900, we use it directly as the hour
-    final tempDate = DateTime(2026, 1, 1, hour, 0);
-    return DateFormat('h:mm a').format(tempDate);
-  }
 
   // --- Network Service ---
   final NetworkCaller _networkCaller = NetworkCaller();
@@ -74,7 +55,95 @@ class ProviderProfileController extends GetxController {
     fetchBusinessProfile();
   }
 
-  // Helper to get token from shared preferences
+  // --- NEW: UPDATE METHOD (Multipart PUT) ---
+  Future<void> updateBusinessProfile({
+    required String name,
+    required String phone,
+    required String description,
+    required String serviceCategory,
+    required String region,
+    required String location,
+  }) async {
+    try {
+      isLoading.value = true;
+      final token = await _getAuthToken();
+
+      // Creating the Multipart Request manually
+      var request = http.MultipartRequest('PUT', Uri.parse(AppUrl.updateBusinessProfile));
+
+      // Headers
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      // Form Fields (Name, Phone, etc.)
+      request.fields.addAll({
+        "name": name,
+        "phone": phone,
+        "description": description,
+        "serviceCategory": serviceCategory,
+        "region": region.toLowerCase(),
+        "location": location,
+      });
+
+      // Image File (If selected)
+      if (selectedImageFile.value != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'image',
+          selectedImageFile.value!.path,
+        ));
+      }
+
+      // Send Request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      var jsonResponse = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        Get.snackbar('Success', jsonResponse['message'] ?? 'Profile updated',
+            backgroundColor: Colors.green, colorText: Colors.white);
+
+        selectedImageFile.value = null;
+        await fetchBusinessProfile(); // Refresh data
+        Get.back();
+      } else {
+        Get.snackbar('Update Failed', jsonResponse['message'] ?? 'Error ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('🧨 Update Error: $e');
+      Get.snackbar('Error', 'Something went wrong');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Helper to pick image
+  Future<void> pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      selectedImageFile.value = File(image.path);
+    }
+  }
+
+  // --- EXISTING CODE REMAINS THE SAME ---
+
+  String get todayHours {
+    if (availability.isEmpty) return 'Loading hours...';
+    String dayName = DateFormat('EEEE').format(DateTime.now());
+    final todayData = availability[dayName];
+    if (todayData == null || !todayData.isAvailable) {
+      return 'Today: Closed';
+    }
+    return 'Today: ${_formatTime(todayData.openingTime)} - ${_formatTime(todayData.closingTime)}';
+  }
+
+  String _formatTime(int hour) {
+    final tempDate = DateTime(2026, 1, 1, hour, 0);
+    return DateFormat('h:mm a').format(tempDate);
+  }
+
   Future<String?> _getAuthToken() async {
     final tokenService = SharedPrefService();
     return await tokenService.getAccessToken();
@@ -91,7 +160,6 @@ class ProviderProfileController extends GetxController {
 
   @override
   void onClose() {
-    debugPrint('🗑 Disposing ProviderProfileController');
     nameController.dispose();
     locationController.dispose();
     descriptionController.dispose();
@@ -101,92 +169,60 @@ class ProviderProfileController extends GetxController {
     super.onClose();
   }
 
-  // --- API Fetching ---
-
   Future<void> fetchBusinessProfile() async {
     try {
       isLoading.value = true;
-
-      // 1. Get the real token
       final token = await _getAuthToken();
-
-      if (token == null || token.isEmpty) {
-        debugPrint('❌ No token found');
-        Get.snackbar('Auth Error', 'Please log in again');
-        return;
-      }
-
-      debugPrint('📡 Fetching profile from: ${AppUrl.getBusinessProfile}');
+      if (token == null || token.isEmpty) return;
 
       final response = await _networkCaller.getRequest(
         AppUrl.getBusinessProfile,
-        headers: {
-          'Authorization': 'Bearer $token', // Dynamic token fix
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
-      debugPrint('📥 Response Code: ${response.statusCode}');
-
       if (response.isSuccess && response.jsonResponse != null) {
-        // Ensure you match the 'data' nesting of your specific API response
         final profileResponse = BusinessProfileResponse.fromJson(response.jsonResponse!);
-
-        // Check if email exists in the raw response data
         final rawData = response.jsonResponse!['data'] as Map<String, dynamic>?;
-        String emailValue = '';
-        if (rawData != null && rawData.containsKey('email')) {
-          emailValue = rawData['email']?.toString() ?? '';
-        }
-
+        String emailValue = rawData?['email']?.toString() ?? '';
         _mapModelToUI(profileResponse.data, emailValue: emailValue);
-      } else if (response.statusCode == 401) {
-        debugPrint('❌ Unauthorized: Token might be expired or malformed');
-        Get.snackbar('Session Expired', 'Please log in again');
-      } else {
-        debugPrint('❌ Server Error: ${response.errorMessage}');
-        Get.snackbar('Error', 'Failed to fetch profile: ${response.statusCode}');
       }
-    } catch (e) {
-      debugPrint('🧨 Connection/Mapping Error: $e');
-      Get.snackbar('Error', 'Connection error');
     } finally {
       isLoading.value = false;
     }
   }
 
   void _mapModelToUI(BusinessProfile data, {String emailValue = ''}) {
-    debugPrint('Mapping ID: ${data.id}');
+    providerId.value = data.id;
+    businessName.value = data.name;
+    location.value = data.location;
+    description.value = data.description;
+    contactDetails.value = data.phone;
+    address.value = data.region;
 
-    providerId.value = data.id ?? '';
-    businessName.value = data.name ?? '';
-    location.value = data.location ?? '';
-    description.value = data.description ?? '';
-    contactDetails.value = data.phone ?? '';
-    address.value = data.region ?? '';
-    email.value = emailValue; // Set email from raw response
-    businessImage.value = data.image ?? '';
+    // ✅ FIX: serviceCategory is now an object
+    category.value = data.serviceCategory.name;
 
-    // Update controllers so Edit Mode starts with current data
+    email.value = emailValue;
+    businessImage.value = data.image;
+
     nameController.text = businessName.value;
     locationController.text = location.value;
     descriptionController.text = description.value;
     contactController.text = contactDetails.value;
     addressController.text = address.value;
     emailController.text = email.value;
-    availability.value = data.availability;
 
-    debugPrint('✅ Data mapping complete');
+    availability.value = data.availability;
   }
 
 
   void cancelEdit() {
-    debugPrint('🚫 Resetting fields');
     nameController.text = businessName.value;
     locationController.text = location.value;
     descriptionController.text = description.value;
     contactController.text = contactDetails.value;
     addressController.text = address.value;
-    emailController.text = email.value; // Reset email field too
+    emailController.text = email.value;
     isEditing.value = false;
   }
 
@@ -199,6 +235,6 @@ class ProviderProfileController extends GetxController {
   }
 
   void showImagePickerDialog() {
-    debugPrint('📸 Image picker clicked');
+    pickImage(); // Connect the logic
   }
 }

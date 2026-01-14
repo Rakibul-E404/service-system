@@ -4,6 +4,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../controllers/provider_profile_controller.dart';
+
 class EditBusinessProfileScreen extends StatefulWidget {
   const EditBusinessProfileScreen({Key? key}) : super(key: key);
 
@@ -12,24 +17,46 @@ class EditBusinessProfileScreen extends StatefulWidget {
 }
 
 class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
-  // Controllers
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
+  // Access the controller directly
+  final profileCtrl = Get.find<ProviderProfileController>();
 
-  // Dropdown Values
-  String _selectedLocation = 'North';
-  String _selectedCategory = 'Cleaning';
-  String _selectedSubCategory = 'House Cleaning';
+  // Local Controllers
+  late TextEditingController _nameController;
+  late TextEditingController _bioController;
+  late TextEditingController _phoneController;
+  late TextEditingController _addressController; // Exact Location
+  late TextEditingController _locationController; // General Region
+  late TextEditingController _categoryController;
 
-  // Lists
-  final List<String> _locations = ['North', 'South', 'East', 'West'];
-  final List<String> _categories = ['Cleaning', 'Plumbing', 'Electrician', 'Moving'];
-  final List<String> _subCategories = ['House Cleaning', 'Office Cleaning', 'Deep Cleaning'];
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize with current values from the Controller
+    _nameController = TextEditingController(text: profileCtrl.businessName.value);
+    _bioController = TextEditingController(text: profileCtrl.description.value);
+    _phoneController = TextEditingController(text: profileCtrl.contactDetails.value);
+    _addressController = TextEditingController(text: profileCtrl.location.value);
+    _locationController = TextEditingController(text: profileCtrl.address.value);
+    _categoryController = TextEditingController(text: profileCtrl.category.value);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _locationController.dispose();
+    _categoryController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+
+    bool isCategoryReadOnly = profileCtrl.category.value.isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -39,10 +66,10 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
+      body: Obx(() => SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,18 +78,23 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
+                  Obx(() => CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.grey[200],
-                    child: Icon(Icons.business, size: 60, color: Colors.grey[400]),
-                  ),
+                    backgroundImage: profileCtrl.selectedImageFile.value != null
+                        ? FileImage(profileCtrl.selectedImageFile.value!)
+                        : (profileCtrl.businessImage.value.isNotEmpty
+                        ? NetworkImage(profileCtrl.getFullImageUrl()) as ImageProvider
+                        : null),
+                    child: (profileCtrl.selectedImageFile.value == null && profileCtrl.businessImage.value.isEmpty)
+                        ? Icon(Icons.business, size: 60, color: Colors.grey[400])
+                        : null,
+                  )),
                   Positioned(
                     bottom: 0,
                     right: 4,
                     child: GestureDetector(
-                      onTap: () {
-                        // Image picker logic will go here
-                      },
+                      onTap: () => profileCtrl.pickImage(),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -79,14 +111,12 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
             ),
             const SizedBox(height: 30),
 
-            // --- Basic Info Section ---
             _buildSectionTitle('General Information'),
             _buildTextField('Business Name', _nameController, Icons.person_outline),
             _buildTextField('Business Bio', _bioController, Icons.info_outline, maxLines: 3),
 
             const SizedBox(height: 20),
 
-            // --- Dropdown Section ---
             _buildSectionTitle('Categories & Location'),
             Container(
               padding: const EdgeInsets.all(16),
@@ -97,26 +127,23 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
               ),
               child: Column(
                 children: [
-                  _buildDropdownField('Category', _selectedCategory, _categories, (val) {
-                    setState(() => _selectedCategory = val!);
-                  }),
+                  // Updated Category Field with readOnly logic
+                  _buildTextField(
+                    'Category',
+                    _categoryController,
+                    Icons.category_outlined,
+                    readOnly: isCategoryReadOnly, // Lock if data exists
+                  ),
                   const SizedBox(height: 16),
-                  _buildDropdownField('Sub Category', _selectedSubCategory, _subCategories, (val) {
-                    setState(() => _selectedSubCategory = val!);
-                  }),
-                  const SizedBox(height: 16),
-                  _buildDropdownField('General Location', _selectedLocation, _locations, (val) {
-                    setState(() => _selectedLocation = val!);
-                  }),
+                  _buildTextField('General Region (North/South/etc)', _locationController, Icons.map_outlined),
                 ],
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // --- Contact Section ---
             _buildSectionTitle('Contact Details'),
-            _buildTextField('Exact Address', _addressController, Icons.location_on_outlined),
+            _buildTextField('Exact Address / City', _addressController, Icons.location_on_outlined),
             _buildTextField('Phone Number', _phoneController, Icons.phone_android_outlined, keyboardType: TextInputType.phone),
 
             const SizedBox(height: 40),
@@ -126,15 +153,26 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  // Logic to trigger update
+                onPressed: profileCtrl.isLoading.value
+                    ? null
+                    : () {
+                  profileCtrl.updateBusinessProfile(
+                    name: _nameController.text,
+                    phone: _phoneController.text,
+                    description: _bioController.text,
+                    serviceCategory: _categoryController.text, // Sending as plain text as requested
+                    region: _locationController.text,
+                    location: _addressController.text,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: const Text(
+                child: profileCtrl.isLoading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
                   'Update Profile',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
@@ -143,7 +181,7 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
             const SizedBox(height: 20),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -159,53 +197,38 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+      String label,
+      TextEditingController controller,
+      IconData icon, {
+        int maxLines = 1,
+        TextInputType keyboardType = TextInputType.text,
+        bool readOnly = false, // Added parameter
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        readOnly: readOnly, // Set the readOnly state
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: AppColors.primaryColor, size: 22),
+          prefixIcon: Icon(icon, color: readOnly ? Colors.grey : AppColors.primaryColor, size: 22),
           labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
           filled: true,
-          fillColor: Colors.grey[50],
+          // Change color to indicate it is disabled/read-only
+          fillColor: readOnly ? Colors.grey[200] : Colors.grey[50],
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey[200]!),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primaryColor),
+            borderSide: BorderSide(color: readOnly ? Colors.grey[200]! : AppColors.primaryColor),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDropdownField(String label, String value, List<String> items, ValueChanged<String?> onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        const SizedBox(height: 4),
-        DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down),
-            items: items.map((String item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(item, style: const TextStyle(fontSize: 15)),
-              );
-            }).toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      ],
     );
   }
 }

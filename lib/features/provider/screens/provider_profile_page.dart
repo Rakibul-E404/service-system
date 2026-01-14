@@ -42,7 +42,8 @@ class ProviderProfilePage extends StatelessWidget {
                 ),
                 child: InkWell(
                   onTap: () {
-                    Get.to(const EditBusinessProfileScreen());
+                    Get.to(const EditBusinessProfileScreen(
+                    ));
                   },
                   child: const Icon(
                     Icons.edit,
@@ -121,6 +122,19 @@ class ProviderProfilePage extends StatelessWidget {
                             showLocationDropdown: false,
                           ),
                           const SizedBox(height: 20),
+
+
+                          _buildFormField(
+                            controller: controller,
+                            label: 'Category',
+                            value: controller.category.value,
+                            textController: TextEditingController(text: controller.category.value),
+                            isEditing: false, // 🔒 read-only for now
+                            placeholder: 'Business category',
+                            showLocationDropdown: false,
+                          ),
+                          const SizedBox(height: 20),
+
                           _buildFormField(
                             controller: controller,
                             showLocationDropdown: true,
