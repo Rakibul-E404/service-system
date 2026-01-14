@@ -5,7 +5,7 @@ import 'package:manx_mate/features/home/screens/search_input_section.dart';
 import 'package:manx_mate/features/home/screens/search_results_grid.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/extensions/context_extensions.dart';
-import '../controllers/search_controller.dart';
+import '../controllers/home_search_controller.dart';
 import 'ad_section.dart';
 import 'all_service_screen.dart';
 import 'featured_providers_section.dart';

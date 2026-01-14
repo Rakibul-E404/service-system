@@ -7,7 +7,7 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import '../../../core/extensions/context_extensions.dart';
-import '../controllers/search_controller.dart';
+import '../controllers/home_search_controller.dart';
 
 
 class SearchResultsHeader extends StatelessWidget {
