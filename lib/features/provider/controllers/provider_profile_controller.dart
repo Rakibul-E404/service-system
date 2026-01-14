@@ -49,6 +49,9 @@ class ProviderProfileController extends GetxController {
   // --- Network Service ---
   final NetworkCaller _networkCaller = NetworkCaller();
 
+
+  final processingId = ''.obs;
+
   // --- Text Controllers ---
   late TextEditingController nameController;
   late TextEditingController locationController;
@@ -226,6 +229,52 @@ class ProviderProfileController extends GetxController {
         ),
       ),
     );
+  }
+
+
+  Future<void> toggleSubCategoryService(String subCategoryId) async {
+    try {
+      processingId.value = subCategoryId;
+      final token = await _getAuthToken();
+
+      // Construct the URL dynamically with the ID
+      final String url = "${AppUrl.baseUrl}/service/$subCategoryId";
+
+      debugPrint('🚀 Hitting Self-Service API: $url');
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      debugPrint('📥 Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Toggle the local ID in the list only after a successful API hit
+        if (selectedSubCategoryIds.contains(subCategoryId)) {
+          selectedSubCategoryIds.remove(subCategoryId);
+        } else {
+          selectedSubCategoryIds.add(subCategoryId);
+        }
+
+        Get.snackbar('Success', 'Service updated',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 1));
+      } else {
+        Get.snackbar('Error', 'Failed to update service (${response.statusCode})',
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      debugPrint('🧨 API Error: $e');
+      Get.snackbar('Error', 'Check your internet connection');
+    } finally {
+      processingId.value = ''; // Reset processing state
+    }
   }
 
   // --- EXISTING CODE REMAINS THE SAME ---

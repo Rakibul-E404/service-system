@@ -29,6 +29,7 @@ class AppUrl {
   static const String getBusinessProfile = '$baseUrl/business_profile/self';
   static const String putAvailabilityPart = '$baseUrl//business_profile/ability';
   static const String updateBusinessProfile = '$baseUrl/business_profile';
+  static const String createService = '$baseUrl/service/';
 
 
 

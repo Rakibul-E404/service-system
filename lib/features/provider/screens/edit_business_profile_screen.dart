@@ -243,16 +243,22 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 16),
-            const Text("Select Sub-Categories",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text("Select Sub-Categories",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.close))
+              ],
+            ),
             const Divider(),
             Expanded(
               child: Obx(() {
                 if (categoryCtrl.isSubLoading.value) {
                   return const Center(child: CircularProgressIndicator());
-                }
-                if (categoryCtrl.subCategories.isEmpty) {
-                  return const Center(child: Text("No sub-categories found"));
                 }
                 return ListView.builder(
                   itemCount: categoryCtrl.subCategories.length,
@@ -260,33 +266,30 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                     final sub = categoryCtrl.subCategories[index];
                     return Obx(() {
                       final isSelected = profileCtrl.selectedSubCategoryIds.contains(sub.id);
+                      final isProcessing = profileCtrl.processingId.value == sub.id;
+
                       return CheckboxListTile(
                         activeColor: AppColors.primaryColor,
                         title: Text(sub.name),
+                        secondary: isProcessing
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            : null,
                         value: isSelected,
-                        onChanged: (val) => profileCtrl.toggleSubCategory(sub.id),
+                        // Call the new API-hitting method here
+                        onChanged: isProcessing ? null : (val) => profileCtrl.toggleSubCategoryService(sub.id),
                       );
                     });
                   },
                 );
               }),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryColor),
-                  onPressed: () => Get.back(),
-                  child: const Text("Done", style: TextStyle(color: Colors.white)),
-                ),
-              ),
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
+
 
   Widget _buildSectionTitle(String title) {
     return Padding(
