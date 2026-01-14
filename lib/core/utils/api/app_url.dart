@@ -25,6 +25,8 @@ class AppUrl {
   static const String getAllAdvertisement = '$baseUrlV1/$version1/adds/all';
 
   static const String getBusinessProfile = '$baseUrl/business_profile/self';
+  static const String featuredProviders = '$baseUrlV1/$version1/business_profile/featured-providers';
+
 
 
 
@@ -85,7 +87,7 @@ class AppUrl {
   static String allSubCategory(String categoryId) {
     return '$baseUrlV1/$version1/category/$categoryId/subcategories';
 }
-  static const String allService = '$baseUrl/service/all';
+  static const String allService = '$baseUrlV1/$version1/service/all';
 
   static String getSubCategoriesUrl(String categoryId) {
     return '$baseUrl/category/$categoryId/subcategories';
