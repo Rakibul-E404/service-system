@@ -1,4 +1,3 @@
-
 class BusinessProfileResponse {
   final bool success;
   final int code;
@@ -21,6 +20,23 @@ class BusinessProfileResponse {
     );
   }
 }
+class ServiceCategory {
+  final String id;
+  final String name;
+
+  ServiceCategory({
+    required this.id,
+    required this.name,
+  });
+
+  factory ServiceCategory.fromJson(Map<String, dynamic> json) {
+    return ServiceCategory(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+    );
+  }
+}
+
 
 class BusinessProfile {
   final String id;
@@ -28,7 +44,7 @@ class BusinessProfile {
   final String name;
   final String phone;
   final String description;
-  final String serviceCategory;
+  final ServiceCategory serviceCategory; // ✅ UPDATED
   final bool isProfileComplete;
   final String createdAt;
   final String updatedAt;
@@ -68,7 +84,9 @@ class BusinessProfile {
       name: json['name'] ?? '',
       phone: json['phone'] ?? '',
       description: json['description'] ?? '',
-      serviceCategory: json['serviceCategory'] ?? '',
+      serviceCategory: ServiceCategory.fromJson(
+        json['serviceCategory'] ?? {},
+      ),
       isProfileComplete: json['isProfileComplete'] ?? false,
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
@@ -91,6 +109,7 @@ class BusinessProfile {
     );
   }
 }
+
 
 
 class AvailabilityDay {
