@@ -161,10 +161,7 @@ class ProviderQuoteTab extends StatelessWidget {
                           context,
                           'Cancel Booking',
                           'Are you sure you want to cancel this booking?',
-                              () => controller.respondToBooking(
-                            bookingId: bookingId,
-                            status: 'cancelled',
-                          ),
+                          () => controller.cancelBookingLocally(bookingId),
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -261,6 +258,7 @@ class ProviderQuoteTab extends StatelessWidget {
       },
     );
   }
+
 
   void _showBookingDetails(BuildContext context, Map<String, dynamic> booking) {
     final dynamic authorRaw = booking['author'];
