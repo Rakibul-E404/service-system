@@ -7,6 +7,7 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../controllers/category_controller.dart';
 import '../controllers/provider_profile_controller.dart';
 
 class EditBusinessProfileScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class EditBusinessProfileScreen extends StatefulWidget {
 class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
   // Access the controller directly
   final profileCtrl = Get.find<ProviderProfileController>();
+  final categoryCtrl = Get.find<CategoryController>();
 
   // Local Controllers
   late TextEditingController _nameController;
@@ -39,6 +41,10 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
     _addressController = TextEditingController(text: profileCtrl.location.value);
     _locationController = TextEditingController(text: profileCtrl.address.value);
     _categoryController = TextEditingController(text: profileCtrl.category.value);
+
+    if (profileCtrl.categoryId.value.isNotEmpty) {
+      categoryCtrl.fetchSubCategories(profileCtrl.categoryId.value);
+    }
   }
 
   @override
@@ -127,17 +133,57 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
               ),
               child: Column(
                 children: [
-                  // Updated Category Field with readOnly logic
                   _buildTextField(
                     'Category',
                     _categoryController,
                     Icons.category_outlined,
-                    readOnly: isCategoryReadOnly, // Lock if data exists
+                    readOnly: isCategoryReadOnly,
                   ),
                   const SizedBox(height: 16),
-                  _buildTextField('General Region (North/South/etc)', _locationController, Icons.map_outlined),
+
+                  // --- Dynamic Sub-Category Dropdown ---
+                  // --- Dynamic Sub-Category Dropdown ---
+                  Obx(() {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Sub-Category", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          // Value comes from Profile (where the selection is saved)
+                          value: profileCtrl.selectedSubCategoryId.value.isEmpty
+                              ? null
+                              : profileCtrl.selectedSubCategoryId.value,
+                          hint: const Text("Select Sub-Category"),
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.account_tree_outlined, color: AppColors.primaryColor),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          // Items come from CategoryController (the source of truth for categories)
+                          items: categoryCtrl.subCategories.map((sub) {
+                            return DropdownMenuItem(
+                              value: sub.id,
+                              child: Text(sub.name),
+                            );
+                          }).toList(),
+                          onChanged: (val) => profileCtrl.selectedSubCategoryId.value = val ?? '',
+                        ),
+                        // Loading state comes from CategoryController
+                        if (categoryCtrl.isSubLoading.value)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8.0),
+                            child: LinearProgressIndicator(minHeight: 2),
+                          ),
+                      ],
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+                  _buildTextField('General Region', _locationController, Icons.map_outlined),
                 ],
-              ),
+              )
             ),
 
             const SizedBox(height: 20),

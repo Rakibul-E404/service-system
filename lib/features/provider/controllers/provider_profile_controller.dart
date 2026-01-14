@@ -8,6 +8,7 @@ import 'package:manx_mate/core/utils/api/app_url.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 
+import '../../home/model/sub_category_model.dart';
 import '../model/business_profile_response_model.dart';
 
 
@@ -32,6 +33,12 @@ class ProviderProfileController extends GetxController {
   final businessImage = ''.obs;
   final address = ''.obs;
   final category = ''.obs;
+
+  final categoryId = ''.obs;
+  final selectedSubCategoryId = ''.obs;
+  final isSubLoading = false.obs;
+  final subCategories = <SubCategoryModel>[].obs;
+
 
   final Rx<File?> selectedImageFile = Rx<File?>(null); // Added for update
   final availability = <String, AvailabilityDay>{}.obs;
@@ -198,10 +205,10 @@ class ProviderProfileController extends GetxController {
     description.value = data.description;
     contactDetails.value = data.phone;
     address.value = data.region;
-
     // ✅ FIX: serviceCategory is now an object
     category.value = data.serviceCategory.name;
-
+    categoryId.value = data.serviceCategory.id;
+    category.value = data.serviceCategory.name;
     email.value = emailValue;
     businessImage.value = data.image;
 

@@ -6,6 +6,8 @@ import 'package:manx_mate/features/provider/screens/availablity_page.dart';
 import 'package:manx_mate/features/provider/screens/edit_business_profile_screen.dart';
 import 'package:manx_mate/features/provider/screens/provider_availablity_screen.dart';
 
+import '../controllers/category_controller.dart';
+
 class ProviderProfilePage extends StatelessWidget {
   const ProviderProfilePage({super.key});
 
@@ -13,6 +15,7 @@ class ProviderProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     // This ensures the controller is created and available in memory
     final controller = Get.put(ProviderProfileController());
+    Get.put(CategoryController());
 
     return Scaffold(
       backgroundColor: Colors.white,
