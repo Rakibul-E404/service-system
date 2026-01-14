@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
@@ -25,6 +26,34 @@ class ProviderProfileController extends GetxController {
   final email = ''.obs;
   final businessImage = ''.obs;
   final address = ''.obs;
+
+
+  final availability = <String, AvailabilityDay>{}.obs;
+
+  String get todayHours {
+    if (availability.isEmpty) return 'Loading hours...';
+
+    // 1. Get current day name with Capitalized first letter (e.g., "Wednesday")
+    // Your API uses "Wednesday", not "wednesday"
+    String dayName = DateFormat('EEEE').format(DateTime.now());
+
+    // 2. Look up in availability map
+    final todayData = availability[dayName];
+
+    // 3. Handle Null or Closed status
+    if (todayData == null || !todayData.isAvailable) {
+      return 'Today: Closed';
+    }
+
+    // 4. Format and Return
+    return 'Today: ${_formatTime(todayData.openingTime)} - ${_formatTime(todayData.closingTime)}';
+  }
+
+  String _formatTime(int hour) {
+    // Since your API sends 9 instead of 900, we use it directly as the hour
+    final tempDate = DateTime(2026, 1, 1, hour, 0);
+    return DateFormat('h:mm a').format(tempDate);
+  }
 
   // --- Network Service ---
   final NetworkCaller _networkCaller = NetworkCaller();
@@ -144,23 +173,11 @@ class ProviderProfileController extends GetxController {
     contactController.text = contactDetails.value;
     addressController.text = address.value;
     emailController.text = email.value;
+    availability.value = data.availability;
 
     debugPrint('✅ Data mapping complete');
   }
 
-  // --- UI Interactions ---
-
-  // void toggleEdit() {
-  //   if (isEditing.value) {
-  //     // Save changes - first upload image if selected, then update profile
-  //     _updateBusinessProfile();
-  //   } else {
-  //     // Enter edit mode
-  //     _initializeControllers();
-  //     isEditing.value = true;
-  //   }
-  //   debugPrint('Edit Mode: ${isEditing.value}');
-  // }
 
   void cancelEdit() {
     debugPrint('🚫 Resetting fields');

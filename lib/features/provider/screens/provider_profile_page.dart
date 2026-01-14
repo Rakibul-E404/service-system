@@ -27,37 +27,6 @@ class ProviderProfilePage extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
-        // actions: <Widget>[
-        //   Obx(
-        //         () => Container(
-        //       margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-        //       child: ElevatedButton(
-        //         onPressed: controller.isLoading.value ? null : () => controller.toggleEdit(),
-        //         style: ElevatedButton.styleFrom(
-        //           backgroundColor: Colors.amber[600],
-        //           foregroundColor: Colors.black,
-        //           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        //           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        //           elevation: 0,
-        //           disabledBackgroundColor: Colors.grey[300],
-        //         ),
-        //         child: controller.isLoading.value
-        //             ? const SizedBox(
-        //           width: 14,
-        //           height: 14,
-        //           child: CircularProgressIndicator(
-        //             strokeWidth: 2,
-        //             valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-        //           ),
-        //         )
-        //             : Text(
-        //           controller.isEditing.value ? 'Save' : 'Edit',
-        //           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // ],
       ),
       body: Obx(() {
         if (controller.isLoading.value && !controller.isEditing.value) {
@@ -161,6 +130,7 @@ class ProviderProfilePage extends StatelessWidget {
                             placeholder: 'Add a business description',
                           ),
                           const SizedBox(height: 20),
+                          // Inside ProviderProfilePage column...
                           const Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [Text("Open & Close Hour", style: TextStyle(fontSize: 18))],
@@ -171,14 +141,25 @@ class ProviderProfilePage extends StatelessWidget {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: Colors.grey[200]!),
+                                ),
                               ),
                               onPressed: () => Get.to(() => const ProviderAvailabilityScreen()),
-                              child: const Row(
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Today: 9:00AM - 6:00PM', style: TextStyle(color: Colors.black)),
-                                  Icon(Icons.arrow_forward, color: AppColors.primaryColor),
+                                  // This Obx is crucial to show the data once fetched
+                                  Obx(() => Text(
+                                    controller.todayHours,
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  )),
+                                  const Icon(Icons.arrow_forward, color: AppColors.primaryColor, size: 20),
                                 ],
                               ),
                             ),
