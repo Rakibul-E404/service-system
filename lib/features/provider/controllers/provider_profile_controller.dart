@@ -415,9 +415,23 @@ class ProviderProfileController extends GetxController {
   void forceRefresh() => fetchBusinessProfile();
 
   String getFullImageUrl() {
-    if (businessImage.value.isEmpty) return '';
-    if (businessImage.value.startsWith('http')) return businessImage.value;
-    return '${AppUrl.baseUrl}${businessImage.value}';
+    String imageUrl = businessImage.value;
+
+    if (imageUrl.isEmpty) return "";
+
+    // Check if the URL is already a full path (e.g., https://...)
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('https')) {
+      return imageUrl;
+    }
+
+    // If it's a relative path, prepend the Base URL
+    // Ensure there is a "/" between the base and the path
+    String baseUrl = AppUrl.imageBaseUrl;
+    if (!baseUrl.endsWith('/') && !imageUrl.startsWith('/')) {
+      return '$baseUrl/$imageUrl';
+    }
+
+    return '$baseUrl$imageUrl';
   }
 
 
