@@ -100,7 +100,7 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                     bottom: 0,
                     right: 4,
                     child: GestureDetector(
-                      onTap: () => profileCtrl.pickImage(),
+                      onTap: () => profileCtrl.showImagePickerDialog(),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -141,41 +141,39 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // --- Dynamic Sub-Category Dropdown ---
-                  // --- Dynamic Sub-Category Dropdown ---
                   Obx(() {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Sub-Category", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                        const Text("Sub-Categories", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          // Value comes from Profile (where the selection is saved)
-                          value: profileCtrl.selectedSubCategoryId.value.isEmpty
-                              ? null
-                              : profileCtrl.selectedSubCategoryId.value,
-                          hint: const Text("Select Sub-Category"),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.account_tree_outlined, color: AppColors.primaryColor),
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        InkWell(
+                          onTap: () => _showSubCategoryPicker(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    profileCtrl.selectedSubCategoryNames,
+                                    style: TextStyle(
+                                      color: profileCtrl.selectedSubCategoryIds.isEmpty ? Colors.grey : Colors.black,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
+                              ],
+                            ),
                           ),
-                          // Items come from CategoryController (the source of truth for categories)
-                          items: categoryCtrl.subCategories.map((sub) {
-                            return DropdownMenuItem(
-                              value: sub.id,
-                              child: Text(sub.name),
-                            );
-                          }).toList(),
-                          onChanged: (val) => profileCtrl.selectedSubCategoryId.value = val ?? '',
                         ),
-                        // Loading state comes from CategoryController
-                        if (categoryCtrl.isSubLoading.value)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8.0),
-                            child: LinearProgressIndicator(minHeight: 2),
-                          ),
                       ],
                     );
                   }),
@@ -206,7 +204,6 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                     name: _nameController.text,
                     phone: _phoneController.text,
                     description: _bioController.text,
-                    serviceCategory: _categoryController.text, // Sending as plain text as requested
                     region: _locationController.text,
                     location: _addressController.text,
                   );
@@ -232,6 +229,64 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
   }
 
   // --- Helper Widgets ---
+
+  void _showSubCategoryPicker(BuildContext context) {
+    Get.bottomSheet(
+      isScrollControlled: true,
+      Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            const Text("Select Sub-Categories",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Divider(),
+            Expanded(
+              child: Obx(() {
+                if (categoryCtrl.isSubLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (categoryCtrl.subCategories.isEmpty) {
+                  return const Center(child: Text("No sub-categories found"));
+                }
+                return ListView.builder(
+                  itemCount: categoryCtrl.subCategories.length,
+                  itemBuilder: (context, index) {
+                    final sub = categoryCtrl.subCategories[index];
+                    return Obx(() {
+                      final isSelected = profileCtrl.selectedSubCategoryIds.contains(sub.id);
+                      return CheckboxListTile(
+                        activeColor: AppColors.primaryColor,
+                        title: Text(sub.name),
+                        value: isSelected,
+                        onChanged: (val) => profileCtrl.toggleSubCategory(sub.id),
+                      );
+                    });
+                  },
+                );
+              }),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryColor),
+                  onPressed: () => Get.back(),
+                  child: const Text("Done", style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildSectionTitle(String title) {
     return Padding(

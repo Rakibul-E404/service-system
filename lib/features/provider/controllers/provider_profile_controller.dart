@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import '../../../core/config/app_colors.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 
@@ -16,6 +17,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+
+import 'category_controller.dart';
 
 class ProviderProfileController extends GetxController {
   // --- Loading States ---
@@ -42,7 +45,7 @@ class ProviderProfileController extends GetxController {
 
   final Rx<File?> selectedImageFile = Rx<File?>(null); // Added for update
   final availability = <String, AvailabilityDay>{}.obs;
-
+  final selectedSubCategoryIds = <String>[].obs;
   // --- Network Service ---
   final NetworkCaller _networkCaller = NetworkCaller();
 
@@ -62,12 +65,32 @@ class ProviderProfileController extends GetxController {
     fetchBusinessProfile();
   }
 
+
+  void toggleSubCategory(String id) {
+    if (selectedSubCategoryIds.contains(id)) {
+      selectedSubCategoryIds.remove(id);
+    } else {
+      selectedSubCategoryIds.add(id);
+    }
+  }
+
+// Helper to show names in the main UI
+  String get selectedSubCategoryNames {
+    if (selectedSubCategoryIds.isEmpty) return "Select Sub-Categories";
+    // Match IDs to Names from the CategoryController list
+    final categoryCtrl = Get.find<CategoryController>();
+    return categoryCtrl.subCategories
+        .where((sub) => selectedSubCategoryIds.contains(sub.id))
+        .map((sub) => sub.name)
+        .join(", ");
+  }
+
   // --- NEW: UPDATE METHOD (Multipart PUT) ---
+  // Remove serviceCategory and subCategory from the parameters
   Future<void> updateBusinessProfile({
     required String name,
     required String phone,
     required String description,
-    required String serviceCategory,
     required String region,
     required String location,
   }) async {
@@ -75,7 +98,9 @@ class ProviderProfileController extends GetxController {
       isLoading.value = true;
       final token = await _getAuthToken();
 
-      // Creating the Multipart Request manually
+      debugPrint('🌐 --- STARTING PROFILE UPDATE ---');
+      debugPrint('📍 URL: ${AppUrl.updateBusinessProfile}');
+
       var request = http.MultipartRequest('PUT', Uri.parse(AppUrl.updateBusinessProfile));
 
       // Headers
@@ -84,54 +109,123 @@ class ProviderProfileController extends GetxController {
         'Accept': 'application/json',
       });
 
-      // Form Fields (Name, Phone, etc.)
-      request.fields.addAll({
+      // Form Fields - Only passing general business info
+      Map<String, String> fields = {
         "name": name,
         "phone": phone,
         "description": description,
-        "serviceCategory": serviceCategory,
         "region": region.toLowerCase(),
         "location": location,
-      });
+      };
+      request.fields.addAll(fields);
+      debugPrint('📝 Fields (No Category Sent): $fields');
 
-      // Image File (If selected)
+      // Image File with explicit MediaType fix
       if (selectedImageFile.value != null) {
+        String filePath = selectedImageFile.value!.path;
+        String extension = filePath.split('.').last.toLowerCase();
+
+        // Explicitly mapping the extension to the correct subtype for the backend
+        String subType = (extension == 'jpg' || extension == 'jpeg') ? 'jpeg' : extension;
+
+        debugPrint('📸 Adding Image: $filePath as image/$subType');
+
         request.files.add(await http.MultipartFile.fromPath(
           'image',
-          selectedImageFile.value!.path,
+          filePath,
+          contentType: http.MediaType('image', subType), // Fixes the 400 format error
         ));
+      } else {
+        debugPrint('📸 No new image selected.');
       }
 
       // Send Request
+      debugPrint('📤 Sending Request...');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      debugPrint('📥 Status Code: ${response.statusCode}');
+      debugPrint('📄 Response Body: ${response.body}');
+
       var jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200 && jsonResponse['success'] == true) {
+        debugPrint('✅ Update Successful');
         Get.snackbar('Success', jsonResponse['message'] ?? 'Profile updated',
             backgroundColor: Colors.green, colorText: Colors.white);
 
-        selectedImageFile.value = null;
-        await fetchBusinessProfile(); // Refresh data
-        Get.back();
+        selectedImageFile.value = null; // Clear local picker
+        await fetchBusinessProfile(); // Refresh UI with new data
+        Get.back(); // Return to profile page
       } else {
+        debugPrint('❌ Update Failed: ${jsonResponse['message']}');
         Get.snackbar('Update Failed', jsonResponse['message'] ?? 'Error ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('🧨 Update Error: $e');
+      debugPrint('🧨 CRITICAL ERROR: $e');
       Get.snackbar('Error', 'Something went wrong');
     } finally {
       isLoading.value = false;
+      debugPrint('🌐 --- PROFILE UPDATE FINISHED ---');
     }
   }
 
-  // Helper to pick image
-  Future<void> pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      selectedImageFile.value = File(image.path);
+// --- Updated: Flexible Image Picker ---
+  Future<void> pickImage(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 80, // Optional: Compress for faster uploads
+      );
+
+      if (image != null) {
+        selectedImageFile.value = File(image.path);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      Get.snackbar('Error', 'Failed to pick image');
     }
+  }
+
+  // --- Updated: Show Selection Dialog ---
+  void showImagePickerDialog() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Wrap(
+          children: [
+            const ListTile(
+              title: Text('Select Image Source',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: AppColors.primaryColor),
+              title: const Text('Gallery'),
+              onTap: () {
+                Get.back(); // Close bottom sheet
+                pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppColors.primaryColor),
+              title: const Text('Camera'),
+              onTap: () {
+                Get.back(); // Close bottom sheet
+                pickImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // --- EXISTING CODE REMAINS THE SAME ---
@@ -241,7 +335,5 @@ class ProviderProfileController extends GetxController {
     return '${AppUrl.baseUrl}${businessImage.value}';
   }
 
-  void showImagePickerDialog() {
-    pickImage(); // Connect the logic
-  }
+
 }
