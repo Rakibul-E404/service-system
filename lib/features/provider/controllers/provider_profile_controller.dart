@@ -98,23 +98,21 @@ class ProviderProfileController extends GetxController {
     required String description,
     required String region,
     required String location,
+    String? serviceCategoryId, // Added optional parameter
   }) async {
     try {
       isLoading.value = true;
       final token = await _getAuthToken();
 
       debugPrint('🌐 --- STARTING PROFILE UPDATE ---');
-      debugPrint('📍 URL: ${AppUrl.updateBusinessProfile}');
-
       var request = http.MultipartRequest('PUT', Uri.parse(AppUrl.updateBusinessProfile));
 
-      // Headers
       request.headers.addAll({
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       });
 
-      // Form Fields - Only passing general business info
+      // Base fields
       Map<String, String> fields = {
         "name": name,
         "phone": phone,
@@ -122,48 +120,40 @@ class ProviderProfileController extends GetxController {
         "region": region.toLowerCase(),
         "location": location,
       };
-      request.fields.addAll(fields);
-      debugPrint('📝 Fields (No Category Sent): $fields');
 
-      // Image File with explicit MediaType fix
+      // LOGIC: Only add serviceCategory if it was passed from the UI (first-time set)
+      if (serviceCategoryId != null && serviceCategoryId.isNotEmpty) {
+        fields["serviceCategory"] = serviceCategoryId;
+        debugPrint('📝 New Category ID included: $serviceCategoryId');
+      }
+
+      request.fields.addAll(fields);
+
+      // Image Handling
       if (selectedImageFile.value != null) {
         String filePath = selectedImageFile.value!.path;
         String extension = filePath.split('.').last.toLowerCase();
-
-        // Explicitly mapping the extension to the correct subtype for the backend
         String subType = (extension == 'jpg' || extension == 'jpeg') ? 'jpeg' : extension;
-
-        debugPrint('📸 Adding Image: $filePath as image/$subType');
 
         request.files.add(await http.MultipartFile.fromPath(
           'image',
           filePath,
-          contentType: http.MediaType('image', subType), // Fixes the 400 format error
+          contentType: http.MediaType('image', subType),
         ));
-      } else {
-        debugPrint('📸 No new image selected.');
       }
 
-      // Send Request
-      debugPrint('📤 Sending Request...');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
-
-      debugPrint('📥 Status Code: ${response.statusCode}');
-      debugPrint('📄 Response Body: ${response.body}');
-
       var jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200 && jsonResponse['success'] == true) {
-        debugPrint('✅ Update Successful');
         Get.snackbar('Success', jsonResponse['message'] ?? 'Profile updated',
             backgroundColor: Colors.green, colorText: Colors.white);
 
-        selectedImageFile.value = null; // Clear local picker
-        await fetchBusinessProfile(); // Refresh UI with new data
-        Get.back(); // Return to profile page
+        selectedImageFile.value = null;
+        await fetchBusinessProfile();
+        Get.back();
       } else {
-        debugPrint('❌ Update Failed: ${jsonResponse['message']}');
         Get.snackbar('Update Failed', jsonResponse['message'] ?? 'Error ${response.statusCode}');
       }
     } catch (e) {
@@ -171,7 +161,6 @@ class ProviderProfileController extends GetxController {
       Get.snackbar('Error', 'Something went wrong');
     } finally {
       isLoading.value = false;
-      debugPrint('🌐 --- PROFILE UPDATE FINISHED ---');
     }
   }
 

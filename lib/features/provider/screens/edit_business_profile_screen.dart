@@ -1,10 +1,8 @@
 
 
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/category_controller.dart';
@@ -45,6 +43,10 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
     if (profileCtrl.categoryId.value.isNotEmpty) {
       categoryCtrl.fetchSubCategories(profileCtrl.categoryId.value);
     }
+
+    if (categoryCtrl.categories.isEmpty) {
+      categoryCtrl.fetchCategories();
+    }
   }
 
   @override
@@ -75,158 +77,228 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: Obx(() => SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Image Upload Section ---
-            Center(
-              child: Stack(
-                children: [
-                  Obx(() => CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: profileCtrl.selectedImageFile.value != null
-                        ? FileImage(profileCtrl.selectedImageFile.value!)
-                        : (profileCtrl.businessImage.value.isNotEmpty
-                        ? NetworkImage(profileCtrl.getFullImageUrl()) as ImageProvider
-                        : null),
-                    child: (profileCtrl.selectedImageFile.value == null && profileCtrl.businessImage.value.isEmpty)
-                        ? Icon(Icons.business, size: 60, color: Colors.grey[400])
-                        : null,
-                  )),
-                  Positioned(
-                    bottom: 0,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () => profileCtrl.showImagePickerDialog(),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Image Upload Section ---
+              Center(
+                child: Stack(
+                  children: [
+                    Obx(() => CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: profileCtrl.selectedImageFile.value != null
+                          ? FileImage(profileCtrl.selectedImageFile.value!)
+                          : (profileCtrl.businessImage.value.isNotEmpty
+                          ? NetworkImage(profileCtrl.getFullImageUrl()) as ImageProvider
+                          : null),
+                      child: (profileCtrl.selectedImageFile.value == null && profileCtrl.businessImage.value.isEmpty)
+                          ? Icon(Icons.business, size: 60, color: Colors.grey[400])
+                          : null,
+                    )),
+                    Positioned(
+                      bottom: 0,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () => profileCtrl.showImagePickerDialog(),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            _buildSectionTitle('General Information'),
-            _buildTextField('Business Name', _nameController, Icons.person_outline),
-            _buildTextField('Business Bio', _bioController, Icons.info_outline, maxLines: 3),
+              _buildSectionTitle('General Information'),
+              _buildTextField('Business Name', _nameController, Icons.person_outline),
+              _buildTextField('Business Bio', _bioController, Icons.info_outline, maxLines: 3),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            _buildSectionTitle('Categories & Location'),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Column(
-                children: [
-                  _buildTextField(
-                    'Category',
-                    _categoryController,
-                    Icons.category_outlined,
-                    readOnly: isCategoryReadOnly,
-                  ),
-                  const SizedBox(height: 16),
+              _buildSectionTitle('Categories & Location'),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  children: [
+                    Obx(() {
+                      // Logic: Only lock the field if the server already has a value saved.
+                      final bool isSavedOnServer = profileCtrl.category.value.isNotEmpty;
 
-                  Obx(() {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Sub-Categories", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () {
-                            profileCtrl.fetchSelfServices();
-                            _showSubCategoryPicker(context);},
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    profileCtrl.selectedSubCategoryNames,
-                                    style: TextStyle(
-                                      color: profileCtrl.selectedSubCategoryIds.isEmpty ? Colors.grey : Colors.black,
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-                              ],
-                            ),
+                      if (isSavedOnServer) {
+                        // Locked view after successful update
+                        return _buildTextField(
+                          'Category',
+                          _categoryController,
+                          Icons.category_outlined,
+                          readOnly: true,
+                        );
+                      } else {
+                        // Selectable view before update
+                        return DropdownButtonFormField<String>(
+                          value: profileCtrl.categoryId.value.isEmpty ? null : profileCtrl.categoryId.value,
+                          hint: const Text("Select Category"),
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.category_outlined, color: AppColors.primaryColor),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
                           ),
-                        ),
-                      ],
-                    );
-                  }),
+                          items: categoryCtrl.categories.map((cat) {
+                            return DropdownMenuItem(value: cat.id, child: Text(cat.name));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              final selectedCat = categoryCtrl.categories.firstWhere((e) => e.id == val);
 
-                  const SizedBox(height: 16),
-                  _buildTextField('General Region', _locationController, Icons.map_outlined),
-                ],
-              )
-            ),
+                              // --- WARNING DIALOG ---
+                              Get.defaultDialog(
+                                title: "Warning",
+                                middleText: "Once you set '${selectedCat.name}' as your category and update your profile, you cannot change it again. Do you want to proceed?",
+                                textConfirm: "Confirm",
+                                textCancel: "Cancel",
+                                confirmTextColor: Colors.white,
+                                buttonColor: AppColors.primaryColor,
+                                onConfirm: () {
+                                  profileCtrl.categoryId.value = val;
+                                  _categoryController.text = selectedCat.name;
+                                  categoryCtrl.fetchSubCategories(val);
+                                  Get.back(); // Close dialog
+                                },
+                              );
+                            }
+                          },
+                        );
+                      }
+                    }),
+                    const SizedBox(height: 16),
 
-            const SizedBox(height: 20),
 
-            _buildSectionTitle('Contact Details'),
-            _buildTextField('Exact Address / City', _addressController, Icons.location_on_outlined),
-            _buildTextField('Phone Number', _phoneController, Icons.phone_android_outlined, keyboardType: TextInputType.phone),
+                      Obx(() {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Sub-Categories", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () {
+                                profileCtrl.fetchSelfServices();
+                                _showSubCategoryPicker(context);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        profileCtrl.selectedSubCategoryNames,
+                                        style: TextStyle(
+                                          color: profileCtrl.selectedSubCategoryIds.isEmpty ? Colors.grey : Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
 
-            const SizedBox(height: 40),
-
-            // --- Update Button ---
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: profileCtrl.isLoading.value
-                    ? null
-                    : () {
-                  profileCtrl.updateBusinessProfile(
-                    name: _nameController.text,
-                    phone: _phoneController.text,
-                    description: _bioController.text,
-                    region: _locationController.text,
-                    location: _addressController.text,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: profileCtrl.isLoading.value
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  'Update Profile',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+                      const SizedBox(height: 16),
+                      _buildTextField('General Region', _locationController, Icons.map_outlined),
+                    ],
+                  )
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      )),
+
+              const SizedBox(height: 20),
+
+              _buildSectionTitle('Contact Details'),
+              _buildTextField('Exact Address / City', _addressController, Icons.location_on_outlined),
+              _buildTextField('Phone Number', _phoneController, Icons.phone_android_outlined, keyboardType: TextInputType.phone),
+
+              const SizedBox(height: 40),
+
+              // --- Update Button ---
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: Obx(() => ElevatedButton(
+                  onPressed: profileCtrl.isLoading.value
+                      ? null
+                      : () {
+                    // 1. Validation: Ensure category is selected if not already set on server
+                    if (profileCtrl.category.value.isEmpty && profileCtrl.categoryId.value.isEmpty) {
+                      Get.snackbar(
+                          'Required',
+                          'Please select a business category before updating.',
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white
+                      );
+                      return;
+                    }
+
+                    // 2. Logic: Only pass the ID if it's the first time setting it
+                    String? newCategoryId;
+                    if (profileCtrl.category.value.isEmpty && profileCtrl.categoryId.value.isNotEmpty) {
+                      newCategoryId = profileCtrl.categoryId.value;
+                    }
+
+                    profileCtrl.updateBusinessProfile(
+                      name: _nameController.text,
+                      phone: _phoneController.text,
+                      description: _bioController.text,
+                      region: _locationController.text,
+                      location: _addressController.text,
+                      serviceCategoryId: newCategoryId,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: profileCtrl.isLoading.value
+                      ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                      : const Text(
+                    'Update Profile',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                )),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        )
     );
   }
 
