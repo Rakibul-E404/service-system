@@ -47,6 +47,7 @@ class ProviderProfileController extends GetxController {
   final Rx<File?> selectedImageFile = Rx<File?>(null); // Added for update
   final availability = <String, AvailabilityDay>{}.obs;
   final selectedSubCategoryIds = <String>[].obs;
+  final subToServiceMap = <String, String>{}.obs;
   // --- Network Service ---
   final NetworkCaller _networkCaller = NetworkCaller();
 
@@ -238,8 +239,6 @@ class ProviderProfileController extends GetxController {
       isSelfServiceLoading.value = true;
       final token = await _getAuthToken();
 
-      debugPrint('🚀 Fetching Self Services: ${AppUrl.subCategorySelfService}');
-
       final response = await http.get(
         Uri.parse(AppUrl.subCategorySelfService),
         headers: {
@@ -252,14 +251,18 @@ class ProviderProfileController extends GetxController {
         final Map<String, dynamic> decodedData = jsonDecode(response.body);
         final serviceResponse = ServiceResponse.fromJson(decodedData);
 
-        // Extract the sub-category IDs from the existing services
-        final List<String> existingIds = serviceResponse.data
-            .map((service) => service.subCategory.id)
-            .toList();
+        // Clear old data
+        subToServiceMap.clear();
+        selectedSubCategoryIds.clear();
 
-        // Update the observable list
-        selectedSubCategoryIds.assignAll(existingIds);
-        debugPrint('✅ Initialized Selected IDs: $selectedSubCategoryIds');
+        for (var service in serviceResponse.data) {
+          String subId = service.subCategory.id;
+          String serviceId = service.id; // The ID needed for DELETE
+
+          selectedSubCategoryIds.add(subId);
+          subToServiceMap[subId] = serviceId; // Store relationship
+        }
+        debugPrint('✅ Mapped ${subToServiceMap.length} services for deletion');
       }
     } catch (e) {
       debugPrint('🧨 Fetch Self Service Error: $e');
@@ -268,31 +271,55 @@ class ProviderProfileController extends GetxController {
     }
   }
 
-
   Future<void> toggleSubCategoryService(String subCategoryId) async {
     try {
       processingId.value = subCategoryId;
       final token = await _getAuthToken();
-      final String url = "${AppUrl.baseUrl}/service/$subCategoryId";
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
+      bool isCurrentlySelected = selectedSubCategoryIds.contains(subCategoryId);
+
+      // IF selected, use the ServiceModel ID from the map. IF NOT, use Sub-Category ID for creation.
+      String targetId = isCurrentlySelected
+          ? subToServiceMap[subCategoryId] ?? ''
+          : subCategoryId;
+
+      final String url = "${AppUrl.baseUrl}/service/$targetId";
+      String method = isCurrentlySelected ? 'DELETE' : 'POST';
+
+      debugPrint('🚀 $method Request to: $url');
+
+      final response = await (isCurrentlySelected
+          ? http.delete(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      })
+          : http.post(Uri.parse(url), headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      }));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Toggle locally on success
-        if (selectedSubCategoryIds.contains(subCategoryId)) {
+        final json = jsonDecode(response.body);
+
+        if (isCurrentlySelected) {
           selectedSubCategoryIds.remove(subCategoryId);
+          subToServiceMap.remove(subCategoryId);
         } else {
           selectedSubCategoryIds.add(subCategoryId);
+          // After POST, the backend usually returns the new ServiceModel ID in 'data'
+          // Save it so we can delete it later without refreshing
+          if (json['data'] != null && json['data']['_id'] != null) {
+            subToServiceMap[subCategoryId] = json['data']['_id'];
+          }
         }
+
+        Get.snackbar('Success', isCurrentlySelected ? 'Removed' : 'Added',
+            snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 1));
       } else {
-        Get.snackbar('Error', 'Failed to update service');
+        Get.snackbar('Error', 'Failed to update: ${response.statusCode}');
       }
+    } catch (e) {
+      debugPrint('🧨 API Error: $e');
     } finally {
       processingId.value = '';
     }
