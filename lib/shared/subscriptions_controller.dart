@@ -94,4 +94,32 @@ class SubscriptionsController extends GetxController {
   bool get hasQuoteAccess =>
       subscriptionData.value?.status.toLowerCase() == 'active' &&
           (subscriptionData.value?.access.contains("PostInquiry") ?? false);
+
+
+
+  // Inside SubscriptionsController
+  bool get canCall =>
+      subscriptionData.value?.status.toLowerCase() == 'active' &&
+          (subscriptionData.value?.access.contains("Call") ?? false);
+
+  bool get canEmail =>
+      subscriptionData.value?.status.toLowerCase() == 'active' &&
+          (subscriptionData.value?.access.contains("Email") ?? false);
+
+  bool get canMessage =>
+      subscriptionData.value?.status.toLowerCase() == 'active' &&
+          (subscriptionData.value?.access.contains("Massaging") ?? false);
+
+// Helper for the Snackbar
+  void showPremiumContactAlert(String feature) {
+    Get.snackbar(
+      "Premium Feature",
+      "The $feature option is only available for active Premium members.",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.amber[800],
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(15),
+      icon: const Icon(Icons.stars, color: Colors.white),
+    );
+  }
 }
