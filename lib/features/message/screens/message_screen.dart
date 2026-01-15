@@ -527,14 +527,14 @@ class _MessageScreenState extends State<MessageScreen> {
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          Obx(() => profileService.isLoggedIn.value
-              ? IconButton(
-            icon: const Icon(Icons.sync, color: AppColors.primaryColor),
-            onPressed: () => controller.loadConversations(),
-          )
-              : const SizedBox.shrink()),
-        ],
+        // actions: [
+        //   Obx(() => profileService.isLoggedIn.value
+        //       ? IconButton(
+        //     icon: const Icon(Icons.sync, color: AppColors.primaryColor),
+        //     onPressed: () => controller.loadConversations(),
+        //   )
+        //       : const SizedBox.shrink()),
+        // ],
       ),
       body: SafeArea(
         child: Obx(() {
