@@ -101,8 +101,8 @@ class FilterBottomSheet {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () {
-                            onClear();
                             Get.back();
+                            onClear();
                           },
                           child: const Text('Clear'),
                         ),
