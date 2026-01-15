@@ -59,6 +59,7 @@ class _ProviderMainBottomNavScreenState extends State<ProviderMainBottomNavScree
       //   },
       // ),
       body: PageView.builder(
+        physics: const NeverScrollableScrollPhysics(),
         controller: _pageController,
         onPageChanged: (int index) {
           setState(() {

@@ -492,7 +492,11 @@ import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/features/auth/widgets/custom_text_field.dart';
 import 'package:manx_mate/features/auth/screens/profile_service.dart'; // Add this import
 import '../../../core/routes/app_routes.dart';
+import '../../../core/utils/api/app_url.dart';
+import '../../../shared/subscriptions_controller.dart';
+import '../../provider/controllers/subscription_controller.dart';
 import '../controllers/message_controller.dart';
+import '../model/conversation_all_list_response_model.dart';
 import 'individual_chat_screen.dart';
 
 class MessageScreen extends StatefulWidget {
@@ -503,57 +507,76 @@ class MessageScreen extends StatefulWidget {
 }
 
 class _MessageScreenState extends State<MessageScreen> {
-  // Use Get.find if it was already initialized, otherwise Get.put
   final MessageController controller = Get.isRegistered<MessageController>()
       ? Get.find<MessageController>()
       : Get.put(MessageController());
 
+  final SubscriptionsController subController = Get.isRegistered<SubscriptionsController>()
+      ? Get.find<SubscriptionsController>()
+      : Get.put(SubscriptionsController());
+
   final ProfileService profileService = Get.find<ProfileService>();
+
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchQuery = ''.obs;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor, // Use your constant
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 0.5,
         title: const Text(
           'Messages',
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          Obx(() => profileService.isLoggedIn.value
-              ? IconButton(
-            icon: const Icon(Icons.sync, color: AppColors.primaryColor),
-            onPressed: () => controller.loadConversations(),
-          )
-              : const SizedBox.shrink()),
-        ],
+
       ),
       body: SafeArea(
         child: Obx(() {
-          // 1. AUTH CHECK
           if (!profileService.isLoggedIn.value) {
             return _buildLoginPrompt(context);
           }
 
-          // 2. MAIN CONTENT
           return Column(
             children: <Widget>[
               _buildSearchBar(),
-
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value) {
                     return _buildLoadingState();
                   }
 
-                  if (controller.users.isEmpty) {
-                    return _buildEmptyState();
+                  // Updated filtering logic using the new ConversationModel list
+                  final filteredConversations = controller.conversations.where((conv) {
+                    final otherUser = controller.getOtherUser(conv.users);
+                    return otherUser?.name
+                        .toLowerCase()
+                        .contains(_searchQuery.value.toLowerCase()) ??
+                        false;
+                  }).toList();
+
+                  if (filteredConversations.isEmpty) {
+                    return _buildEmptyState(_searchQuery.value.isNotEmpty);
                   }
 
-                  return _buildChatList();
+                  // Inside MessageScreen build
+                  return RefreshIndicator(
+                    onRefresh: () => controller.loadConversations(),
+                    color: AppColors.primaryColor,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(), // 🔹 Ensure this is here
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: filteredConversations.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                      itemBuilder: (context, index) {
+                        return _buildChatTile(filteredConversations[index]);
+                      },
+                    ),
+                  );
                 }),
               ),
             ],
@@ -563,96 +586,186 @@ class _MessageScreenState extends State<MessageScreen> {
     );
   }
 
-  /// --- UI Components ---
-
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: MyTextFormFieldWithIcon(
+        controller: _searchController,
         formHintText: 'Search conversations...',
-        prefixIcon: const Icon(CupertinoIcons.search, color: AppColors.primaryColor, size: 20),
-        onChanged: (value) {
-          // Logic for filtering controller.users locally could go here
-        },
+        prefixIcon: const Icon(CupertinoIcons.search,
+            color: AppColors.primaryColor, size: 20),
+        onChanged: (value) => _searchQuery.value = value,
       ),
     );
   }
 
-  Widget _buildChatList() {
-    return RefreshIndicator(
-      onRefresh: () => controller.loadConversations(),
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: controller.users.length,
-        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFEEEEEE)),
-        itemBuilder: (context, index) {
-          final user = controller.users[index];
-          return _buildChatTile(user);
-        },
-      ),
-    );
-  }
+  Widget _buildChatTile(ConversationModel conversation) {
+    // Extract the other person's info
+    final otherUser = controller.getOtherUser(conversation.users);
+    if (otherUser == null) return const SizedBox.shrink();
 
-  Widget _buildChatTile(ChatUser user) {
-    return InkWell(
-      onTap: () => controller.selectUser(user), // Updated to use controller logic
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            // Avatar with Online Indicator
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: user.avatar.isNotEmpty
-                      ? NetworkImage(user.avatar)
-                      : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
-                ),
-                if (user.isOnline)
-                  Positioned(
-                    bottom: 2,
-                    right: 2,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
+    // Use Obx to make the tile reactive to subscription changes
+    return Obx(() {
+      final bool hasAccess = subController.canMessage;
+
+      return InkWell(
+        onTap: () {
+          if (hasAccess) {
+            controller.selectConversation(conversation);
+          } else {
+            // Show the premium alert if they don't have "Massaging" access or are inactive
+            subController.showPremiumContactAlert("Messaging");
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              // Avatar with a subtle desaturation if locked
+              Opacity(
+                opacity: hasAccess ? 1.0 : 0.6,
+                child: _buildAvatar(otherUser),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          otherUser.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: hasAccess ? Colors.black : Colors.black54,
+                          ),
+                        ),
+                        Text(
+                          controller.formatTime(conversation.lastMessage?.createdAt),
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        ),
+                      ],
                     ),
-                  ),
-              ],
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            conversation.lastMessage?.text ?? 'Start a conversation',
+                            style: TextStyle(
+                              color: hasAccess ? Colors.grey[600] : Colors.grey[400],
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Visual Indicator: Show a lock icon if user is not premium/active
+                        if (!hasAccess)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Icon(
+                              Icons.lock_outline,
+                              size: 14,
+                              color: Colors.amber[800],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+
+  Widget _buildAvatar(ConversationUser user) {
+    // Logic: Use full URL if it starts with http, otherwise append to base URL
+    final String imageUrl = user.image.isNotEmpty
+        ? (user.image.startsWith('http')
+        ? user.image
+        : '${AppUrl.imageBaseUrl}/${user.image}')
+        : '';
+
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: Colors.grey[100],
+      child: ClipOval(
+        child: imageUrl.isNotEmpty
+            ? Image.network(
+          imageUrl,
+          width: 56,
+          height: 56,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              _buildDefaultAvatar(),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+              ),
+            );
+          },
+        )
+            : _buildDefaultAvatar(),
+      ),
+    );
+  }
+
+  Widget _buildDefaultAvatar() {
+    return Image.asset(
+      'assets/images/default_avatar.png',
+      width: 56,
+      height: 56,
+      fit: BoxFit.cover,
+    );
+  }
+
+  Widget _buildLoginPrompt(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              "Login Required",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(width: 12),
-            // Name and Last Message
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        user.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        user.time,
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user.lastMessage,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            const SizedBox(height: 8),
+            const Text(
+              "Please log in to see your messages and start chatting.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Get.offAllNamed(AppRoutes.roleSelectionRoute),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text(
+                  "Go to Login",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
             ),
           ],
@@ -661,42 +774,24 @@ class _MessageScreenState extends State<MessageScreen> {
     );
   }
 
-  Widget _buildLoginPrompt(BuildContext context) {
+  Widget _buildEmptyState(bool isSearching) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.lock_outline, size: 70, color: Colors.grey),
+          Icon(isSearching ? CupertinoIcons.search : Icons.chat_bubble_outline,
+              size: 60, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          const Text("Login Required", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text("Please log in to see your messages"),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Get.offAllNamed(AppRoutes.roleSelectionRoute),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryColor),
-            child: const Text("Go to Login", style: TextStyle(color: Colors.white)),
-          ),
+          Text(isSearching ? "No results found" : "No messages yet",
+              style: const TextStyle(color: Colors.grey, fontSize: 16)),
         ],
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return const Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.chat_bubble_outline, size: 60, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          const Text("No messages yet", style: TextStyle(color: Colors.grey, fontSize: 16)),
-        ],
-      ),
-    );
+    return const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryColor));
   }
 }
 

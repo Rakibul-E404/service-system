@@ -6,6 +6,7 @@ import 'package:manx_mate/features/provider/screens/availablity_page.dart';
 import 'package:manx_mate/features/provider/screens/edit_business_profile_screen.dart';
 import 'package:manx_mate/features/provider/screens/provider_availablity_screen.dart';
 
+import '../../../shared/subscriptions_controller.dart';
 import '../controllers/category_controller.dart';
 
 class ProviderProfilePage extends StatelessWidget {
@@ -16,6 +17,10 @@ class ProviderProfilePage extends StatelessWidget {
     // This ensures the controller is created and available in memory
     final controller = Get.put(ProviderProfileController());
     Get.put(CategoryController());
+
+    final SubscriptionsController subController = Get.isRegistered<SubscriptionsController>()
+        ? Get.find<SubscriptionsController>()
+        : Get.put(SubscriptionsController());
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -185,25 +190,64 @@ class ProviderProfilePage extends StatelessWidget {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   side: BorderSide(color: Colors.grey[200]!),
                                 ),
                               ),
-                              onPressed: () => Get.to(() => const ProviderAvailabilityScreen()),
+                              onPressed: () {
+                                // 🔹 Dual Logic Check
+                                final subController = Get.find<SubscriptionsController>();
+
+                                if (subController.canAccessOpeningHours) {
+                                  // Access Granted
+                                  Get.to(() => const ProviderAvailabilityScreen());
+                                } else {
+                                  // 🔹 Show message if not clickable
+                                  Get.snackbar(
+                                    "Premium Upgrade Required",
+                                    "This feature is available on our Premium plans. Upgrade now to manage your business hours.",
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: const Color(0xFF1A1A1A), // Sleek Dark/Gold theme
+                                    colorText: Colors.white,
+                                    margin: const EdgeInsets.all(15),
+                                    duration: const Duration(seconds: 4),
+                                    icon: const Icon(Icons.stars, color: Colors.amber),
+                                    mainButton: TextButton(
+                                      onPressed: () {
+                                        Get.toNamed('/subscription-plans');// Navigate to plans
+                                      } ,
+                                      child: const Text("UPGRADE", style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                                    ),
+                                  );
+                                }
+                              },
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // This Obx is crucial to show the data once fetched
-                                  Obx(() => Text(
-                                    controller.todayHours,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                  )),
-                                  const Icon(Icons.arrow_forward, color: AppColors.primaryColor, size: 20),
+                                  Obx(() {
+                                    // 🔹 Visual feedback: change text color if locked
+                                    final bool hasAccess = Get.find<SubscriptionsController>().canAccessOpeningHours;
+
+                                    return Text(
+                                      controller.todayHours,
+                                      style: TextStyle(
+                                        color: hasAccess ? Colors.black : Colors.grey[400],
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
+                                    );
+                                  }),
+                                  // 🔹 Visual feedback: change icon if locked
+                                  Obx(() {
+                                    final bool hasAccess = Get.find<SubscriptionsController>().canAccessOpeningHours;
+                                    return Icon(
+                                      hasAccess ? Icons.arrow_forward : Icons.lock_outline,
+                                      color: hasAccess ? AppColors.primaryColor : Colors.grey[400],
+                                      size: 20,
+                                    );
+                                  }),
                                 ],
                               ),
                             ),
