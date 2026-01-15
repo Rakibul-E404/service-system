@@ -31,6 +31,10 @@ class AppUrl {
   static const String updateBusinessProfile = '$baseUrl/business_profile';
   static const String createService = '$baseUrl/service/';
   static const String subCategorySelfService = '$baseUrl/service/self';
+  static const String createAddProvider = '$baseUrl/adds/create';
+  static const String getAddsDetails = '$baseUrl/adds/self';
+
+
 
 
 

@@ -10,7 +10,7 @@ import '../controllers/subscription_controller.dart';
 class ProviderBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ProviderController>(() => ProviderController(), fenix: true);
+    // Get.lazyPut<ProviderController>(() => ProviderController(), fenix: true);
     Get.lazyPut<ReminderController>(() => ReminderController(), fenix: true);
     Get.put<ProviderProfileController>(ProviderProfileController(), permanent: true); // Changed this line
     Get.lazyPut<AvailabilityController>(() => AvailabilityController(), fenix: true);
