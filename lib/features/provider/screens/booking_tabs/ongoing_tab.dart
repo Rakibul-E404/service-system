@@ -413,6 +413,7 @@ import 'package:manx_mate/features/booking/controllers/booking_action_controller
 import 'package:manx_mate/features/provider/screens/booking_tabs/provider_ongoing_controller.dart';
 import 'package:manx_mate/model/booking_service_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../message/controllers/message_controller.dart';
 import '../provider_services.dart';
 
 class OngoingTab extends StatelessWidget {
@@ -420,6 +421,8 @@ class OngoingTab extends StatelessWidget {
 
   ProviderOngoingController get controller => Get.find<ProviderOngoingController>();
   BookingActionController get actionController => Get.find<BookingActionController>();
+  MessageController get messageController => Get.find<MessageController>();
+
 
   String _getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
@@ -579,6 +582,7 @@ class OngoingTab extends StatelessWidget {
     final Map<String, dynamic> jobData = {
       'service': {
         'author': {
+          '_id': booking.author.id,
           'name': booking.author.name,
           'phone': booking.author.phone,
           'email': booking.author.email,
@@ -921,13 +925,42 @@ class OngoingTab extends StatelessWidget {
                             label: 'Message',
                             color: Colors.purple,
                             onTap: () {
-                              Navigator.pop(context);
-                              Get.snackbar(
-                                'Coming Soon',
-                                'In-app messaging will be available soon.',
-                                backgroundColor: Colors.purple,
-                                colorText: Colors.white,
-                              );
+                              Navigator.pop(context); // Close the Job Details modal
+
+                              // 1. Get the Author data from the job map
+                              final Map<String, dynamic> authorData = job['service']?['author'] ?? {};
+
+                              // 2. Extract specific fields needed for the conversation
+                              final String receiverId = authorData['_id']?.toString() ?? '';
+                              final String receiverName = authorData['name']?.toString() ?? 'Client';
+
+                              // 3. Handle Avatar URL logic
+                              String avatarUrl = '';
+                              if (authorData['image'] != null && authorData['image'].toString().isNotEmpty) {
+                                final String imagePath = authorData['image'].toString();
+                                avatarUrl = imagePath.startsWith('http')
+                                    ? imagePath
+                                    : '${AppUrl.imageBaseUrl}/$imagePath';
+                              }
+
+                              debugPrint("🖱️ Message button clicked for User: $receiverName (ID: $receiverId)");
+
+                              if (receiverId.isNotEmpty) {
+                                // 4. Call the createConversationAndNavigate method we added debugprints to earlier
+                                messageController.createConversationAndNavigate(
+                                  receiverId: receiverId,
+                                  receiverName: receiverName,
+                                  receiverAvatar: avatarUrl,
+                                );
+                              } else {
+                                Get.snackbar(
+                                    'Error',
+                                    'Could not find Client ID',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM
+                                );
+                              }
                             },
                           ),
                         ],

@@ -1229,26 +1229,45 @@ class MessageController extends GetxController {
     required String receiverName,
     required String receiverAvatar,
   }) async {
+    debugPrint("🚀 [Chat] createConversationAndNavigate called for: $receiverName (ID: $receiverId)");
+
+    // Check for existing conversation
     final ChatUser? existing = _findExistingConversation(receiverId);
     if (existing != null) {
+      debugPrint("✅ [Chat] Existing conversation found for $receiverName. Navigating...");
       selectUser(existing);
       return;
     }
+
+    debugPrint("🆕 [Chat] No existing conversation. Attempting to create new one...");
 
     try {
       isLoading.value = true;
       final String? token = await _secureStorage.read(AppConstants.authToken);
 
+      if (token == null) {
+        debugPrint("❌ [Chat] Error: Auth token is null");
+        return;
+      }
+
       final response = await _networkCaller.postRequest(
         '${AppUrl.baseUrl}/conversation/create',
         body: {"receiverId": receiverId},
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
       );
+
+      debugPrint("📡 [Chat] Create API Status Code: ${response.statusCode}");
 
       if (response.isSuccess && response.jsonResponse != null) {
         final Map<String, dynamic>? data = response.jsonResponse!['data'];
+
         if (data != null) {
           final String conversationId = data['_id'] ?? '';
+          debugPrint("✅ [Chat] Conversation created successfully. New ID: $conversationId");
+
           final ChatUser newUser = ChatUser(
             id: receiverId,
             conversationId: conversationId,
@@ -1258,12 +1277,23 @@ class MessageController extends GetxController {
             time: _formatMessageTime(DateTime.now().toIso8601String()),
             isOnline: false,
           );
+
+          // Add to the local list and navigate
           users.insert(0, newUser);
+          debugPrint("📱 [Chat] New user added to local list. Selecting user...");
           selectUser(newUser);
+        } else {
+          debugPrint("⚠️ [Chat] Response success but 'data' field is null");
         }
+      } else {
+        debugPrint("❌ [Chat] API Request failed: ${response.errorMessage}");
+        debugPrint("📄 [Chat] Response Body: ${response.jsonResponse}");
       }
+    } catch (e) {
+      debugPrint("🔥 [Chat] Critical Exception in createConversationAndNavigate: $e");
     } finally {
       isLoading.value = false;
+      debugPrint("🏁 [Chat] createConversationAndNavigate process finished.");
     }
   }
 
