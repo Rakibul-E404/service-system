@@ -118,20 +118,20 @@ class AppUrl {
 
   // Favorites URL
   static String getFavoritesUrl(int page) {
-    return '$baseUrl/favorite/?page=$page&limit=10';
+    return '$baseUrlV1/$version1/favorite/?page=$page&limit=10';
   }
 
   static String addFavoriteUrl(String serviceId) {
-    return '$baseUrl/favorite/$serviceId';
+    return '$baseUrlV1/$version1/favorite/$serviceId';
   }
 
   static String deleteFavoriteUrl(String serviceId) {
-    return '$baseUrl/favorite/$serviceId';
+    return '$baseUrlV1/$version1/favorite/$serviceId';
   }
 
-  static String removeFavoriteUrl(String favoriteId) {
-    return '$baseUrl/favorite/$favoriteId';
-  }
+  // static String removeFavoriteUrl(String favoriteId) {
+  //   return '$baseUrl/favorite/$favoriteId';
+  // }
 
   // Helper for business profile images
   static String getBusinessProfileImageUrl(String imagePath) {

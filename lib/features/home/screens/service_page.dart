@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
@@ -233,14 +232,14 @@ class _ServicesPageState extends State<ServicesPage> {
         // Services list with pagination
         debugPrint('📋 Showing ${servicesList.length} services (Total: $totalServices)');
         return Column(
-          children: [
+          children: <Widget>[
             // Total count indicator
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Colors.grey[100],
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                children: <Widget>[
                   Text(
                     '${servicesList.length} of $totalServices services',
                     style: TextStyle(
@@ -262,7 +261,7 @@ class _ServicesPageState extends State<ServicesPage> {
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: servicesList.length + (hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
+                itemBuilder: (BuildContext context, int index) {
                   // Load more indicator
                   if (hasMore && index == servicesList.length) {
                     return Padding(
@@ -321,7 +320,7 @@ class _ServicesPageState extends State<ServicesPage> {
 
                               Get.toNamed(
                                 AppRoutes.homeServiceDetailsRoute,
-                                arguments: {
+                                arguments: <String, Object?>{
                                   'serviceId': service.id,
                                   'serviceName': service.name,
                                   'serviceDescription': service.description,
@@ -355,7 +354,7 @@ class _ServicesPageState extends State<ServicesPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
-                        children: [
+                        children: <Widget>[
                           Icon(Icons.error, color: Colors.orange[300]),
                           const SizedBox(width: 12),
                           Expanded(
@@ -383,15 +382,3 @@ class _ServicesPageState extends State<ServicesPage> {
     super.dispose();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-

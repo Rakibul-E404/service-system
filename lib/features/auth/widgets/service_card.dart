@@ -90,7 +90,7 @@ class ServiceCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -152,7 +152,7 @@ class ServiceCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
+                          const Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
                           const SizedBox(width: 2),
                           Text(
                             rating.toString(),
