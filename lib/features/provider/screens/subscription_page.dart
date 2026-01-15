@@ -5,6 +5,9 @@ import '../controllers/subscription_controller.dart';
 
 
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 class SubscriptionPage extends GetView<SubscriptionController> {
   const SubscriptionPage({super.key});
 
@@ -26,7 +29,7 @@ class SubscriptionPage extends GetView<SubscriptionController> {
         ),
         title: Text(
           'Subscription',
-          style: context.txtTheme.labelLarge,
+          style: context.textTheme.labelLarge,
         ),
         centerTitle: true,
       ),
@@ -80,7 +83,7 @@ class SubscriptionPage extends GetView<SubscriptionController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Subscription Info Banner (if user has active subscription)
+                // Subscription Info Banner
                 Obx(() {
                   if (controller.currentPackage.value != null &&
                       controller.endDate.value != null) {
@@ -89,7 +92,6 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                   return const SizedBox.shrink();
                 }),
 
-                // "My Package" label
                 const Text(
                   'My Package',
                   style: TextStyle(
@@ -100,7 +102,7 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                 ),
                 const SizedBox(height: 16),
 
-                // Subscription Cards
+                // Subscription Cards using SubscriptionModel
                 ...controller.subscriptionPlans.asMap().entries.map((entry) {
                   final index = entry.key;
                   final plan = entry.value;
@@ -119,10 +121,9 @@ class SubscriptionPage extends GetView<SubscriptionController> {
     );
   }
 
-  // Add this method to get the public active subscription value
   String? get activeSubscription => controller.currentPackage.value;
 
-  Widget _buildSubscriptionCard(SubscriptionPlan plan) {
+  Widget _buildSubscriptionCard(SubscriptionModel plan) {
     final bool isCurrentPlan = controller.isCurrentPlan(plan.title);
     final Color backgroundColor = controller.getPlanBackgroundColor(plan.title);
     final Color primaryColor = controller.getPlanColor(plan.title);
@@ -140,13 +141,11 @@ class SubscriptionPage extends GetView<SubscriptionController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top section with icon and current badge
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Crown/Premium icon with colored background
                 Container(
                   width: 48,
                   height: 48,
@@ -161,7 +160,6 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                   ),
                 ),
                 const Spacer(),
-                // Current badge (only for current plan)
                 if (isCurrentPlan)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -184,14 +182,11 @@ class SubscriptionPage extends GetView<SubscriptionController> {
               ],
             ),
           ),
-
-          // Features list
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Plan features
                 ...plan.description.map((feature) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -210,10 +205,7 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                     ],
                   ),
                 )),
-
                 const SizedBox(height: 12),
-
-                // Plan title
                 Text(
                   plan.title,
                   style: const TextStyle(
@@ -223,8 +215,6 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Price section
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -240,7 +230,7 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        '/${_getDurationText(plan.duration)}',
+                        '/${_getDurationText(plan.duration, plan.durationType)}',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -251,8 +241,6 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // Upgrade button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -261,7 +249,7 @@ class SubscriptionPage extends GetView<SubscriptionController> {
                         : () => controller.onUpgradeNow(plan),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      foregroundColor: plan.title.toLowerCase() == 'basic'
+                      foregroundColor: (plan.title.toLowerCase() == 'basic' || plan.title.toLowerCase() == 'standard')
                           ? Colors.white
                           : Colors.black,
                       disabledBackgroundColor: Colors.grey[300],
@@ -290,20 +278,16 @@ class SubscriptionPage extends GetView<SubscriptionController> {
     );
   }
 
-  String _getDurationText(int duration) {
-    if (duration == 1) {
-      return 'month';
-    } else if (duration < 12) {
-      return 'monthly';
-    } else if (duration == 12) {
-      return 'year';
-    } else {
-      return 'yearly';
-    }
+  String _getDurationText(int duration, String type) {
+    if (type.isNotEmpty) return type.toLowerCase();
+    if (duration == 1) return 'month';
+    if (duration == 12) return 'year';
+    return '$duration months';
   }
 
   Widget _buildSubscriptionInfoBanner() {
-    final endDate = DateTime.parse(controller.endDate.value!);
+    final endDateStr = controller.endDate.value!;
+    final endDate = DateTime.parse(endDateStr);
     final daysLeft = endDate.difference(DateTime.now()).inDays;
     final formattedEndDate = '${endDate.day}/${endDate.month}/${endDate.year}';
 
@@ -375,5 +359,4 @@ class SubscriptionPage extends GetView<SubscriptionController> {
     );
   }
 }
-
 
