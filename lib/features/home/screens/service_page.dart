@@ -287,6 +287,11 @@ class _ServicesPageState extends State<ServicesPage> {
                     debugPrint('   - Location: ${service.location}');
                     debugPrint('   - Rating: ${service.rating}');
 
+                    // Check if 'AddFavorites' is in accessibleBySubscription
+                    final hasFavoriteAccess = service.accessibleBySubscription?.contains('AddFavorites') ?? false;
+                    debugPrint('   - Has favorite access: $hasFavoriteAccess');
+                    debugPrint('   - Accessible by subscription: ${service.accessibleBySubscription}');
+
                     return Obx(() {
                       final bool isFavorited = favoriteController.isFavorited(service.id);
                       final bool isLoadingFav = favoriteController.isFavoriteLoading(service.id);
@@ -312,6 +317,7 @@ class _ServicesPageState extends State<ServicesPage> {
                             showFavorite: true,
                             showLocationAndRating: true,
                             isFavorited: isFavorited,
+                            isFavoriteEnabled: hasFavoriteAccess, // Pass enabled status
                             onTap: () {
                               debugPrint('👆 Tapped: ${service.name}');
                               debugPrint('📦 Service author data:');
@@ -332,12 +338,28 @@ class _ServicesPageState extends State<ServicesPage> {
                                 },
                               );
                             },
-                            onFavorite: isLoadingFav
-                                ? null
-                                : () {
-                              debugPrint('❤️ Favorite tapped for: ${service.name}');
-                              debugPrint('   - Service ID: ${service.id}');
-                              favoriteController.toggleFavorite(service.id);
+                            onFavorite: () {
+                              if (hasFavoriteAccess && !isLoadingFav) {
+                                // If enabled and not loading, call the API
+                                debugPrint('❤️ Favorite tapped for: ${service.name}');
+                                debugPrint('   - Service ID: ${service.id}');
+                                debugPrint('   - Has favorite access: $hasFavoriteAccess');
+                                favoriteController.toggleFavorite(service.id);
+                              } else if (!hasFavoriteAccess) {
+                                // If disabled, show message but don't call API
+                                debugPrint('🚫 Favorite button disabled for: ${service.name}');
+                                debugPrint('   - No favorite access for this service');
+
+                                Get.snackbar(
+                                  'Feature Not Available',
+                                  'Adding favorites is not available for this service',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.orange.withOpacity(0.8),
+                                  colorText: Colors.white,
+                                  duration: const Duration(seconds: 2),
+                                );
+                              }
+                              // If loading, do nothing
                             },
                           ),
                         ),
