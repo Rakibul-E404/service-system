@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 
@@ -15,7 +14,8 @@ class ServiceCard extends StatelessWidget {
   final bool showLocationAndRating;
   final double? width;
   final double? height;
-  final bool isGuestMode; // New parameter for guest mode
+  final bool isGuestMode;
+  final bool isFavoriteEnabled; // New parameter
 
   const ServiceCard({
     super.key,
@@ -31,7 +31,8 @@ class ServiceCard extends StatelessWidget {
     this.showLocationAndRating = true,
     this.width,
     this.height,
-    this.isGuestMode = false, // Default to false
+    this.isGuestMode = false,
+    this.isFavoriteEnabled = true, // Default to enabled
   });
 
   @override
@@ -80,22 +81,25 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   // Heart/Favorite Button (conditionally rendered)
-                  // Hide favorite button in guest mode or when showFavorite is false
                   if (showFavorite && !isGuestMode)
                     Positioned(
                       top: 8,
                       left: 8,
                       child: GestureDetector(
-                        onTap: onFavorite,
+                        onTap: onFavorite, // Always tappable
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             isFavorited ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorited ? Colors.red : Colors.grey[600],
+                            color: !isFavoriteEnabled
+                                ? Colors.grey[400] // Disabled color
+                                : isFavorited
+                                ? Colors.red
+                                : Colors.grey[600],
                             size: 18,
                           ),
                         ),
@@ -137,7 +141,6 @@ class ServiceCard extends StatelessWidget {
                     const Spacer(),
 
                     // Location and Rating Row
-                    // Hide in guest mode OR when showLocationAndRating is false
                     if (showLocationAndRating && !isGuestMode)
                       Row(
                         children: <Widget>[
@@ -152,7 +155,7 @@ class ServiceCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
+                          const Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
                           const SizedBox(width: 2),
                           Text(
                             rating.toString(),
@@ -174,4 +177,3 @@ class ServiceCard extends StatelessWidget {
     );
   }
 }
-

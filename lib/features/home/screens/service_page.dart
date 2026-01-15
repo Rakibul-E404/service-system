@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
@@ -233,14 +232,14 @@ class _ServicesPageState extends State<ServicesPage> {
         // Services list with pagination
         debugPrint('📋 Showing ${servicesList.length} services (Total: $totalServices)');
         return Column(
-          children: [
+          children: <Widget>[
             // Total count indicator
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Colors.grey[100],
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                children: <Widget>[
                   Text(
                     '${servicesList.length} of $totalServices services',
                     style: TextStyle(
@@ -262,7 +261,7 @@ class _ServicesPageState extends State<ServicesPage> {
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: servicesList.length + (hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
+                itemBuilder: (BuildContext context, int index) {
                   // Load more indicator
                   if (hasMore && index == servicesList.length) {
                     return Padding(
@@ -287,6 +286,11 @@ class _ServicesPageState extends State<ServicesPage> {
                     debugPrint('   - Image URL: ${service.fullImageUrl}');
                     debugPrint('   - Location: ${service.location}');
                     debugPrint('   - Rating: ${service.rating}');
+
+                    // Check if 'AddFavorites' is in accessibleBySubscription
+                    final hasFavoriteAccess = service.accessibleBySubscription?.contains('AddFavorites') ?? false;
+                    debugPrint('   - Has favorite access: $hasFavoriteAccess');
+                    debugPrint('   - Accessible by subscription: ${service.accessibleBySubscription}');
 
                     return Obx(() {
                       final bool isFavorited = favoriteController.isFavorited(service.id);
@@ -313,6 +317,7 @@ class _ServicesPageState extends State<ServicesPage> {
                             showFavorite: true,
                             showLocationAndRating: true,
                             isFavorited: isFavorited,
+                            isFavoriteEnabled: hasFavoriteAccess, // Pass enabled status
                             onTap: () {
                               debugPrint('👆 Tapped: ${service.name}');
                               debugPrint('📦 Service author data:');
@@ -321,7 +326,7 @@ class _ServicesPageState extends State<ServicesPage> {
 
                               Get.toNamed(
                                 AppRoutes.homeServiceDetailsRoute,
-                                arguments: {
+                                arguments: <String, Object?>{
                                   'serviceId': service.id,
                                   'serviceName': service.name,
                                   'serviceDescription': service.description,
@@ -333,12 +338,28 @@ class _ServicesPageState extends State<ServicesPage> {
                                 },
                               );
                             },
-                            onFavorite: isLoadingFav
-                                ? null
-                                : () {
-                              debugPrint('❤️ Favorite tapped for: ${service.name}');
-                              debugPrint('   - Service ID: ${service.id}');
-                              favoriteController.toggleFavorite(service.id);
+                            onFavorite: () {
+                              if (hasFavoriteAccess && !isLoadingFav) {
+                                // If enabled and not loading, call the API
+                                debugPrint('❤️ Favorite tapped for: ${service.name}');
+                                debugPrint('   - Service ID: ${service.id}');
+                                debugPrint('   - Has favorite access: $hasFavoriteAccess');
+                                favoriteController.toggleFavorite(service.id);
+                              } else if (!hasFavoriteAccess) {
+                                // If disabled, show message but don't call API
+                                debugPrint('🚫 Favorite button disabled for: ${service.name}');
+                                debugPrint('   - No favorite access for this service');
+
+                                Get.snackbar(
+                                  'Feature Not Available',
+                                  'Adding favorites is not available for this service',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.orange.withOpacity(0.8),
+                                  colorText: Colors.white,
+                                  duration: const Duration(seconds: 2),
+                                );
+                              }
+                              // If loading, do nothing
                             },
                           ),
                         ),
@@ -355,7 +376,7 @@ class _ServicesPageState extends State<ServicesPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
-                        children: [
+                        children: <Widget>[
                           Icon(Icons.error, color: Colors.orange[300]),
                           const SizedBox(width: 12),
                           Expanded(
@@ -383,15 +404,3 @@ class _ServicesPageState extends State<ServicesPage> {
     super.dispose();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
