@@ -59,33 +59,13 @@ class IndividualChatScreen extends GetView<MessageController> {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Text(
-                      'Available', // You can update this based on your model later
-                      style: TextStyle(color: Colors.green, fontSize: 11),
-                    ),
+
                   ],
                 ),
               ),
             ],
           );
         }),
-        actions: <Widget>[
-          IconButton(onPressed: () {}, icon: const Icon(Icons.call, color: Colors.black54)),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onSelected: (String value) => _handleMenuSelection(value),
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'profile',
-                child: Row(children: [Icon(Icons.person, size: 20), SizedBox(width: 8), Text('View Profile')]),
-              ),
-              const PopupMenuItem<String>(
-                value: 'report',
-                child: Row(children: [Icon(Icons.report, size: 20), SizedBox(width: 8), Text('Report User')]),
-              ),
-            ],
-          ),
-        ],
       ),
       body: Column(
         children: <Widget>[
@@ -198,7 +178,6 @@ class IndividualChatScreen extends GetView<MessageController> {
       child: SafeArea(
         child: Row(
           children: [
-            IconButton(icon: const Icon(Icons.attach_file, color: Colors.grey), onPressed: () {}),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
