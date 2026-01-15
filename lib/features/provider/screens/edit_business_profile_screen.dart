@@ -28,16 +28,25 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
   late TextEditingController _locationController; // General Region
   late TextEditingController _categoryController;
 
+  final List<String> _regions = ['North', 'South', 'East', 'West'];
+
+
   @override
   void initState() {
     super.initState();
+
+    String rawRegion = profileCtrl.address.value.trim();
 
     // Initialize with current values from the Controller
     _nameController = TextEditingController(text: profileCtrl.businessName.value);
     _bioController = TextEditingController(text: profileCtrl.description.value);
     _phoneController = TextEditingController(text: profileCtrl.contactDetails.value);
     _addressController = TextEditingController(text: profileCtrl.location.value);
-    _locationController = TextEditingController(text: profileCtrl.address.value);
+    String formattedRegion = "";
+    if (rawRegion.isNotEmpty) {
+      formattedRegion = rawRegion[0].toUpperCase() + rawRegion.substring(1).toLowerCase();
+    }
+    _locationController = TextEditingController(text: formattedRegion);
     _categoryController = TextEditingController(text: profileCtrl.category.value);
 
     if (profileCtrl.categoryId.value.isNotEmpty) {
@@ -229,8 +238,34 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                         );
                       }),
 
-                      const SizedBox(height: 16),
-                      _buildTextField('General Region', _locationController, Icons.map_outlined),
+                    const SizedBox(height: 16),
+
+
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _regions.contains(_locationController.text) ? _locationController.text : null,
+                      hint: const Text("Select General Region"),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.map_outlined, color: AppColors.primaryColor),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[200]!)
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[200]!)
+                        ),
+                      ),
+                      items: _regions.map((region) => DropdownMenuItem(value: region, child: Text(region))).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          _locationController.text = val;
+                        }
+                      },
+                    ),
                     ],
                   )
               ),
