@@ -493,6 +493,8 @@ import 'package:manx_mate/features/auth/widgets/custom_text_field.dart';
 import 'package:manx_mate/features/auth/screens/profile_service.dart'; // Add this import
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../shared/subscriptions_controller.dart';
+import '../../provider/controllers/subscription_controller.dart';
 import '../controllers/message_controller.dart';
 import '../model/conversation_all_list_response_model.dart';
 import 'individual_chat_screen.dart';
@@ -508,6 +510,10 @@ class _MessageScreenState extends State<MessageScreen> {
   final MessageController controller = Get.isRegistered<MessageController>()
       ? Get.find<MessageController>()
       : Get.put(MessageController());
+
+  final SubscriptionsController subController = Get.isRegistered<SubscriptionsController>()
+      ? Get.find<SubscriptionsController>()
+      : Get.put(SubscriptionsController());
 
   final ProfileService profileService = Get.find<ProfileService>();
 
@@ -527,14 +533,7 @@ class _MessageScreenState extends State<MessageScreen> {
           style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        // actions: [
-        //   Obx(() => profileService.isLoggedIn.value
-        //       ? IconButton(
-        //     icon: const Icon(Icons.sync, color: AppColors.primaryColor),
-        //     onPressed: () => controller.loadConversations(),
-        //   )
-        //       : const SizedBox.shrink()),
-        // ],
+
       ),
       body: SafeArea(
         child: Obx(() {
@@ -601,54 +600,90 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 
   Widget _buildChatTile(ConversationModel conversation) {
-    // Helper to extract the other person's info
+    // Extract the other person's info
     final otherUser = controller.getOtherUser(conversation.users);
     if (otherUser == null) return const SizedBox.shrink();
 
-    return InkWell(
-      onTap: () => controller.selectConversation(conversation),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            _buildAvatar(otherUser),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        otherUser.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        controller.formatTime(conversation.lastMessage?.createdAt),
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    conversation.lastMessage?.text ?? 'Start a conversation',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+    // Use Obx to make the tile reactive to subscription changes
+    return Obx(() {
+      final bool hasAccess = subController.canMessage;
+
+      return InkWell(
+        onTap: () {
+          if (hasAccess) {
+            controller.selectConversation(conversation);
+          } else {
+            // Show the premium alert if they don't have "Massaging" access or are inactive
+            subController.showPremiumContactAlert("Messaging");
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              // Avatar with a subtle desaturation if locked
+              Opacity(
+                opacity: hasAccess ? 1.0 : 0.6,
+                child: _buildAvatar(otherUser),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          otherUser.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: hasAccess ? Colors.black : Colors.black54,
+                          ),
+                        ),
+                        Text(
+                          controller.formatTime(conversation.lastMessage?.createdAt),
+                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            conversation.lastMessage?.text ?? 'Start a conversation',
+                            style: TextStyle(
+                              color: hasAccess ? Colors.grey[600] : Colors.grey[400],
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Visual Indicator: Show a lock icon if user is not premium/active
+                        if (!hasAccess)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Icon(
+                              Icons.lock_outline,
+                              size: 14,
+                              color: Colors.amber[800],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
+
 
   Widget _buildAvatar(ConversationUser user) {
     // Logic: Use full URL if it starts with http, otherwise append to base URL
