@@ -24,8 +24,17 @@ class AppUrl {
   static const String getMyQuote = '$baseUrlV1/$version1/service-inquiry/self';
   static const String getAllAdvertisement = '$baseUrlV1/$version1/adds/all';
 
+  // nurujjaman
+
   static const String getBusinessProfile = '$baseUrl/business_profile/self';
   static const String featuredProviders = '$baseUrlV1/$version1/business_profile/featured-providers';
+  static const String putAvailabilityPart = '$baseUrl//business_profile/ability';
+  static const String updateBusinessProfile = '$baseUrl/business_profile';
+  static const String createService = '$baseUrl/service/';
+  static const String subCategorySelfService = '$baseUrl/service/self';
+  static const String createAddProvider = '$baseUrl/adds/create';
+  static const String getAddsDetails = '$baseUrl/adds/self';
+
 
 
 

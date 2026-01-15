@@ -231,14 +231,14 @@ class AppNavigation {
       name: AppRoutes.providerProfileRoute,
       page: () => const ProviderProfilePage(),
       transition: Transition.rightToLeft,
-      binding: ProviderBinding(),
+
     ),
-    GetPage<dynamic>(
-      name: AppRoutes.providerAvailabilityRoute,
-      page: () => const ProviderAvailabilityPage(),
-      transition: Transition.rightToLeft,
-      binding: ProviderBinding(),
-    ),
+    // GetPage<dynamic>(
+    //   name: AppRoutes.providerAvailabilityRoute,
+    //   page: () => const ProviderAvailabilityPage(),
+    //   transition: Transition.rightToLeft,
+    //   binding: ProviderBinding(),
+    // ),
     GetPage<dynamic>(
       name: AppRoutes.subscriptionPageRoute,
       page: () => const SubscriptionPage(),
