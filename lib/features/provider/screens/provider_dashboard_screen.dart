@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:manx_mate/features/provider/screens/publish_advertisement_screen.dart';
 import '../../auth/screens/profile_service.dart';
 import '../../profile/widgets/profile_common_tile.dart';
+import '../controllers/add_list_controller.dart';
 import '../controllers/create_add_controller.dart';
 import '../controllers/provider_controller.dart';
 import '../controllers/provider_profile_controller.dart';
@@ -25,6 +26,14 @@ class ProviderDashboardScreen extends StatefulWidget {
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   // Local state for the overlay
   bool isOverlayOpen = false;
+  final AdsListController adsController = Get.put(AdsListController());
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch ads immediately when dashboard opens
+    adsController.fetchSelfAds();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +45,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             await profileController.fetchBusinessProfile();
-            // Add any other specific refresh logic here
+            await adsController.fetchSelfAds();
           },
           child: Stack(
             children: [
@@ -64,15 +73,24 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           // --- CREATE NOW BUTTON LOGIC ---
                           Obx(() {
                             final bool hasAdAccess = profileController.subscriptionAccess.contains('Adds');
+                            // Check if there is already an advertisement in the list
+                            final bool hasExistingAd = adsController.adsList.isNotEmpty;
+
                             return _buildAdvertisementCard(
                               icon: Icons.campaign_rounded,
-                              title: 'Create New Ad',
+                              // Change title based on existence of an ad
+                              title: hasExistingAd ? 'Current Advertisement' : 'Create New Ad',
                               description: hasAdAccess
-                                  ? 'Promote your services to reach more customers'
+                                  ? (hasExistingAd
+                                  ? 'You have an active ad. You can view or update it here.'
+                                  : 'Promote your services to reach more customers')
                                   : 'Upgrade your plan to create advertisements',
-                              buttonText: 'Create Now',
+
+                              // Change button text based on existence of an ad
+                              buttonText: hasExistingAd ? 'View Ad' : 'Create Now',
+
                               onTap: hasAdAccess
-                                  ? () => Get.to(() => const PublishAdvertisementScreen()) // Open as a real page
+                                  ? () => Get.to(() => const PublishAdvertisementScreen())
                                   : () => Get.snackbar(
                                 'Access Denied',
                                 'Your current plan does not support Ads.',
