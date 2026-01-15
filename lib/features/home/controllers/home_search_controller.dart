@@ -6,13 +6,11 @@ import '../../../core/utils/api/app_url.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 
 class HomeSearchController extends GetxController {
-  // Reactive data
   final RxList<dynamic> _services = <dynamic>[].obs;
   final RxList<dynamic> _filteredServices = <dynamic>[].obs;
   final RxBool _isLoading = false.obs;
   final RxString _error = ''.obs;
 
-  // Getters
   List<dynamic> get services => _services.value;
   List<dynamic> get filteredServices => _filteredServices.value;
   bool get isLoading => _isLoading.value;
@@ -43,9 +41,11 @@ class HomeSearchController extends GetxController {
       if (response.isSuccess && response.jsonResponse != null) {
         final data = response.jsonResponse!['data']?['data'];
         if (data is List && data.isNotEmpty) {
-          _services.value = data;
-          _filteredServices.value = List.from(data);
-          debugPrint('✅ Services loaded: ${data.length} items');
+          // Transform the data to match what SearchResultsGrid expects
+          final transformedData = _transformServiceData(data);
+          _services.value = transformedData;
+          _filteredServices.value = List.from(transformedData);
+          debugPrint('✅ Services loaded: ${transformedData.length} items');
         } else {
           _services.clear();
           _filteredServices.clear();
@@ -66,7 +66,32 @@ class HomeSearchController extends GetxController {
     }
   }
 
-  /// 🔍 Search with optional filters: keyword, location, category, subcategory
+  /// Transform API data to match SearchResultsGrid expected format
+  List<Map<String, dynamic>> _transformServiceData(List<dynamic> apiData) {
+    return apiData.map<Map<String, dynamic>>((service) {
+      return {
+        '_id': service['_id'] ?? '',
+        'name': service['subCategory']?['name'] ?? 'Unnamed Service',
+        'description': service['profileDetails']?['description'] ??
+            service['subCategory']?['description'] ??
+            'No description available',
+        'location': service['profileDetails']?['location'] ?? 'Location not specified',
+        'image': service['profileDetails']?['image'] ?? '',
+        'rating': (service['averageRating']?.toDouble() ?? 0.0),
+        'author': service['author'] ?? '',
+        'authorData': service['profileDetails'] ?? {},
+        'subCategory': service['subCategory'] ?? {},
+        'isSponsored': service['isSponsored'] ?? false,
+        'isSubscribed': service['isSubscribed'] ?? false,
+        'accessibleBySubscription': service['accessibleBySubscription'] ?? [],
+        'phone': service['profileDetails']?['phone'] ?? '',
+        'region': service['profileDetails']?['region'] ?? '',
+        // Add price if available in your API, otherwise use default
+        'price': '99.99', // Default or fetch from actual data
+      };
+    }).toList();
+  }
+
   void searchServices({
     String keyword = '',
     String location = '',
@@ -83,8 +108,16 @@ class HomeSearchController extends GetxController {
       results = results.where((service) {
         final name = (service['name'] ?? '').toString().toLowerCase();
         final desc = (service['description'] ?? '').toString().toLowerCase();
-        final subCat = (service['subCategory'] ?? '').toString().toLowerCase();
-        return name.contains(term) || desc.contains(term) || subCat.contains(term);
+        final subCatName = (service['subCategory']?['name'] ?? '')
+            .toString()
+            .toLowerCase();
+        final subCatDesc = (service['subCategory']?['description'] ?? '')
+            .toString()
+            .toLowerCase();
+        return name.contains(term) ||
+            desc.contains(term) ||
+            subCatName.contains(term) ||
+            subCatDesc.contains(term);
       }).toList();
     }
 
@@ -96,7 +129,7 @@ class HomeSearchController extends GetxController {
       }).toList();
     }
 
-    // 🏷️ Category filter (exact match)
+    // 🏷️ Category filter (exact match) - Update based on your actual category field
     if (category.isNotEmpty && category != 'All Categories') {
       results = results.where((service) {
         return (service['category'] ?? '') == category;
@@ -106,7 +139,7 @@ class HomeSearchController extends GetxController {
     // 🔖 Subcategory filter (exact match)
     if (subcategory.isNotEmpty && subcategory != 'All Subcategories') {
       results = results.where((service) {
-        return (service['subCategory'] ?? '') == subcategory;
+        return (service['subCategory']?['name'] ?? '') == subcategory;
       }).toList();
     }
 
@@ -119,4 +152,3 @@ class HomeSearchController extends GetxController {
     update();
   }
 }
-

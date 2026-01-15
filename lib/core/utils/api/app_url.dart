@@ -27,6 +27,7 @@ class AppUrl {
   // nurujjaman
 
   static const String getBusinessProfile = '$baseUrl/business_profile/self';
+  static const String featuredProviders = '$baseUrlV1/$version1/business_profile/featured-providers';
   static const String putAvailabilityPart = '$baseUrl//business_profile/ability';
   static const String updateBusinessProfile = '$baseUrl/business_profile';
   static const String createService = '$baseUrl/service/';
@@ -95,7 +96,7 @@ class AppUrl {
   static String allSubCategory(String categoryId) {
     return '$baseUrlV1/$version1/category/$categoryId/subcategories';
 }
-  static const String allService = '$baseUrl/service/all';
+  static const String allService = '$baseUrlV1/$version1/service/all';
 
   static String getSubCategoriesUrl(String categoryId) {
     return '$baseUrl/category/$categoryId/subcategories';
