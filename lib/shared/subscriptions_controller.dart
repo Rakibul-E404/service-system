@@ -1,0 +1,71 @@
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:manx_mate/shared/subscriptions_get_response_model.dart';
+import '../../core/network/network_caller.dart';
+import '../core/config/app_constants.dart';
+import '../core/data/secured_storage.dart';
+import '../core/utils/api/app_url.dart';
+
+class ProviderSubscriptionController extends GetxController {
+  // Observables
+  final RxBool isLoading = false.obs;
+  final Rx<ProviderSubscriptionData?> subscriptionData = Rx<ProviderSubscriptionData?>(null);
+
+  // Dependencies
+  final NetworkCaller _networkCaller = NetworkCaller();
+  final SecureStorageService _secureStorage = SecureStorageService();
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchSubscription();
+  }
+
+  /// 🔹 API: FETCH PROVIDER SUBSCRIPTION
+  Future<void> fetchSubscription() async {
+    try {
+      isLoading.value = true;
+
+      // Get token from secure storage
+      final String? token = await _secureStorage.read(AppConstants.authToken);
+
+      if (token == null) {
+        debugPrint("❌ No Auth Token found for Subscription");
+        return;
+      }
+
+      final response = await _networkCaller.getRequest(
+        AppUrl.subscriptionGlobalGet, // Update this path if needed
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final resModel = SubscriptionsGetResponseModel.fromJson(response.jsonResponse!);
+        subscriptionData.value = resModel.data;
+      } else {
+        debugPrint("❌ Failed to fetch subscription: ${response.errorMessage}");
+      }
+    } catch (e) {
+      debugPrint("🔥 Subscription Controller Error: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// 🔹 HELPER: Check if subscription is active
+  bool get isSubscriptionActive {
+    if (subscriptionData.value == null) return false;
+    return subscriptionData.value!.status.toLowerCase() == 'active';
+  }
+
+  /// 🔹 HELPER: Calculate remaining days
+  int get remainingDays {
+    if (subscriptionData.value?.endDate == null) return 0;
+    final difference = subscriptionData.value!.endDate!.difference(DateTime.now());
+    return difference.inDays > 0 ? difference.inDays : 0;
+  }
+}
