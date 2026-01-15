@@ -7,7 +7,7 @@ import '../core/config/app_constants.dart';
 import '../core/data/secured_storage.dart';
 import '../core/utils/api/app_url.dart';
 
-class ProviderSubscriptionController extends GetxController {
+class SubscriptionsController extends GetxController {
   // Observables
   final RxBool isLoading = false.obs;
   final Rx<ProviderSubscriptionData?> subscriptionData = Rx<ProviderSubscriptionData?>(null);
@@ -67,5 +67,16 @@ class ProviderSubscriptionController extends GetxController {
     if (subscriptionData.value?.endDate == null) return 0;
     final difference = subscriptionData.value!.endDate!.difference(DateTime.now());
     return difference.inDays > 0 ? difference.inDays : 0;
+  }
+
+
+  bool get canAccessOpeningHours {
+    if (subscriptionData.value == null) return false;
+
+    // Logic: Must be active AND have the specific access string
+    bool isActive = subscriptionData.value!.status.toLowerCase() == 'active';
+    bool hasFeature = subscriptionData.value!.access.contains("OpeningHours");
+
+    return isActive && hasFeature;
   }
 }
