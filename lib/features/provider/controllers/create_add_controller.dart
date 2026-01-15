@@ -18,12 +18,16 @@ class CreateAdController extends GetxController {
   Future<void> pickAdImage({required ImageSource source}) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: source, imageQuality: 80);
-    if (image != null) selectedImage.value = File(image.path);
+    if (image != null) {
+      selectedImage.value = File(image.path);
+      debugPrint('📸 Image Selected: ${image.path}');
+    }
   }
 
   /// Create / Update Advertisement
   Future<void> createAdvertisement() async {
     if (selectedImage.value == null) {
+      debugPrint('⚠️ Validation Failed: No image selected');
       Get.snackbar(
         'Required',
         'Please select an image',
@@ -36,6 +40,7 @@ class CreateAdController extends GetxController {
     try {
       isLoading.value = true;
       final token = await _getAuthToken();
+      debugPrint('🔑 Auth Token: ${token ?? "No Token Found"}');
 
       var request = http.MultipartRequest('POST', Uri.parse(AppUrl.createAddProvider));
       request.headers.addAll({
@@ -45,6 +50,7 @@ class CreateAdController extends GetxController {
 
       String filePath = selectedImage.value!.path;
       String extension = filePath.split('.').last.toLowerCase();
+      debugPrint('📤 Preparing Upload: $filePath with extension: $extension');
 
       request.files.add(await http.MultipartFile.fromPath(
         'content',
@@ -52,11 +58,18 @@ class CreateAdController extends GetxController {
         contentType: MediaType('image', extension),
       ));
 
+      debugPrint('🚀 Sending Request to: ${AppUrl.createAddProvider}');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      // Print raw response for debugging
+      debugPrint('📡 Status Code: ${response.statusCode}');
+      debugPrint('📄 Response Body: ${response.body}');
+
       var jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint('✅ Ad Creation Success');
         Get.snackbar(
           'Success',
           'Ad published successfully!',
@@ -65,6 +78,7 @@ class CreateAdController extends GetxController {
         );
         _resetForm();
       } else {
+        debugPrint('❌ Ad Creation Failed: ${jsonResponse['message']}');
         Get.snackbar('Error', jsonResponse['message'] ?? 'Failed to create Ad');
       }
     } catch (e) {
@@ -75,7 +89,10 @@ class CreateAdController extends GetxController {
     }
   }
 
-  void _resetForm() => selectedImage.value = null;
+  void _resetForm() {
+    debugPrint('🧹 Resetting Form State');
+    selectedImage.value = null;
+  }
 
   Future<String?> _getAuthToken() async {
     return await Get.find<SharedPrefService>().getAccessToken();

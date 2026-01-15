@@ -72,7 +72,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                                   : 'Upgrade your plan to create advertisements',
                               buttonText: 'Create Now',
                               onTap: hasAdAccess
-                                  ? () => setState(() => isOverlayOpen = true)
+                                  ? () => Get.to(() => const PublishAdvertisementScreen()) // Open as a real page
                                   : () => Get.snackbar(
                                 'Access Denied',
                                 'Your current plan does not support Ads.',
@@ -91,12 +91,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 ),
               ),
 
-              // Ad Creation Overlay
-              if (isOverlayOpen)
-                Positioned.fill(
-                  child: PublishAdvertisementScreen(
-                  ),
-                ),
             ],
           ),
         ),

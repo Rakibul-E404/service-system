@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:manx_mate/core/config/app_colors.dart';
 
 import '../../../core/utils/api/app_url.dart';
 import '../controllers/add_list_controller.dart';
@@ -22,10 +23,6 @@ class PublishAdvertisementScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Get.back(), // Close the overlay
-        ),
         title: const Text("Create Advertisement"),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -94,30 +91,45 @@ class PublishAdvertisementScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               /// 🔹 Publish Advertisement Button
+              /// 🔹 Publish Advertisement Button
               Obx(() {
+                // Check if an image is selected AND it's not currently loading
+                final bool isImageSelected = createController.selectedImage.value != null;
+                final bool isBusy = createController.isLoading.value;
+
                 return SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: createController.isLoading.value
-                        ? null
-                        : () => createController
+                    // Logic: Button is ONLY clickable if an image is picked AND controller is not loading
+                    onPressed: (isImageSelected && !isBusy)
+                        ? () => createController
                         .createAdvertisement()
                         .then((_) => adsController.fetchSelfAds())
-                        .then((_) => Get.back()), // Navigate back after successful creation
+                        .then((_) => Get.back())
+                        : null, // Setting this to null disables the button
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[600],
+                      // We can change color dynamically based on selection
+                      backgroundColor: isImageSelected ? Colors.amber[600] : Colors.grey[400],
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
-                    child: createController.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                      "Publish Advertisement",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    child: isBusy
+                        ? const SizedBox(
+                      height: 25,
+                      width: 25,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                        : Text(
+                      isImageSelected ? "Publish Advertisement" : "Select Image First",
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: isImageSelected ? AppColors.backgroundColor : Colors.white70,
+                          fontWeight: FontWeight.bold
+                      ),
                     ),
                   ),
                 );
@@ -178,9 +190,9 @@ class PublishAdvertisementScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade400),
       ),
-      child: Column(
+      child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.image_outlined, size: 50, color: Colors.grey),
           SizedBox(height: 8),
           Text(
