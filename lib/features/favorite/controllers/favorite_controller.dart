@@ -1,10 +1,10 @@
-
+/**
+import 'package:flutter/cupertino.dart' as developer show debugPrint;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
-import '../../../core/utils/logger_utils.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 import '../screens/fav_model.dart';
 
@@ -27,7 +27,7 @@ class FavoriteController extends GetxController {
   // Map serviceId -> favoriteId (server side favorite entry id). Null if not present.
   final Map<String, String?> serviceToFavoriteId = {};
 
-  /// Fetch favorites from API and populate serviceToFavoriteId map
+  /// Fetch favorites from API using AppUrl.getAllFavoritesUrl
   Future<void> fetchFavorites({bool refresh = false}) async {
     if (refresh) {
       currentPage.value = 1;
@@ -49,218 +49,145 @@ class FavoriteController extends GetxController {
         return;
       }
 
-      final String url = '${AppUrl.baseUrl}/favorite/?page=${currentPage.value}&limit=10';
+      // Use AppUrl.getAllFavoritesUrl as requested
+      final String url = AppUrl.getAllFavoritesUrl(currentPage.value);
+      developer.debugPrint('🌐 GET favorites from: $url');
+
       final Map<String, String> headers = {'Authorization': 'Bearer $accessToken'};
 
       final NetworkResponse response = await _networkCaller.getRequest(url, headers: headers);
-      LoggerUtils.debug(response.jsonResponse);
+      developer.debugPrint('📡 Response status: ${response.statusCode}');
 
       if (response.isSuccess && response.jsonResponse != null) {
-        final Map<String, dynamic>? dataObject = response.jsonResponse!['data'];
-        if (dataObject == null) {
-          errorMessage.value = 'Invalid response format';
-          return;
-        }
+        final Map<String, dynamic> responseData = response.jsonResponse!;
 
-        final List<dynamic> dataList = dataObject['data'] ?? [];
-        if (dataList.isEmpty) {
-          hasMoreData.value = false;
-        } else {
-          final List<FavoriteModel> newFavorites = dataList
-              .map((json) => FavoriteModel.fromJson(json as Map<String, dynamic>))
-              .toList();
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final Map<String, dynamic> dataObject = responseData['data'];
+          final List<dynamic> dataList = dataObject['data'] ?? [];
 
-          // Populate maps to reflect server state
-          for (var fav in newFavorites) {
-            final serviceId = fav.providerService?.id;
-            if (serviceId != null) {
-              favoriteStatus[serviceId] = true;
-              // fav.id is server favorite id
-              if (fav.id != null) {
-                serviceToFavoriteId[serviceId] = fav.id;
+          if (dataList.isEmpty) {
+            hasMoreData.value = false;
+            developer.debugPrint('📭 No more favorites data');
+          } else {
+            // Parse favorites from the new JSON structure
+            final List<FavoriteModel> newFavorites = [];
+
+            for (var favData in dataList) {
+              try {
+                // Extract service ID from the profile data
+                final String? serviceId = favData['profile']?['_id']?.toString();
+
+                if (serviceId != null && serviceId.isNotEmpty) {
+                  // Create ProviderService from the new JSON structure
+                  final profileData = favData['profile'] as Map<String, dynamic>? ?? {};
+                  final subCategoryData = favData['subCategory'] as Map<String, dynamic>? ?? {};
+
+                  final providerService = ProviderService(
+                    id: serviceId,
+                    title: profileData['businessName']?.toString() ?? 'No Title',
+                    description: profileData['description']?.toString() ?? '',
+                    image: profileData['image']?.toString(),
+                    location: profileData['location']?.toString() ?? 'Unknown Location',
+                    rating: (favData['averageRating'] as num?)?.toDouble(),
+                    categoryName: subCategoryData['name']?.toString() ?? '',
+                    subcategoryName: subCategoryData['name']?.toString() ?? '',
+                    provider: Provider(
+                      id: profileData['author']?.toString() ?? '',
+                      name: profileData['businessName']?.toString() ?? 'Unknown Provider',
+                    ),
+                    totalRating: favData['totalReviews'] as int?,
+                  );
+
+                  // Create FavoriteModel
+                  final favorite = FavoriteModel(
+                    id: favData['_id']?.toString() ?? '',
+                    userId: profileData['author']?.toString(),
+                    providerServiceId: serviceId,
+                    providerService: providerService,
+                    isDeleted: false,
+                  );
+
+                  newFavorites.add(favorite);
+
+                  // Update favorite status maps
+                  favoriteStatus[serviceId] = true;
+                  serviceToFavoriteId[serviceId] = favorite.id;
+
+                  developer.debugPrint('✅ Marked service $serviceId as favorited (favoriteId: ${favorite.id})');
+                } else {
+                  developer.debugPrint('⚠️ Skipping favorite item with no service ID');
+                }
+              } catch (e) {
+                developer.debugPrint('❌ Error parsing favorite item: $e');
+                developer.debugPrint('📋 Failed data: $favData');
               }
             }
-          }
 
-          favorites.addAll(newFavorites);
-          currentPage.value++;
+            favorites.addAll(newFavorites);
+
+            // Update pagination
+            final pagination = dataObject['pagination'] as Map<String, dynamic>?;
+            if (pagination != null) {
+              final int totalPages = (pagination['totalPages'] as num?)?.toInt() ?? 1;
+              final int currentPageNum = (pagination['page'] as num?)?.toInt() ?? currentPage.value;
+
+              hasMoreData.value = currentPageNum < totalPages;
+              currentPage.value = currentPageNum + 1;
+
+              developer.debugPrint('📊 Pagination: Page $currentPageNum of $totalPages');
+              developer.debugPrint('📊 Has more data: $hasMoreData');
+            } else {
+              // Fallback: increment page if we got data
+              currentPage.value++;
+              developer.debugPrint('📊 Using fallback pagination, new page: ${currentPage.value}');
+            }
+
+            developer.debugPrint('📊 Loaded ${newFavorites.length} favorites, total: ${favorites.length}');
+          }
+        } else {
+          errorMessage.value = responseData['message']?.toString() ?? 'Failed to load favorites';
+          developer.debugPrint('❌ API error: ${errorMessage.value}');
         }
       } else {
         errorMessage.value = response.errorMessage ?? 'Failed to load favorites';
+        developer.debugPrint('❌ Network error: ${errorMessage.value}');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       errorMessage.value = 'Error: ${e.toString()}';
+      developer.debugPrint('💥 Exception fetching favorites: $e');
+      developer.debugPrint('📚 StackTrace: $stackTrace');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // /// Toggle favorite status for a service.
-  // /// Adds (POST) when not favorited; removes (DELETE) when favorited.
-  // Future<void> toggleFavorite(String serviceId) async {
-  //   debugPrint('🎯 ========== TOGGLE FAVORITE ==========');
-  //   debugPrint('📥 serviceId: $serviceId');
-  //
-  //   // Prevent concurrent operations for same service
-  //   if (loadingStatus[serviceId] == true) {
-  //     debugPrint('⏳ Operation already in progress for $serviceId, ignoring tap.');
-  //     return;
-  //   }
-  //   // Lock the service
-  //   loadingStatus[serviceId] = true;
-  //
-  //   try {
-  //     final String? accessToken = await _sharedPrefService.getAccessToken();
-  //     if (accessToken == null || accessToken.isEmpty) {
-  //       debugPrint('❌ No access token available');
-  //       Get.snackbar(
-  //         'Error',
-  //         'Please login to add favorites',
-  //         snackPosition: SnackPosition.BOTTOM,
-  //         backgroundColor: Colors.red.withOpacity(0.8),
-  //         colorText: Colors.white,
-  //       );
-  //       return;
-  //     }
-  //
-  //     final bool currentlyFavorited = favoriteStatus[serviceId] ?? false;
-  //
-  //     if (!currentlyFavorited) {
-  //       // --- Add favorite (POST) using the new endpoint ---
-  //       final String url = AppUrl.addFavoriteUrl(serviceId);
-  //       debugPrint('🌐 POST to: $url');
-  //
-  //       final NetworkResponse response = await _networkCaller.postRequest(
-  //         url,
-  //         body: {}, // API expects body, send empty object
-  //         headers: <String, String>{'Authorization': 'Bearer $accessToken'},
-  //       );
-  //
-  //       debugPrint('📡 POST response: isSuccess=${response.isSuccess} status=${response.statusCode}');
-  //
-  //       if (response.isSuccess && response.jsonResponse != null) {
-  //         // Try to extract the created favorite id from response
-  //         String? createdFavoriteId;
-  //         try {
-  //           // Many APIs return created object in data or data['data'], handle commonly used shapes
-  //           final resp = response.jsonResponse!;
-  //           if (resp['data'] is Map && resp['data']['id'] != null) {
-  //             createdFavoriteId = resp['data']['id'].toString();
-  //           } else if (resp['data'] is Map && resp['data']['data'] is Map && resp['data']['data']['id'] != null) {
-  //             createdFavoriteId = resp['data']['data']['id'].toString();
-  //           } else if (resp['id'] != null) {
-  //             createdFavoriteId = resp['id'].toString();
-  //           }
-  //         } catch (_) {
-  //           // ignore parse errors; createdFavoriteId may remain null
-  //         }
-  //
-  //         // Update local state instantly for the UI
-  //         favoriteStatus[serviceId] = true;
-  //         if (createdFavoriteId != null) {
-  //           serviceToFavoriteId[serviceId] = createdFavoriteId;
-  //           debugPrint('🆔 Stored favoriteId for $serviceId -> $createdFavoriteId');
-  //         }
-  //
-  //         // Instant feedback on UI
-  //         updateFavoriteUI(serviceId, true);
-  //
-  //         Get.snackbar(
-  //           'Success',
-  //           'Added to favorites',
-  //           snackPosition: SnackPosition.BOTTOM,
-  //           backgroundColor: Colors.green.withOpacity(0.8),
-  //           colorText: Colors.white,
-  //           duration: const Duration(seconds: 2),
-  //         );
-  //       } else {
-  //         debugPrint('❌ POST failed: ${response.errorMessage}');
-  //         Get.snackbar(
-  //           'Error',
-  //           response.errorMessage ?? 'Failed to add favorite',
-  //           snackPosition: SnackPosition.BOTTOM,
-  //           backgroundColor: Colors.red.withOpacity(0.8),
-  //           colorText: Colors.white,
-  //         );
-  //       }
-  //     } else {
-  //       // --- Remove favorite (DELETE) ---
-  //       final String? favoriteId = serviceToFavoriteId[serviceId];
-  //       if (favoriteId == null || favoriteId.isEmpty) {
-  //         // We do not have favoriteId — fall back to refreshing list and informing user
-  //         debugPrint('⚠️ No favoriteId found for $serviceId; refreshing from server and aborting delete.');
-  //         await refreshFavorites();
-  //         Get.snackbar(
-  //           'Info',
-  //           'Could not remove favorite immediately. Refreshed list.',
-  //           snackPosition: SnackPosition.BOTTOM,
-  //           backgroundColor: Colors.orange.withOpacity(0.8),
-  //           colorText: Colors.white,
-  //         );
-  //         return;
-  //       }
-  //
-  //       final String url = '${AppUrl.baseUrl}/favorite/$favoriteId';
-  //       debugPrint('🌐 DELETE to: $url');
-  //
-  //       final NetworkResponse response = await _networkCaller.deleteRequest(
-  //         url,
-  //         headers: <String, String>{'Authorization': 'Bearer $accessToken'},
-  //       );
-  //
-  //       debugPrint('📡 DELETE response: isSuccess=${response.isSuccess} status=${response.statusCode}');
-  //
-  //       if (response.isSuccess) {
-  //         // Update local state instantly (remove from favorite)
-  //         favoriteStatus[serviceId] = false;
-  //         serviceToFavoriteId.remove(serviceId);
-  //
-  //         // Instant feedback on UI
-  //         updateFavoriteUI(serviceId, false);
-  //
-  //         Get.snackbar(
-  //           'Success',
-  //           'Removed from favorites',
-  //           snackPosition: SnackPosition.BOTTOM,
-  //           backgroundColor: Colors.green.withOpacity(0.8),
-  //           colorText: Colors.white,
-  //           duration: const Duration(seconds: 2),
-  //         );
-  //       } else {
-  //         debugPrint('❌ DELETE failed: ${response.errorMessage}');
-  //         Get.snackbar(
-  //           'Error',
-  //           response.errorMessage ?? 'Failed to remove favorite',
-  //           snackPosition: SnackPosition.BOTTOM,
-  //           backgroundColor: Colors.red.withOpacity(0.8),
-  //           colorText: Colors.white,
-  //         );
-  //       }
-  //     }
-  //   } catch (e, stackTrace) {
-  //     debugPrint('💥 Exception in toggleFavorite: $e');
-  //     debugPrint('📚 StackTrace: $stackTrace');
-  //     Get.snackbar(
-  //       'Error',
-  //       'Something went wrong',
-  //       snackPosition: SnackPosition.BOTTOM,
-  //       backgroundColor: Colors.red.withOpacity(0.8),
-  //       colorText: Colors.white,
-  //     );
-  //   } finally {
-  //     loadingStatus[serviceId] = false;
-  //     debugPrint('🏁 ========== TOGGLE COMPLETE ==========');
-  //   }
-  // }
+  /// Check if a specific service is in favorites
+  bool isServiceInFavorites(String serviceId) {
+    // First check our local map
+    if (favoriteStatus.containsKey(serviceId)) {
+      return favoriteStatus[serviceId] == true;
+    }
+
+    // Also check in the favorites list
+    return favorites.any((fav) =>
+    fav.providerServiceId == serviceId ||
+        fav.providerService?.id == serviceId
+    );
+  }
+
   /// Toggle favorite status for a service.
   /// Adds (POST) when not favorited; removes (DELETE) when favorited.
   Future<void> toggleFavorite(String serviceId) async {
-    debugPrint('🎯 ========== TOGGLE FAVORITE ==========');
-    debugPrint('📥 serviceId: $serviceId');
+    developer.debugPrint('🎯 ========== TOGGLE FAVORITE ==========');
+    developer.debugPrint('📥 serviceId: $serviceId');
+
+    // First, check if service is already in our local state
+    bool currentlyFavorited = isServiceInFavorites(serviceId);
+    developer.debugPrint('📊 Current favorite status for $serviceId: $currentlyFavorited');
 
     // Prevent concurrent operations for same service
     if (loadingStatus[serviceId] == true) {
-      debugPrint('⏳ Operation already in progress for $serviceId, ignoring tap.');
+      developer.debugPrint('⏳ Operation already in progress for $serviceId, ignoring tap.');
       return;
     }
     // Lock the service
@@ -269,7 +196,7 @@ class FavoriteController extends GetxController {
     try {
       final String? accessToken = await _sharedPrefService.getAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
-        debugPrint('❌ No access token available');
+        developer.debugPrint('❌ No access token available');
         Get.snackbar(
           'Error',
           'Please login to add favorites',
@@ -280,49 +207,46 @@ class FavoriteController extends GetxController {
         return;
       }
 
-      final bool currentlyFavorited = favoriteStatus[serviceId] ?? false;
-
       if (!currentlyFavorited) {
         // --- Add favorite (POST) ---
-        // Use AppUrl.addFavoriteUrl as requested
         final String url = AppUrl.addFavoriteUrl(serviceId);
-        debugPrint('🌐 POST to: $url');
+        developer.debugPrint('🌐 POST to: $url');
 
         final NetworkResponse response = await _networkCaller.postRequest(
           url,
-          body: {}, // API expects body, send empty object
+          body: {},
           headers: <String, String>{'Authorization': 'Bearer $accessToken'},
         );
 
-        debugPrint('📡 POST response: isSuccess=${response.isSuccess} status=${response.statusCode}');
+        developer.debugPrint('📡 POST response: isSuccess=${response.isSuccess} status=${response.statusCode}');
 
         if (response.isSuccess && response.jsonResponse != null) {
+          final resp = response.jsonResponse!;
+          developer.debugPrint('📊 Response data: $resp');
+
           // Try to extract the created favorite id from response
           String? createdFavoriteId;
           try {
-            final resp = response.jsonResponse!;
-            debugPrint('📊 Response data: $resp');
-
             if (resp['data'] is Map && resp['data']['_id'] != null) {
               createdFavoriteId = resp['data']['_id'].toString();
-              debugPrint('✅ Extracted favoriteId from data._id: $createdFavoriteId');
+              developer.debugPrint('✅ Extracted favoriteId from data._id: $createdFavoriteId');
             } else if (resp['_id'] != null) {
               createdFavoriteId = resp['_id'].toString();
-              debugPrint('✅ Extracted favoriteId from _id: $createdFavoriteId');
+              developer.debugPrint('✅ Extracted favoriteId from _id: $createdFavoriteId');
             }
           } catch (e) {
-            debugPrint('❌ Error parsing response: $e');
+            developer.debugPrint('❌ Error parsing response: $e');
           }
 
           // Update local state instantly for the UI
           favoriteStatus[serviceId] = true;
           if (createdFavoriteId != null) {
             serviceToFavoriteId[serviceId] = createdFavoriteId;
-            debugPrint('🆔 Stored favoriteId for $serviceId -> $createdFavoriteId');
+            developer.debugPrint('🆔 Stored favoriteId for $serviceId -> $createdFavoriteId');
           }
 
-          // Instant feedback on UI
-          updateFavoriteUI(serviceId, true);
+          // Refresh favorites list to get updated data
+          await fetchFavorites(refresh: true);
 
           Get.snackbar(
             'Success',
@@ -333,7 +257,7 @@ class FavoriteController extends GetxController {
             duration: const Duration(seconds: 2),
           );
         } else {
-          debugPrint('❌ POST failed: ${response.errorMessage}');
+          developer.debugPrint('❌ POST failed: ${response.errorMessage}');
           Get.snackbar(
             'Error',
             response.errorMessage ?? 'Failed to add favorite',
@@ -344,39 +268,49 @@ class FavoriteController extends GetxController {
         }
       } else {
         // --- Remove favorite (DELETE) ---
-        final String? favoriteId = serviceToFavoriteId[serviceId];
+        String? favoriteId = serviceToFavoriteId[serviceId];
+
         if (favoriteId == null || favoriteId.isEmpty) {
-          // We do not have favoriteId — fall back to refreshing list and informing user
-          debugPrint('⚠️ No favoriteId found for $serviceId; refreshing from server and aborting delete.');
-          await refreshFavorites();
-          Get.snackbar(
-            'Info',
-            'Could not remove favorite immediately. Refreshed list.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange.withOpacity(0.8),
-            colorText: Colors.white,
+          // Try to find favoriteId from favorites list
+          final FavoriteModel? favorite = favorites.firstWhereOrNull(
+                  (fav) => fav.providerServiceId == serviceId || fav.providerService?.id == serviceId
           );
-          return;
+
+          if (favorite != null && favorite.id.isNotEmpty) {
+            favoriteId = favorite.id;
+            developer.debugPrint('🔍 Found favoriteId from list: $favoriteId');
+          } else {
+            developer.debugPrint('⚠️ No favoriteId found for $serviceId; refreshing from server and aborting delete.');
+            await refreshFavorites();
+            Get.snackbar(
+              'Info',
+              'Could not remove favorite immediately. Refreshed list.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange.withOpacity(0.8),
+              colorText: Colors.white,
+            );
+            return;
+          }
         }
 
-        // For DELETE, use the base URL with favoriteId
-        final String url = '${AppUrl.baseUrl}/favorite/$favoriteId';
-        debugPrint('🌐 DELETE to: $url');
+        // For DELETE, use the delete favorite URL
+        final String url = AppUrl.deleteFavoriteUrl(favoriteId);
+        developer.debugPrint('🌐 DELETE to: $url');
 
         final NetworkResponse response = await _networkCaller.deleteRequest(
           url,
           headers: <String, String>{'Authorization': 'Bearer $accessToken'},
         );
 
-        debugPrint('📡 DELETE response: isSuccess=${response.isSuccess} status=${response.statusCode}');
+        developer.debugPrint('📡 DELETE response: isSuccess=${response.isSuccess} status=${response.statusCode}');
 
         if (response.isSuccess) {
           // Update local state instantly (remove from favorite)
           favoriteStatus[serviceId] = false;
           serviceToFavoriteId.remove(serviceId);
 
-          // Instant feedback on UI
-          updateFavoriteUI(serviceId, false);
+          // Refresh the favorites list to get updated data
+          await fetchFavorites(refresh: true);
 
           Get.snackbar(
             'Success',
@@ -387,7 +321,7 @@ class FavoriteController extends GetxController {
             duration: const Duration(seconds: 2),
           );
         } else {
-          debugPrint('❌ DELETE failed: ${response.errorMessage}');
+          developer.debugPrint('❌ DELETE failed: ${response.errorMessage}');
           Get.snackbar(
             'Error',
             response.errorMessage ?? 'Failed to remove favorite',
@@ -398,8 +332,8 @@ class FavoriteController extends GetxController {
         }
       }
     } catch (e, stackTrace) {
-      debugPrint('💥 Exception in toggleFavorite: $e');
-      debugPrint('📚 StackTrace: $stackTrace');
+      developer.debugPrint('💥 Exception in toggleFavorite: $e');
+      developer.debugPrint('📚 StackTrace: $stackTrace');
       Get.snackbar(
         'Error',
         'Something went wrong',
@@ -409,21 +343,7 @@ class FavoriteController extends GetxController {
       );
     } finally {
       loadingStatus[serviceId] = false;
-      debugPrint('🏁 ========== TOGGLE COMPLETE ==========');
-    }
-  }
-
-
-  /// Function to update the UI immediately
-  void updateFavoriteUI(String serviceId, bool isFavorited) {
-    // Update the local favorite status instantly
-    favoriteStatus[serviceId] = isFavorited;
-
-    // Optionally, you can update the favorite list if the service is shown there
-    final int index = favorites.indexWhere((f) => f.providerService?.id == serviceId);
-    if (index != -1) {
-      favorites[index].isDeleted = !isFavorited; // Update the UI item status as deleted or not
-      favorites.refresh();
+      developer.debugPrint('🏁 ========== TOGGLE COMPLETE ==========');
     }
   }
 
@@ -437,7 +357,7 @@ class FavoriteController extends GetxController {
     return loadingStatus[serviceId] ?? false;
   }
 
-  /// Remove favorite by ID and update UI instantly (keeps compatibility)
+  /// Remove favorite by ID and update UI instantly
   Future<bool> removeFavorite(String favoriteId) async {
     try {
       final String? accessToken = await _sharedPrefService.getAccessToken();
@@ -445,25 +365,36 @@ class FavoriteController extends GetxController {
         return false;
       }
 
-      final String url = '${AppUrl.baseUrl}/favorite/$favoriteId';
+      final String url = AppUrl.deleteFavoriteUrl(favoriteId);
       final Map<String, String> headers = {'Authorization': 'Bearer $accessToken'};
 
       final NetworkResponse response = await _networkCaller.deleteRequest(url, headers: headers);
       if (response.isSuccess) {
-        final int index = favorites.indexWhere((fav) => fav.id == favoriteId);
-        if (index != -1) {
-          final serviceId = favorites[index].providerService?.id;
-          favorites[index].isDeleted = true;
+        // Find and remove the favorite from our list
+        final FavoriteModel? favoriteToRemove = favorites.firstWhereOrNull(
+                (fav) => fav.id == favoriteId
+        );
+
+        if (favoriteToRemove != null) {
+          final String? serviceId = favoriteToRemove.providerServiceId ?? favoriteToRemove.providerService?.id;
+
+          // Remove from favorites list
+          favorites.removeWhere((fav) => fav.id == favoriteId);
+
+          // Update status maps
           if (serviceId != null) {
             favoriteStatus[serviceId] = false;
             serviceToFavoriteId.remove(serviceId);
           }
+
+          // Refresh the UI
           favorites.refresh();
         }
         return true;
       }
       return false;
     } catch (e) {
+      developer.debugPrint('❌ Error removing favorite: $e');
       return false;
     }
   }
@@ -471,6 +402,13 @@ class FavoriteController extends GetxController {
   /// Refresh favorites
   Future<void> refreshFavorites() async {
     await fetchFavorites(refresh: true);
+  }
+
+  /// Load more favorites for pagination
+  Future<void> loadMoreFavorites() async {
+    if (!isLoading.value && hasMoreData.value) {
+      await fetchFavorites();
+    }
   }
 
   /// Set initial favorite status (useful when loading data)
@@ -496,24 +434,474 @@ class FavoriteController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchFavorites();
+    developer.debugPrint('🎯 FavoriteController initialized');
+    // Don't auto-fetch on init, let the FavoriteScreen handle it based on login state
   }
 
   @override
-  void dispose() {
+  void onClose() {
     clearFavorites();
-    super.dispose();
+    super.onClose();
+  }
+}*/
+
+
+
+
+
+
+
+
+import 'package:flutter/cupertino.dart' as developer show debugPrint;
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../core/network/network_caller.dart';
+import '../../../core/network/network_response.dart';
+import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
+import '../screens/fav_model.dart';
+
+class FavoriteController extends GetxController {
+  final NetworkCaller _networkCaller = NetworkCaller();
+  final SharedPrefService _sharedPrefService = SharedPrefService();
+
+  final RxList<FavoriteModel> favorites = <FavoriteModel>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
+  final RxInt currentPage = 1.obs;
+  final RxBool hasMoreData = true.obs;
+
+  // Track favorite status for each service by ID
+  final RxMap<String, bool> favoriteStatus = <String, bool>{}.obs;
+
+  // Track loading state for each service (used as a mutex)
+  final RxMap<String, bool> loadingStatus = <String, bool>{}.obs;
+
+  // Map serviceId -> favoriteId (server side favorite entry id). Null if not present.
+  final Map<String, String?> serviceToFavoriteId = {};
+
+  /// Fetch favorites from API using AppUrl.getAllFavoritesUrl
+  Future<void> fetchFavorites({bool refresh = false}) async {
+    if (refresh) {
+      currentPage.value = 1;
+      favorites.clear();
+      hasMoreData.value = true;
+      serviceToFavoriteId.clear();
+      favoriteStatus.clear();
+    }
+
+    if (!hasMoreData.value || isLoading.value) return;
+
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final String? accessToken = await _sharedPrefService.getAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        errorMessage.value = 'Authentication required. Please login again.';
+        return;
+      }
+
+      // Use AppUrl.getAllFavoritesUrl as requested
+      final String url = AppUrl.getAllFavoritesUrl(currentPage.value);
+      developer.debugPrint('🌐 GET favorites from: $url');
+
+      final Map<String, String> headers = {'Authorization': 'Bearer $accessToken'};
+
+      final NetworkResponse response = await _networkCaller.getRequest(url, headers: headers);
+      developer.debugPrint('📡 Response status: ${response.statusCode}');
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final Map<String, dynamic> responseData = response.jsonResponse!;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final Map<String, dynamic> dataObject = responseData['data'];
+          final List<dynamic> dataList = dataObject['data'] ?? [];
+
+          if (dataList.isEmpty) {
+            hasMoreData.value = false;
+            developer.debugPrint('📭 No more favorites data');
+          } else {
+            // Parse favorites from the new JSON structure
+            final List<FavoriteModel> newFavorites = [];
+
+            for (var favData in dataList) {
+              try {
+                // Extract service ID from the profile data
+                final String? serviceId = favData['profile']?['_id']?.toString();
+
+                if (serviceId != null && serviceId.isNotEmpty) {
+                  // Create ProviderService from the new JSON structure
+                  final profileData = favData['profile'] as Map<String, dynamic>? ?? {};
+                  final subCategoryData = favData['subCategory'] as Map<String, dynamic>? ?? {};
+
+                  final providerService = ProviderService(
+                    id: serviceId,
+                    title: profileData['businessName']?.toString() ?? 'No Title',
+                    description: profileData['description']?.toString() ?? '',
+                    image: profileData['image']?.toString(),
+                    location: profileData['location']?.toString() ?? 'Unknown Location',
+                    rating: (favData['averageRating'] as num?)?.toDouble(),
+                    categoryName: subCategoryData['name']?.toString() ?? '',
+                    subcategoryName: subCategoryData['name']?.toString() ?? '',
+                    provider: Provider(
+                      id: profileData['author']?.toString() ?? '',
+                      name: profileData['businessName']?.toString() ?? 'Unknown Provider',
+                    ),
+                    totalRating: favData['totalReviews'] as int?,
+                  );
+
+                  // Create FavoriteModel
+                  final favorite = FavoriteModel(
+                    id: favData['_id']?.toString() ?? '',
+                    userId: profileData['author']?.toString(),
+                    providerServiceId: serviceId,
+                    providerService: providerService,
+                    isDeleted: false,
+                  );
+
+                  newFavorites.add(favorite);
+
+                  // Update favorite status maps
+                  favoriteStatus[serviceId] = true;
+                  serviceToFavoriteId[serviceId] = favorite.id;
+
+                  developer.debugPrint('✅ Marked service $serviceId as favorited (favoriteId: ${favorite.id})');
+                } else {
+                  developer.debugPrint('⚠️ Skipping favorite item with no service ID');
+                }
+              } catch (e) {
+                developer.debugPrint('❌ Error parsing favorite item: $e');
+                developer.debugPrint('📋 Failed data: $favData');
+              }
+            }
+
+            favorites.addAll(newFavorites);
+
+            // Update pagination
+            final pagination = dataObject['pagination'] as Map<String, dynamic>?;
+            if (pagination != null) {
+              final int totalPages = (pagination['totalPages'] as num?)?.toInt() ?? 1;
+              final int currentPageNum = (pagination['page'] as num?)?.toInt() ?? currentPage.value;
+
+              hasMoreData.value = currentPageNum < totalPages;
+              currentPage.value = currentPageNum + 1;
+
+              developer.debugPrint('📊 Pagination: Page $currentPageNum of $totalPages');
+              developer.debugPrint('📊 Has more data: $hasMoreData');
+            } else {
+              // Fallback: increment page if we got data
+              currentPage.value++;
+              developer.debugPrint('📊 Using fallback pagination, new page: ${currentPage.value}');
+            }
+
+            developer.debugPrint('📊 Loaded ${newFavorites.length} favorites, total: ${favorites.length}');
+          }
+        } else {
+          errorMessage.value = responseData['message']?.toString() ?? 'Failed to load favorites';
+          developer.debugPrint('❌ API error: ${errorMessage.value}');
+        }
+      } else {
+        errorMessage.value = response.errorMessage ?? 'Failed to load favorites';
+        developer.debugPrint('❌ Network error: ${errorMessage.value}');
+      }
+    } catch (e, stackTrace) {
+      errorMessage.value = 'Error: ${e.toString()}';
+      developer.debugPrint('💥 Exception fetching favorites: $e');
+      developer.debugPrint('📚 StackTrace: $stackTrace');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Check if a specific service is in favorites
+  bool isServiceInFavorites(String serviceId) {
+    // First check our local map
+    if (favoriteStatus.containsKey(serviceId)) {
+      return favoriteStatus[serviceId] == true;
+    }
+
+    // Also check in the favorites list
+    return favorites.any((fav) =>
+    fav.providerServiceId == serviceId ||
+        fav.providerService?.id == serviceId
+    );
+  }
+
+  /// Toggle favorite status for a service.
+  /// Adds (POST) when not favorited; removes (DELETE) when favorited.
+  Future<void> toggleFavorite(String serviceId) async {
+    developer.debugPrint('🎯 ========== TOGGLE FAVORITE ==========');
+    developer.debugPrint('📥 serviceId: $serviceId');
+
+    // First, check if service is already in our local state
+    bool currentlyFavorited = isServiceInFavorites(serviceId);
+    developer.debugPrint('📊 Current favorite status for $serviceId: $currentlyFavorited');
+
+    // Prevent concurrent operations for same service
+    if (loadingStatus[serviceId] == true) {
+      developer.debugPrint('⏳ Operation already in progress for $serviceId, ignoring tap.');
+      return;
+    }
+    // Lock the service
+    loadingStatus[serviceId] = true;
+
+    try {
+      final String? accessToken = await _sharedPrefService.getAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        developer.debugPrint('❌ No access token available');
+        Get.snackbar(
+          'Error',
+          'Please login to add favorites',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      if (!currentlyFavorited) {
+        // --- Add favorite (POST) ---
+        final String url = AppUrl.addFavoriteUrl(serviceId);
+        developer.debugPrint('🌐 POST to: $url');
+
+        final NetworkResponse response = await _networkCaller.postRequest(
+          url,
+          body: {},
+          headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+        );
+
+        developer.debugPrint('📡 POST response: isSuccess=${response.isSuccess} status=${response.statusCode}');
+
+        if (response.isSuccess && response.jsonResponse != null) {
+          final resp = response.jsonResponse!;
+          developer.debugPrint('📊 Response data: $resp');
+
+          // Try to extract the created favorite id from response
+          String? createdFavoriteId;
+          try {
+            if (resp['data'] is Map && resp['data']['_id'] != null) {
+              createdFavoriteId = resp['data']['_id'].toString();
+              developer.debugPrint('✅ Extracted favoriteId from data._id: $createdFavoriteId');
+            } else if (resp['_id'] != null) {
+              createdFavoriteId = resp['_id'].toString();
+              developer.debugPrint('✅ Extracted favoriteId from _id: $createdFavoriteId');
+            }
+          } catch (e) {
+            developer.debugPrint('❌ Error parsing response: $e');
+          }
+
+          // Update local state instantly for the UI
+          favoriteStatus[serviceId] = true;
+          if (createdFavoriteId != null) {
+            serviceToFavoriteId[serviceId] = createdFavoriteId;
+            developer.debugPrint('🆔 Stored favoriteId for $serviceId -> $createdFavoriteId');
+          }
+
+          // Refresh favorites list to get updated data
+          await fetchFavorites(refresh: true);
+
+          Get.snackbar(
+            'Success',
+            'Added to favorites',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.withOpacity(0.8),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
+        } else {
+          developer.debugPrint('❌ POST failed: ${response.errorMessage}');
+          Get.snackbar(
+            'Error',
+            response.errorMessage ?? 'Failed to add favorite',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red.withOpacity(0.8),
+            colorText: Colors.white,
+          );
+        }
+      } else {
+        // --- Remove favorite (DELETE) ---
+        String? favoriteId = serviceToFavoriteId[serviceId];
+
+        if (favoriteId == null || favoriteId.isEmpty) {
+          // Try to find favoriteId from favorites list
+          final FavoriteModel? favorite = favorites.firstWhereOrNull(
+                  (fav) => fav.providerServiceId == serviceId || fav.providerService?.id == serviceId
+          );
+
+          if (favorite != null && favorite.id.isNotEmpty) {
+            favoriteId = favorite.id;
+            developer.debugPrint('🔍 Found favoriteId from list: $favoriteId');
+          } else {
+            developer.debugPrint('⚠️ No favoriteId found for $serviceId; refreshing from server and aborting delete.');
+            await refreshFavorites();
+            Get.snackbar(
+              'Info',
+              'Could not remove favorite immediately. Refreshed list.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange.withOpacity(0.8),
+              colorText: Colors.white,
+            );
+            return;
+          }
+        }
+
+        // For DELETE, use the delete favorite URL
+        final String url = AppUrl.deleteFavoriteUrl(favoriteId);
+        developer.debugPrint('🌐 DELETE to: $url');
+
+        final NetworkResponse response = await _networkCaller.deleteRequest(
+          url,
+          headers: <String, String>{'Authorization': 'Bearer $accessToken'},
+        );
+
+        developer.debugPrint('📡 DELETE response: isSuccess=${response.isSuccess} status=${response.statusCode}');
+
+        if (response.isSuccess) {
+          // Update local state instantly (remove from favorite)
+          favoriteStatus[serviceId] = false;
+          serviceToFavoriteId.remove(serviceId);
+
+          // Refresh the favorites list to get updated data
+          await fetchFavorites(refresh: true);
+
+          Get.snackbar(
+            'Success',
+            'Removed from favorites',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.withOpacity(0.8),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+          );
+        } else {
+          developer.debugPrint('❌ DELETE failed: ${response.errorMessage}');
+          Get.snackbar(
+            'Error',
+            response.errorMessage ?? 'Failed to remove favorite',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red.withOpacity(0.8),
+            colorText: Colors.white,
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      developer.debugPrint('💥 Exception in toggleFavorite: $e');
+      developer.debugPrint('📚 StackTrace: $stackTrace');
+      Get.snackbar(
+        'Error',
+        'Something went wrong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    } finally {
+      loadingStatus[serviceId] = false;
+      developer.debugPrint('🏁 ========== TOGGLE COMPLETE ==========');
+    }
+  }
+
+  /// Check if a service is favorited
+  bool isFavorited(String serviceId) {
+    return favoriteStatus[serviceId] ?? false;
+  }
+
+  /// Check if a specific service favorite action is loading
+  bool isFavoriteLoading(String serviceId) {
+    return loadingStatus[serviceId] ?? false;
+  }
+
+  /// Remove favorite by ID and update UI instantly
+  Future<bool> removeFavorite(String favoriteId) async {
+    try {
+      final String? accessToken = await _sharedPrefService.getAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        return false;
+      }
+
+      // Use AppUrl.deleteFavoriteUrl with the favorite ID
+      final String url = AppUrl.deleteFavoriteUrl(favoriteId);
+      developer.debugPrint('🌐 DELETE favorite: $url');
+
+      final Map<String, String> headers = {'Authorization': 'Bearer $accessToken'};
+
+      final NetworkResponse response = await _networkCaller.deleteRequest(url, headers: headers);
+
+      developer.debugPrint('📡 Delete response: ${response.statusCode} - ${response.isSuccess}');
+
+      if (response.isSuccess) {
+        // Find and remove the favorite from our list
+        final FavoriteModel? favoriteToRemove = favorites.firstWhereOrNull(
+                (fav) => fav.id == favoriteId
+        );
+
+        if (favoriteToRemove != null) {
+          final String? serviceId = favoriteToRemove.providerServiceId ?? favoriteToRemove.providerService?.id;
+
+          // Remove from favorites list
+          favorites.removeWhere((fav) => fav.id == favoriteId);
+
+          // Update status maps
+          if (serviceId != null) {
+            favoriteStatus[serviceId] = false;
+            serviceToFavoriteId.remove(serviceId);
+          }
+
+          // Refresh the UI
+          favorites.refresh();
+        }
+        return true;
+      } else {
+        developer.debugPrint('❌ Delete failed: ${response.errorMessage}');
+        return false;
+      }
+    } catch (e) {
+      developer.debugPrint('❌ Error removing favorite: $e');
+      return false;
+    }
+  }
+
+  /// Refresh favorites
+  Future<void> refreshFavorites() async {
+    await fetchFavorites(refresh: true);
+  }
+
+  /// Load more favorites for pagination
+  Future<void> loadMoreFavorites() async {
+    if (!isLoading.value && hasMoreData.value) {
+      await fetchFavorites();
+    }
+  }
+
+  /// Set initial favorite status (useful when loading data)
+  void setFavoriteStatus(String serviceId, bool isFavorited, {String? favoriteId}) {
+    favoriteStatus[serviceId] = isFavorited;
+    if (favoriteId != null) {
+      serviceToFavoriteId[serviceId] = favoriteId;
+    } else if (!isFavorited) {
+      serviceToFavoriteId.remove(serviceId);
+    }
+  }
+
+  /// Clear all favorite data
+  void clearFavorites() {
+    favorites.clear();
+    favoriteStatus.clear();
+    loadingStatus.clear();
+    serviceToFavoriteId.clear();
+    currentPage.value = 1;
+    hasMoreData.value = true;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    developer.debugPrint('🎯 FavoriteController initialized');
+    // Don't auto-fetch on init, let the FavoriteScreen handle it based on login state
+  }
+
+  @override
+  void onClose() {
+    clearFavorites();
+    super.onClose();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
