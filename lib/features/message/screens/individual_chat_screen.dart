@@ -148,7 +148,7 @@ class IndividualChatScreen extends GetView<MessageController> {
               }
 
               return RefreshIndicator(
-                onRefresh: () => controller.refreshMessages(),
+                onRefresh: () => controller.loadMessages(controller.selectedUser.value!.conversationId),
                 child: ListView.builder(
                   reverse: true,
                   padding: const EdgeInsets.all(16),

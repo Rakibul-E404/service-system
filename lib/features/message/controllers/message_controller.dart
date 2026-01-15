@@ -1059,14 +1059,19 @@ import 'package:manx_mate/core/data/secured_storage.dart';
 import 'package:manx_mate/core/config/app_constants.dart';
 import 'package:manx_mate/core/utils/logger_utils.dart';
 import '../screens/individual_chat_screen.dart';
+import 'package:flutter/material.dart';
+
 
 class MessageController extends GetxController {
   RxList<ChatUser> users = <ChatUser>[].obs;
   RxList<Message> messages = <Message>[].obs;
   Rx<ChatUser?> selectedUser = Rx<ChatUser?>(null);
+
+  // UI States
   RxBool isLoading = false.obs;
   RxBool isLoadingMessages = false.obs;
   RxBool showBannerLoading = false.obs;
+
   final NetworkCaller _networkCaller = NetworkCaller();
   final SecureStorageService _secureStorage = SecureStorageService();
   String? _currentUserId;
@@ -1078,6 +1083,7 @@ class MessageController extends GetxController {
   }
 
   Future<void> _initializeController() async {
+    debugPrint("🚀 Initializing MessageController...");
     await _loadCurrentUserId();
     await loadConversations();
     _setupSocketListeners();
@@ -1085,382 +1091,165 @@ class MessageController extends GetxController {
 
   Future<void> _loadCurrentUserId() async {
     _currentUserId = await _secureStorage.read(AppConstants.userId);
-    LoggerUtils.debug("Current User ID: $_currentUserId");
+    debugPrint("🔑 Current User ID loaded: $_currentUserId");
   }
 
+  /// 🔹 SOCKET LISTENERS
   void _setupSocketListeners() {
-    if (_currentUserId != null) {
-      // Listen for new conversations
-      SocketServices().listen("conversation::$_currentUserId", (dynamic data) {
-        LoggerUtils.debug("New conversation event received: $data");
-        loadConversations(); // Refresh the list
-      });
+    debugPrint("📡 Setting up Socket Listeners...");
 
-      // Listen for conversation updates
-      SocketServices().listen("conversation_update::$_currentUserId", (dynamic data) {
-        LoggerUtils.debug("Conversation update received: $data");
-        loadConversations(); // Refresh the list
-      });
-    }
-  }
+    // 1. Listen for List Updates (Conversation)
+    SocketServices().listen("Conversation", (dynamic data) {
+      debugPrint("📩 [Socket] 'Conversation' event: Refreshing chat list...");
+      loadConversations();
+    });
 
-  // ADD THIS MISSING METHOD
-  Future<void> handleListenConversation() async {
-    LoggerUtils.debug("listening method handleListenConversation");
-    final String? userId = await _secureStorage.read(AppConstants.userId);
-    if (userId != null) {
-      SocketServices().listen("conversation::$userId", (dynamic data) {
-        LoggerUtils.debug("Conversation socket event: $data");
-        loadConversations();
-      });
-    }
-  }
-
-  // ADD THIS MISSING METHOD
-  Future<void> handleListenMessage({required String conversationId}) async {
-    LoggerUtils.debug("listening method handleListenMessage for: $conversationId");
-    SocketServices().listen("message::$conversationId", (dynamic data) {
-      LoggerUtils.debug("New message received: $data");
-      loadMessages(conversationId);
+    // 2. Listen for Message Bubbles (Message)
+    SocketServices().listen("Message", (dynamic data) {
+      debugPrint("💬 [Socket] 'Message' event received: $data");
+      if (selectedUser.value != null) {
+        debugPrint("📥 Loading new messages for conversation: ${selectedUser.value!.conversationId}");
+        loadMessages(selectedUser.value!.conversationId);
+      } else {
+        debugPrint("⚠️ Message received but no conversation currently open.");
+      }
+      // Keep the background list updated with the latest message snippet
+      _refreshConversationsSilently();
     });
   }
 
+  /// 🔹 API CALLS: CONVERSATIONS
   Future<void> loadConversations() async {
     try {
       isLoading.value = true;
-
+      debugPrint("📡 API: Fetching all conversations...");
       final String? token = await _secureStorage.read(AppConstants.authToken);
 
-      // Silent token validation - no error popup
       if (token == null || token.isEmpty) {
-        LoggerUtils.debug("No auth token available, skipping conversations load");
-        users.value = []; // Clear existing conversations
-        isLoading.value = false;
+        debugPrint("❌ No token found. Clearing users.");
+        users.clear();
         return;
       }
 
       final NetworkResponse response = await _networkCaller.getRequest(
         '${AppUrl.baseUrl}/conversation/all',
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.isSuccess && response.jsonResponse != null) {
-        final bool success = response.jsonResponse!['success'] ?? false;
         final Map<String, dynamic>? data = response.jsonResponse!['data'];
-
-        if (success && data != null) {
+        if (data != null) {
           final List<dynamic> conversations = data['data'] ?? [];
-          final List<ChatUser> parsedUsers = await _parseConversations(conversations);
-
-          // Update the list - this will trigger UI update
-          users.value = parsedUsers;
-
-          LoggerUtils.debug("Loaded ${users.length} conversations");
-        } else {
-          final String errorMessage = response.jsonResponse?['message'] ?? 'Failed to load conversations';
-          LoggerUtils.debug("Error loading conversations: $errorMessage");
-          // No snackbar error
+          users.value = await _parseConversations(conversations);
+          debugPrint("✅ Loaded ${users.length} conversations.");
         }
       } else {
-        final String errorMessage = response.jsonResponse?['message'] ??
-            response.errorMessage ?? 'Failed to load conversations';
-        LoggerUtils.debug("Network error loading conversations: $errorMessage");
-        // No snackbar error
+        debugPrint("❌ Failed to load conversations: ${response.errorMessage}");
       }
     } catch (e) {
-      LoggerUtils.error("Error loading conversations: $e");
-      // No snackbar error
+      debugPrint("🔥 Error in loadConversations: $e");
     } finally {
       isLoading.value = false;
     }
   }
-
-  Future<List<ChatUser>> _parseConversations(List<dynamic> conversations) async {
-    if (_currentUserId == null) {
-      await _loadCurrentUserId();
-    }
-
-    final List<ChatUser> chatUsers = [];
-
-    for (final conversation in conversations) {
-      try {
-        final String conversationId = conversation['_id'] ?? '';
-        final List<dynamic> usersList = conversation['users'] ?? [];
-        final Map<String, dynamic>? lastMessageData = conversation['lastMessage'];
-
-        LoggerUtils.debug("Processing conversation: $conversationId");
-        LoggerUtils.debug("Users list: $usersList");
-        LoggerUtils.debug("Last message: $lastMessageData");
-
-        // Find the other user in the conversation
-        Map<String, dynamic>? otherUser;
-
-        if (usersList.isEmpty) {
-          LoggerUtils.debug("Empty users list for conversation: $conversationId");
-          // If users list is empty, try to get user info from last message author
-          if (lastMessageData != null && lastMessageData['author'] != null) {
-            final Map<String, dynamic> author = lastMessageData['author'];
-            final String authorId = author['_id']?.toString() ?? '';
-
-            // If author is not current user, use author as other user
-            if (authorId != _currentUserId) {
-              otherUser = author;
-              LoggerUtils.debug("Using last message author as other user: ${author['name']}");
-            } else {
-              LoggerUtils.debug("Last message author is current user, skipping");
-              continue; // Skip if we can't identify the other user
-            }
-          } else {
-            LoggerUtils.debug("No last message author available, skipping conversation");
-            continue; // Skip if we can't identify the other user
-          }
-        } else {
-          // Normal case: find other user in users list
-          for (final user in usersList) {
-            final String userId = user['_id']?.toString() ?? '';
-            if (userId != _currentUserId) {
-              otherUser = user;
-              break;
-            }
-          }
-
-          // If no other user found, take the first one
-          if (otherUser == null && usersList.isNotEmpty) {
-            otherUser = usersList[0];
-          }
-        }
-
-        if (otherUser != null) {
-          final String userId = otherUser['_id']?.toString() ?? '';
-          final String userName = otherUser['name']?.toString()?.trim() ?? 'Unknown User';
-          final String userImage = otherUser['image']?.toString() ?? '';
-          final String fullImageUrl = userImage.isNotEmpty ?
-          AppUrl.getUserProfileImageUrl(userImage) : '';
-
-          // Parse last message
-          String lastMessageText = 'Start a conversation';
-          String lastMessageTime = '';
-
-          if (lastMessageData != null && lastMessageData['text'] != null) {
-            lastMessageText = lastMessageData['text']?.toString() ?? 'Start a conversation';
-            final String createdAt = lastMessageData['createdAt']?.toString() ?? '';
-            lastMessageTime = _formatMessageTime(createdAt);
-          }
-
-          // Check if user is online (you might need to implement this based on your backend)
-          final bool isOnline = otherUser['isOnline'] == true;
-
-          chatUsers.add(ChatUser(
-            id: userId,
-            conversationId: conversationId,
-            name: userName,
-            avatar: fullImageUrl,
-            lastMessage: lastMessageText,
-            time: lastMessageTime,
-            isOnline: isOnline,
-          ));
-
-          LoggerUtils.debug("✅ Parsed user: $userName, Last message: $lastMessageText");
-        } else {
-          LoggerUtils.debug("❌ Could not identify other user for conversation: $conversationId");
-        }
-      } catch (e) {
-        LoggerUtils.error("Error parsing conversation: $e");
-        LoggerUtils.error("Problematic conversation data: $conversation");
-      }
-    }
-
-    // Sort by last message time (most recent first)
-    chatUsers.sort((a, b) {
-      // Handle empty time strings
-      if (a.time.isEmpty && b.time.isEmpty) return 0;
-      if (a.time.isEmpty) return 1;
-      if (b.time.isEmpty) return -1;
-      return b.time.compareTo(a.time);
-    });
-
-    LoggerUtils.debug("✅ Final parsed conversations: ${chatUsers.length}");
-    return chatUsers;
-  }
-
+  /// 🔹 API CALLS: MESSAGES
   Future<void> loadMessages(String conversationId) async {
     try {
       showBannerLoading.value = true;
-
+      debugPrint("📡 API: Loading messages for ID: $conversationId");
       final String? token = await _secureStorage.read(AppConstants.authToken);
 
-      // Silent token validation - no error popup
-      if (token == null || token.isEmpty) {
-        LoggerUtils.debug("No auth token available, skipping messages load");
-        messages.value = []; // Clear existing messages
-        showBannerLoading.value = false;
-        return;
-      }
+      if (token == null || token.isEmpty) return;
 
       final NetworkResponse response = await _networkCaller.getRequest(
         '${AppUrl.baseUrl}/conversation/$conversationId/single',
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
-      showBannerLoading.value = false;
-
       if (response.isSuccess && response.jsonResponse != null) {
-        final bool success = response.jsonResponse!['success'] ?? false;
         final Map<String, dynamic>? data = response.jsonResponse!['data'];
-
-        if (success && data != null) {
+        if (data != null) {
           final List<dynamic> messagesData = data['messages'] ?? [];
           messages.value = await _parseMessages(messagesData);
-
-          LoggerUtils.debug("Loaded ${messages.length} messages for conversation: $conversationId");
-        } else {
-          LoggerUtils.debug("Failed to load messages for conversation: $conversationId");
-          // No snackbar error
+          debugPrint("✅ Loaded ${messages.length} messages.");
         }
-      } else {
-        final String errorMessage = response.jsonResponse?['message'] ??
-            response.errorMessage ?? 'Failed to load messages';
-        LoggerUtils.debug("Network error loading messages: $errorMessage");
-        // No snackbar error
       }
     } catch (e) {
+      debugPrint("🔥 Error in loadMessages: $e");
+    } finally {
       showBannerLoading.value = false;
-      LoggerUtils.error("Error loading messages: $e");
-      // No snackbar error
     }
   }
+  /// 🔹 SEND MESSAGE
+  Future<void> sendMessage(String text) async {
+    if (text.trim().isEmpty || selectedUser.value == null) return;
 
-  Future<List<Message>> _parseMessages(List<dynamic> messagesData) async {
-    if (_currentUserId == null) {
-      await _loadCurrentUserId();
-    }
-
-    final List<Message> parsedMessages = [];
-
-    for (final messageData in messagesData) {
-      try {
-        final String messageId = messageData['_id']?.toString() ?? '';
-        final String text = messageData['text']?.toString() ?? '';
-        final String createdAt = messageData['createdAt']?.toString() ?? '';
-        final Map<String, dynamic> author = messageData['author'] ?? {};
-        final String authorId = author['_id']?.toString() ?? '';
-
-        final bool isSentByMe = authorId == _currentUserId;
-
-        final String authorImage = author['image']?.toString() ?? '';
-        final String authorAvatar = authorImage.isNotEmpty ?
-        AppUrl.getUserProfileImageUrl(authorImage) : '';
-
-        parsedMessages.add(Message(
-          id: messageId,
-          text: text,
-          time: _formatMessageTime(createdAt),
-          isSentByMe: isSentByMe,
-          authorId: authorId,
-          authorName: author['name']?.toString() ?? 'Unknown',
-          authorAvatar: authorAvatar,
-        ));
-      } catch (e) {
-        LoggerUtils.error("Error parsing message: $e");
-      }
-    }
-
-    // Sort messages by time (oldest first for display)
-    parsedMessages.sort((a, b) => a.time.compareTo(b.time));
-
-    return parsedMessages;
-  }
-
-  String _formatMessageTime(String isoTime) {
-    if (isoTime.isEmpty) return '';
+    final String convId = selectedUser.value!.conversationId;
+    debugPrint("📤 Sending message to $convId: $text");
 
     try {
-      final DateTime time = DateTime.parse(isoTime).toLocal();
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final messageDay = DateTime(time.year, time.month, time.day);
+      final String? token = await _secureStorage.read(AppConstants.authToken);
+      if (token == null) return;
 
-      if (messageDay == today) {
-        // Today - show time only
-        final String hour = time.hour.toString().padLeft(2, '0');
-        final String minute = time.minute.toString().padLeft(2, '0');
-        return '$hour:$minute';
-      } else if (messageDay == today.subtract(const Duration(days: 1))) {
-        // Yesterday
-        return 'Yesterday';
+      final response = await _networkCaller.postRequest(
+        '${AppUrl.baseUrl}/conversation/$convId/message',
+        body: {"text": text.trim(), "type": "text"},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.isSuccess) {
+        debugPrint("✅ Message sent successfully.");
+        await loadMessages(convId);
+        _refreshConversationsSilently();
       } else {
-        // Other days - show date
-        final String day = time.day.toString().padLeft(2, '0');
-        final String month = time.month.toString().padLeft(2, '0');
-        return '$day/$month';
+        debugPrint("❌ Message failed to send: ${response.jsonResponse}");
       }
     } catch (e) {
-      return '';
+      debugPrint("🔥 Error in sendMessage: $e");
+    }
+  }
+  /// 🔹 NAVIGATION & SELECTION
+  void selectUser(ChatUser user) {
+    debugPrint("👤 User Selected: ${user.name} (ID: ${user.conversationId})");
+    selectedUser.value = user;
+    loadMessages(user.conversationId);
+    Get.to(() => IndividualChatScreen());
+  }
+
+  /// 🔹 HELPERS
+  Future<void> refreshMessages() async {
+    if (selectedUser.value != null) {
+      debugPrint("🔄 Manual refresh: Loading messages...");
+      await loadMessages(selectedUser.value!.conversationId);
     }
   }
 
-  void selectUser(ChatUser user) {
-    selectedUser.value = user;
-    loadMessages(user.conversationId);
-    handleListenMessage(conversationId: user.conversationId);
-  }
-
-  // Create conversation and navigate to chat
   Future<void> createConversationAndNavigate({
     required String receiverId,
     required String receiverName,
     required String receiverAvatar,
   }) async {
+    final ChatUser? existing = _findExistingConversation(receiverId);
+    if (existing != null) {
+      selectUser(existing);
+      return;
+    }
+
     try {
-      // First, check if conversation already exists
-      final ChatUser? existingConversation = _findExistingConversation(receiverId);
-
-      if (existingConversation != null) {
-        // Conversation exists, navigate directly
-        _navigateToChatScreen(existingConversation);
-        return;
-      }
-
       isLoading.value = true;
-
       final String? token = await _secureStorage.read(AppConstants.authToken);
 
-      // Silent token validation - no error popup
-      if (token == null || token.isEmpty) {
-        LoggerUtils.debug("No auth token available, cannot create conversation");
-        isLoading.value = false;
-        return;
-      }
-
-      // Create new conversation
-      final Map<String, dynamic> requestBody = {
-        "receiverId": receiverId,
-      };
-
-      final NetworkResponse response = await _networkCaller.postRequest(
+      final response = await _networkCaller.postRequest(
         '${AppUrl.baseUrl}/conversation/create',
-        body: requestBody,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+        body: {"receiverId": receiverId},
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
       );
 
-      isLoading.value = false;
-
       if (response.isSuccess && response.jsonResponse != null) {
-        final bool success = response.jsonResponse!['success'] ?? false;
         final Map<String, dynamic>? data = response.jsonResponse!['data'];
-
-        if (success && data != null) {
+        if (data != null) {
           final String conversationId = data['_id'] ?? '';
-
-          // Create ChatUser object
-          final ChatUser chatUser = ChatUser(
+          final ChatUser newUser = ChatUser(
             id: receiverId,
             conversationId: conversationId,
             name: receiverName,
@@ -1469,162 +1258,139 @@ class MessageController extends GetxController {
             time: _formatMessageTime(DateTime.now().toIso8601String()),
             isOnline: false,
           );
-
-          // Add to users list immediately
-          users.insert(0, chatUser);
-
-          // Navigate to chat
-          _navigateToChatScreen(chatUser);
-
-          // No success snackbar to avoid popups
-
-        } else {
-          final String errorMessage = response.jsonResponse?['message'] ?? 'Failed to create conversation';
-          LoggerUtils.debug("Error creating conversation: $errorMessage");
-          // No snackbar error
+          users.insert(0, newUser);
+          selectUser(newUser);
         }
-      } else {
-        final String errorMessage = response.jsonResponse?['message'] ??
-            response.errorMessage ?? 'Failed to create conversation';
-        LoggerUtils.debug("Network error creating conversation: $errorMessage");
-        // No snackbar error
       }
-    } catch (e) {
+    } finally {
       isLoading.value = false;
-      LoggerUtils.error("Error creating conversation: $e");
-      // No snackbar error
     }
   }
+
+  /// 🔹 HELPERS
+  Future<void> _refreshConversationsSilently() async {
+    final String? token = await _secureStorage.read(AppConstants.authToken);
+    if (token == null) return;
+
+    final response = await _networkCaller.getRequest(
+      '${AppUrl.baseUrl}/conversation/all',
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.isSuccess && response.jsonResponse != null) {
+      final Map<String, dynamic>? data = response.jsonResponse!['data'];
+      if (data != null) {
+        final List<dynamic> conversations = data['data'] ?? [];
+        users.value = await _parseConversations(conversations);
+        debugPrint("🔄 Background list refresh complete.");
+      }
+    }
+  }
+
 
   ChatUser? _findExistingConversation(String receiverId) {
-    try {
-      return users.firstWhere(
-            (user) => user.id == receiverId,
-      );
-    } catch (e) {
-      return null;
-    }
+    return users.firstWhereOrNull((user) => user.id == receiverId);
   }
 
-  void _navigateToChatScreen(ChatUser user) {
-    // Set the selected user
-    selectedUser.value = user;
+  /// 🔹 PARSE CONVERSATIONS
+  Future<List<ChatUser>> _parseConversations(List<dynamic> conversations) async {
+    if (_currentUserId == null) await _loadCurrentUserId();
+    final List<ChatUser> chatUsers = [];
 
-    // Load messages for this conversation
-    loadMessages(user.conversationId);
+    for (final conversation in conversations) {
+      try {
+        final String conversationId = conversation['_id'] ?? '';
+        final List<dynamic> usersList = conversation['users'] ?? [];
+        final Map<String, dynamic>? lastMsg = conversation['lastMessage'];
 
-    // Set up message listener
-    handleListenMessage(conversationId: user.conversationId);
-
-    // Navigate to chat screen
-    Get.to(() => IndividualChatScreen());
-  }
-
-  Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
-
-    final ChatUser? currentSelectedUser = selectedUser.value;
-    if (currentSelectedUser == null) {
-      LoggerUtils.debug("No conversation selected for sending message");
-      return;
-    }
-
-    try {
-      final String? token = await _secureStorage.read(AppConstants.authToken);
-
-      // Silent token validation - no error popup
-      if (token == null || token.isEmpty) {
-        LoggerUtils.debug("No auth token available, cannot send message");
-        return;
-      }
-
-      final Map<String, dynamic> requestBody = {
-        "text": text.trim(),
-        "type": "text"
-      };
-
-      final NetworkResponse response = await _networkCaller.postRequest(
-        '${AppUrl.baseUrl}/conversation/${currentSelectedUser.conversationId}/message',
-        body: requestBody,
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.isSuccess && response.jsonResponse != null) {
-        final bool success = response.jsonResponse!['success'] ?? false;
-
-        if (success) {
-          // Refresh messages to show the new one
-          await loadMessages(currentSelectedUser.conversationId);
-          // Refresh conversations to update last message
-          await _refreshConversationsSilently();
-        } else {
-          final String errorMessage = response.jsonResponse?['message'] ?? 'Failed to send message';
-          LoggerUtils.debug("Error sending message: $errorMessage");
-          // No snackbar error
+        // Logic to find the "Other Person" in the chat
+        Map<String, dynamic>? otherUser;
+        for (final user in usersList) {
+          if (user['_id']?.toString() != _currentUserId) {
+            otherUser = user;
+            break;
+          }
         }
+
+        if (otherUser != null) {
+          final String userImage = otherUser['image']?.toString() ?? '';
+
+          chatUsers.add(ChatUser(
+            id: otherUser['_id']?.toString() ?? '',
+            conversationId: conversationId,
+            name: otherUser['name']?.toString() ?? 'User',
+            avatar: userImage.isNotEmpty ? AppUrl.getUserProfileImageUrl(userImage) : '',
+            lastMessage: lastMsg?['text']?.toString() ?? 'Start a conversation',
+            time: _formatMessageTime(lastMsg?['createdAt']?.toString() ?? ''),
+            isOnline: otherUser['isOnline'] == true,
+          ));
+        }
+      } catch (e) {
+        LoggerUtils.error("Error parsing conversation: $e");
+      }
+    }
+
+    // Sort: Newest messages first
+    chatUsers.sort((a, b) => b.time.compareTo(a.time));
+    return chatUsers;
+  }
+
+  /// 🔹 PARSE MESSAGES
+  Future<List<Message>> _parseMessages(List<dynamic> messagesData) async {
+    if (_currentUserId == null) await _loadCurrentUserId();
+    final List<Message> parsedMessages = [];
+
+    for (final data in messagesData) {
+      try {
+        final Map<String, dynamic> author = data['author'] ?? {};
+        final String authorId = author['_id']?.toString() ?? '';
+        final String authorImage = author['image']?.toString() ?? '';
+
+        parsedMessages.add(Message(
+          id: data['_id']?.toString() ?? '',
+          text: data['text']?.toString() ?? '',
+          time: _formatMessageTime(data['createdAt']?.toString() ?? ''),
+          isSentByMe: authorId == _currentUserId,
+          authorId: authorId,
+          authorName: author['name']?.toString() ?? 'Unknown',
+          authorAvatar: authorImage.isNotEmpty ? AppUrl.getUserProfileImageUrl(authorImage) : '',
+        ));
+      } catch (e) {
+        LoggerUtils.error("Error parsing message: $e");
+      }
+    }
+
+    // Message list: Oldest at top, Newest at bottom
+    parsedMessages.sort((a, b) => a.time.compareTo(b.time));
+    return parsedMessages;
+  }
+
+  /// 🔹 FORMAT TIME
+  String _formatMessageTime(String isoTime) {
+    if (isoTime.isEmpty) return '';
+    try {
+      final DateTime time = DateTime.parse(isoTime).toLocal();
+      final now = DateTime.now();
+
+      if (time.year == now.year && time.month == now.month && time.day == now.day) {
+        return "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
+      } else if (time.day == now.day - 1) {
+        return 'Yesterday';
       } else {
-        final String errorMessage = response.jsonResponse?['message'] ??
-            response.errorMessage ?? 'Failed to send message';
-        LoggerUtils.debug("Network error sending message: $errorMessage");
-        // No snackbar error
+        return "${time.day}/${time.month}";
       }
     } catch (e) {
-      LoggerUtils.error("Error sending message: $e");
-      // No snackbar error
+      return '';
     }
   }
 
-  Future<void> _refreshConversationsSilently() async {
-    try {
-      final String? token = await _secureStorage.read(AppConstants.authToken);
-      if (token == null || token.isEmpty) return;
-
-      final NetworkResponse response = await _networkCaller.getRequest(
-        '${AppUrl.baseUrl}/conversation/all',
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.isSuccess && response.jsonResponse != null) {
-        final bool success = response.jsonResponse!['success'] ?? false;
-        final Map<String, dynamic>? data = response.jsonResponse!['data'];
-
-        if (success && data != null) {
-          final List<dynamic> conversations = data['data'] ?? [];
-          users.value = await _parseConversations(conversations);
-        }
-      }
-    } catch (e) {
-      LoggerUtils.error("Error refreshing conversations: $e");
-    }
-  }
-
-  Future<void> refreshConversations() async {
-    await loadConversations();
-  }
-
-  Future<void> refreshMessages() async {
-    final ChatUser? currentUser = selectedUser.value;
-    if (currentUser != null) {
-      await loadMessages(currentUser.conversationId);
-    }
-  }
-
-  // Force refresh the conversations list
-  void forceRefreshConversations() {
-    loadConversations();
-  }
 
   @override
   void onClose() {
-    LoggerUtils.debug("MessageController onClose called");
+    LoggerUtils.debug("MessageController closed");
     super.onClose();
   }
 }
-
 class ChatUser {
   final String id;
   final String conversationId;
