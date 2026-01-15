@@ -6,6 +6,9 @@ import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/common/widgets/reusable_button.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import 'package:manx_mate/features/provider/screens/booking_tabs/provider_quote_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../../shared/subscriptions_controller.dart';
 
 class ProviderQuoteTab extends StatelessWidget {
   const ProviderQuoteTab({super.key});
@@ -261,117 +264,126 @@ class ProviderQuoteTab extends StatelessWidget {
 
 
   void _showBookingDetails(BuildContext context, Map<String, dynamic> booking) {
+    final subController = Get.find<SubscriptionsController>();
     final dynamic authorRaw = booking['author'];
     final Map<String, dynamic> author = (authorRaw is Map<String, dynamic>) ? authorRaw : {};
-    final location = booking['location']?.toString() ?? 'Unknown';
-    final description = booking['description']?.toString() ?? booking['additionalInfo']?.toString() ?? 'No description';
-    final bookingDate = booking['bookingDate']?.toString() ?? booking['date']?.toString() ?? '';
 
-    String formattedDate = '';
-    try {
-      final date = DateTime.parse(bookingDate);
-      formattedDate = '${date.day}/${date.month}/${date.year}';
-    } catch (_) {
-      formattedDate = 'Invalid date';
-    }
-
-    final authorName = author['name']?.toString() ?? 'Unknown';
-    final authorImagePath = author['image']?.toString();
-    final authorImageUrl = _getImageUrl(authorImagePath);
+    final String bookingId = booking['_id']?.toString() ?? '';
+    final String description = booking['description']?.toString() ?? 'No description';
+    final String location = booking['location']?.toString() ?? 'Unknown';
+    final String authorName = author['name']?.toString() ?? 'Unknown';
+    final String? authorPhone = author['phone']?.toString();
+    final String? authorEmail = author['email']?.toString();
+    final String authorImageUrl = _getImageUrl(author['image']?.toString());
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.8,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
+            // Handle Bar
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Booking Details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  const Text('Quote Details', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            const Divider(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // User Info
+                    // Client Identity
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage: NetworkImage(authorImageUrl),
-                          onBackgroundImageError: (_, __) {},
-                        ),
+                        CircleAvatar(radius: 30, backgroundImage: NetworkImage(authorImageUrl)),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                authorName,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Client',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
+                              Text(authorName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text('Client Inquiry', style: TextStyle(color: Colors.grey[600])),
                             ],
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    const Divider(),
+
+                    _buildDetailRow(icon: Icons.description, label: 'Description', value: description),
+                    const SizedBox(height: 16),
+                    _buildDetailRow(icon: Icons.location_on, label: 'Location', value: location),
+
+                    const SizedBox(height: 32),
+                    const Text('Quick Contact', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                     const SizedBox(height: 16),
 
-                    // Booking Details
-                    _buildDetailRow(
-                      icon: Icons.description,
-                      label: 'Service Description',
-                      value: description,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow(
-                      icon: Icons.location_on,
-                      label: 'Location',
-                      value: location,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDetailRow(
-                      icon: Icons.calendar_today,
-                      label: 'Date',
-                      value: formattedDate,
+                    // --- ADDED CONTACT BUTTONS ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Call Button
+                        _buildContactOption(
+                          icon: Icons.call,
+                          label: 'Call',
+                          color: Colors.green,
+                          onTap: () {
+                            if (subController.canCall && authorPhone != null) {
+                              _launchPhone(authorPhone);
+                            } else {
+                              subController.showPremiumContactAlert("Phone Call");
+                            }
+                          },
+                        ),
+                        // Email Button
+                        _buildContactOption(
+                          icon: Icons.email,
+                          label: 'Email',
+                          color: Colors.blue,
+                          onTap: () {
+                            if (subController.canEmail && authorEmail != null) {
+                              _launchEmail(authorEmail);
+                            } else {
+                              subController.showPremiumContactAlert("Email");
+                            }
+                          },
+                        ),
+                        // Message Button
+                        _buildContactOption(
+                          icon: Icons.chat,
+                          label: 'Message',
+                          color: Colors.purple,
+                          onTap: () {
+                            if (subController.canMessage) {
+                              // Logic for internal chat or SMS
+                              debugPrint("Navigate to Chat with $authorName");
+                            } else {
+                              subController.showPremiumContactAlert("Messaging");
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -382,6 +394,44 @@ class ProviderQuoteTab extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildContactOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(30),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey[700])),
+      ],
+    );
+  }
+
+
+  void _launchPhone(String phone) async {
+    final Uri url = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(url)) await launchUrl(url);
+  }
+
+  void _launchEmail(String email) async {
+    final Uri url = Uri.parse('mailto:$email');
+    if (await canLaunchUrl(url)) await launchUrl(url);
+  }
+
 
   Widget _buildDetailRow({
     required IconData icon,

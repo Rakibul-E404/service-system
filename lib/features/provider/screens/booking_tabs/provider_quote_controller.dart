@@ -5,18 +5,66 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 
+import '../../../../core/service/socket_service.dart';
+
 class ProviderQuoteController extends GetxController {
   var isLoading = false.obs;
   var bookings = <Map<String, dynamic>>[].obs;
   var errorMessage = ''.obs;
   var processingIds = <String>[].obs;
 
+  final SocketServices _socketService = SocketServices();
+
+  @override
+  void onInit() {
+    super.onInit();
+    // 🔹 Order matters: Start listening first, then fetch
+    _initSocketListener();
+    fetchBookings();
+  }
+
+  Future<void> _initSocketListener() async {
+    await _socketService.listen("NewServiceInquiry", (data) async {
+      if (data == null) return;
+
+      final String status = data['status']?.toString() ?? '';
+      final String inquiryId = data['_id']?.toString() ?? '';
+
+      if (status == 'respond') {
+        bookings.removeWhere((item) => item['_id'] == inquiryId);
+        debugPrint('🚫 Socket: Removed $inquiryId');
+      }
+      else if (status == 'active') {
+        // 🔹 STRICT DUPLICATE CHECK
+        bool alreadyExists = bookings.any((item) => item['_id'] == inquiryId);
+
+        if (!alreadyExists) {
+          final isCancelled = await _isLocallyCancelled(inquiryId);
+          if (!isCancelled) {
+            bookings.insert(0, data);
+            debugPrint('✅ Socket: Inserted $inquiryId');
+          }
+        } else {
+          debugPrint('ℹ️ Socket: Muted duplicate $inquiryId');
+        }
+      }
+    });
+  }
+
+  Future<bool> _isLocallyCancelled(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? jsonStr = prefs.getString('cancelled_booking_ids');
+    if (jsonStr == null) return false;
+    List<dynamic> list = json.decode(jsonStr);
+    return list.contains(id);
+  }
+
   Future<String?> _getAuthToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('accessToken');
     } catch (e) {
-      print('❌ Error retrieving token: $e');
+      debugPrint('❌ Error retrieving token: $e');
       return null;
     }
   }
@@ -25,84 +73,63 @@ class ProviderQuoteController extends GetxController {
     return processingIds.contains(bookingId);
   }
 
-// Change: Added {bool refresh = false} inside the parentheses
-Future<void> fetchBookings({bool refresh = false}) async {
-  try {
-    // Always show loader when fetching data
-    isLoading.value = true;
-
-    errorMessage.value = '';
-
-    // 2. If refresh is true, we clear the list so the UI resets
-    if (refresh) {
-      bookings.clear();
-    }
-
-    final token = await _getAuthToken();
-    final url = Uri.parse(AppUrl.postInquiryQuote);
-
-    final response = await http.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      if (data['success'] == true) {
-        final responseData = data['data'];
-        List<Map<String, dynamic>> fetchedList = [];
-
-        if (responseData is Map<String, dynamic>) {
-          final List<dynamic> rawList = responseData['data'] ?? [];
-          fetchedList = rawList.cast<Map<String, dynamic>>();
-        } else if (responseData is List) {
-          fetchedList = responseData.cast<Map<String, dynamic>>();
-        }
-
-        // Get locally cancelled booking IDs from SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        String? cancelledIdsJson = prefs.getString('cancelled_booking_ids');
-        List<String> cancelledIds = <String>[];
-
-        if (cancelledIdsJson != null) {
-          List<dynamic> decodedList = json.decode(cancelledIdsJson);
-          cancelledIds = decodedList.cast<String>();
-        }
-
-        // Filter out locally cancelled bookings
-        fetchedList = fetchedList.where((booking) => !cancelledIds.contains(booking['_id'])).toList();
-
-        // 3. assignAll replaces whatever was there with EXACTLY what the API sent (the 4 items)
-        bookings.assignAll(fetchedList);
-
-        print('✅ Accurate Count: ${bookings.length}');
-      } else {
-        errorMessage.value = data['message'] ?? 'Failed to fetch data';
-      }
-    } else {
-      errorMessage.value = 'Server Error: ${response.statusCode}';
-    }
-  } catch (e) {
-    errorMessage.value = 'Error: $e';
-    print('❌ Exception in fetchBookings: $e');
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-  Future<void> respondToBooking({
-    required String bookingId,
-  }) async {
+  Future<void> fetchBookings({bool refresh = false}) async {
     try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final token = await _getAuthToken();
+      final response = await http.get(
+        Uri.parse(AppUrl.postInquiryQuote),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          List<Map<String, dynamic>> fetchedList = [];
+          var responseData = data['data'];
+
+          if (responseData is Map) {
+            fetchedList = (responseData['data'] as List).cast<Map<String, dynamic>>();
+          } else if (responseData is List) {
+            fetchedList = responseData.cast<Map<String, dynamic>>();
+          }
+
+          // 1. Filter locally cancelled items
+          final prefs = await SharedPreferences.getInstance();
+          final cancelledIds = json.decode(prefs.getString('cancelled_booking_ids') ?? '[]');
+
+          final filteredList = fetchedList.where((b) => !cancelledIds.contains(b['_id'])).toList();
+
+          // 2. 🔹 MERGE LOGIC (Avoid overwriting socket data)
+          if (refresh) {
+            bookings.assignAll(filteredList);
+          } else {
+            for (var newItem in filteredList) {
+              bool exists = bookings.any((oldItem) => oldItem['_id'] == newItem['_id']);
+              if (!exists) {
+                bookings.add(newItem);
+              }
+            }
+          }
+          debugPrint('✨ Sync complete. Total: ${bookings.length}');
+        }
+      }
+    } catch (e) {
+      debugPrint('🔥 Fetch Error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> respondToBooking({required String bookingId}) async {
+    try {
+      debugPrint('🔘 Action: Accepting booking $bookingId...');
       processingIds.add(bookingId);
 
       final token = await _getAuthToken();
       final url = Uri.parse('https://d7001.sobhoy.com/api/v1/service-inquiry/$bookingId/accept');
-      print('🌐 Updating booking status: $url');
 
       final response = await http.post(
         url,
@@ -110,47 +137,21 @@ Future<void> fetchBookings({bool refresh = false}) async {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-
           bookings.removeWhere((booking) => booking['_id'] == bookingId);
-
-          Get.snackbar(
-            'Success',
-            'Accepted successfully',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
+          debugPrint('✅ Accept Success: Inquiry $bookingId removed from UI');
+          Get.snackbar('Success', 'Accepted successfully', backgroundColor: Colors.green, colorText: Colors.white);
         } else {
-          errorMessage.value = data['message'] ?? 'Failed to update booking';
-          Get.snackbar(
-            'Error',
-            data['message'] ?? 'Failed to update booking',
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          debugPrint('⚠️ Accept Failed: ${data['message']}');
+          Get.snackbar('Error', data['message'] ?? 'Failed to update', backgroundColor: Colors.red, colorText: Colors.white);
         }
-      } else {
-        errorMessage.value = 'Server Error: ${response.statusCode}';
-        Get.snackbar(
-          'Error',
-          'Server Error: ${response.statusCode}',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
       }
     } catch (e) {
-      errorMessage.value = 'Error: $e';
-      Get.snackbar(
-        'Error',
-        'Error: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      debugPrint('🔥 Accept Exception: $e');
     } finally {
       processingIds.remove(bookingId);
     }
@@ -158,38 +159,27 @@ Future<void> fetchBookings({bool refresh = false}) async {
 
   Future<void> cancelBookingLocally(String bookingId) async {
     try {
-      // Store the cancelled booking ID in SharedPreferences
+      debugPrint('🔘 Action: Cancelling booking $bookingId locally...');
       final prefs = await SharedPreferences.getInstance();
       String? cancelledIdsJson = prefs.getString('cancelled_booking_ids');
-      List<String> cancelledIds = <String>[];
+      List<String> cancelledIds = [];
 
       if (cancelledIdsJson != null) {
-        List<dynamic> decodedList = json.decode(cancelledIdsJson);
-        cancelledIds = decodedList.cast<String>();
+        cancelledIds = List<String>.from(json.decode(cancelledIdsJson));
       }
 
-      cancelledIds.add(bookingId);
-      await prefs.setString('cancelled_booking_ids', json.encode(cancelledIds));
+      if (!cancelledIds.contains(bookingId)) {
+        cancelledIds.add(bookingId);
+        await prefs.setString('cancelled_booking_ids', json.encode(cancelledIds));
+        debugPrint('💾 Local Storage: ID $bookingId added to ignore list');
+      }
 
-      // Remove the booking from the local list
       bookings.removeWhere((booking) => booking['_id'] == bookingId);
+      debugPrint('🗑️ UI: Inquiry $bookingId removed');
 
-      Get.snackbar(
-        'Cancelled',
-        'Booking cancelled Successfully',
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Cancelled', 'Booking cancelled Successfully', backgroundColor: Colors.orange, colorText: Colors.white);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to cancel booking',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      debugPrint('🔥 Cancel Exception: $e');
     }
   }
-
-
-  
 }
