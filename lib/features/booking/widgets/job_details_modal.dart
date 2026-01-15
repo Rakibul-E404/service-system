@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
-import 'package:url_launcher/url_launcher.dart'; // <-- ADD THIS
+import 'package:url_launcher/url_launcher.dart';
 
 class JobDetailsModal {
   static void show({
@@ -16,9 +16,9 @@ class JobDetailsModal {
     String? customTitle,
   }) {
     // Extract service and provider data
-    final Map<String, dynamic> service = job['service'] ?? {};
-    final Map<String, dynamic> author = service['author'] ?? {};
-    final Map<String, dynamic> subCategory = service['subCategory'] ?? {};
+    final Map<String, dynamic> service = job['service'] ?? <String, dynamic>{};
+    final Map<String, dynamic> author = service['author'] ?? <String, dynamic>{};
+    final Map<String, dynamic> subCategory = service['subCategory'] ?? <String, dynamic>{};
 
     // Build image URL
     String imageUrl = '';
@@ -49,7 +49,7 @@ class JobDetailsModal {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+          children: <Widget>[
             // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12, bottom: 8),
@@ -66,7 +66,7 @@ class JobDetailsModal {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                children: <Widget>[
                   Text(
                     customTitle ?? 'Job Details',
                     style: const TextStyle(
@@ -92,11 +92,11 @@ class JobDetailsModal {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: <Widget>[
                     // Provider Image and Info
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      children: <Widget>[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: imageUrl.isNotEmpty
@@ -105,7 +105,7 @@ class JobDetailsModal {
                             width: 100,
                             height: 100,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
+                            placeholder: (BuildContext context, String url) => Container(
                               width: 100,
                               height: 100,
                               color: Colors.grey.shade200,
@@ -113,7 +113,7 @@ class JobDetailsModal {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
-                            errorWidget: (context, url, error) => Container(
+                            errorWidget: (BuildContext context, String url, Object error) => Container(
                               width: 100,
                               height: 100,
                               color: Colors.grey.shade200,
@@ -139,7 +139,7 @@ class JobDetailsModal {
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                            children: <Widget>[
                               Text(
                                 author['name']?.toString() ?? 'Unknown Provider',
                                 style: const TextStyle(
@@ -202,7 +202,7 @@ class JobDetailsModal {
                     ),
 
                     // Additional Information
-                    if (job['details'] != null && job['details'].toString().isNotEmpty) ...[
+                    if (job['details'] != null && job['details'].toString().isNotEmpty) ...<Widget>[
                       const SizedBox(height: 24),
                       const Text(
                         'Job Details',
@@ -235,9 +235,9 @@ class JobDetailsModal {
                     const SizedBox(height: 24),
 
                     // Action Buttons (Conditional)
-                    if (showCancelButton) ...[
+                    if (showCancelButton) ...<Widget>[
                       Row(
-                        children: [
+                        children: <Widget>[
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () {
@@ -261,7 +261,7 @@ class JobDetailsModal {
                     ],
 
                     // Additional Contact Options
-                    if (showContactButtons && (providerPhone != null || providerEmail != null)) ...[
+                    if (showContactButtons && (providerPhone != null || providerEmail != null)) ...<Widget>[
                       const SizedBox(height: 16),
                       const Text(
                         'Quick Contact',
@@ -274,7 +274,7 @@ class JobDetailsModal {
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                        children: <Widget>[
                           if (providerPhone != null)
                             _buildContactOption(
                               icon: Icons.call,
@@ -387,11 +387,11 @@ class JobDetailsModal {
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -404,7 +404,7 @@ class JobDetailsModal {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            children: <Widget>[
               Text(
                 title,
                 style: TextStyle(
@@ -438,13 +438,13 @@ class JobDetailsModal {
     return GestureDetector(
       onTap: onTap,
       child: Column(
-        children: [
+        children: <Widget>[
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.3)),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
             child: Icon(
               icon,
@@ -524,12 +524,12 @@ class JobDetailsModal {
   }
 
   static String _getDayName(int weekday) {
-    const List<String> days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days[weekday - 1];
   }
 
   static String _getMonthName(int month) {
-    const List<String> months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const List<String> months = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[month - 1];
   }
 
