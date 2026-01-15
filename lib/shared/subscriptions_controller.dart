@@ -79,4 +79,19 @@ class SubscriptionsController extends GetxController {
 
     return isActive && hasFeature;
   }
+
+  bool get canAccessQuotes {
+    final data = subscriptionData.value;
+    if (data == null) return false;
+
+    final bool isActive = data.status.toLowerCase() == 'active';
+    final bool hasFeature = data.access.contains("PostInquiry"); // Logic: check for PostInquiry
+
+    return isActive && hasFeature;
+  }
+
+
+  bool get hasQuoteAccess =>
+      subscriptionData.value?.status.toLowerCase() == 'active' &&
+          (subscriptionData.value?.access.contains("PostInquiry") ?? false);
 }
