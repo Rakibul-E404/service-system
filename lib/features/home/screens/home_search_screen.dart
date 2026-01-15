@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -22,95 +21,13 @@ class HomeSearchScreen extends StatefulWidget {
 class _HomeSearchScreenState extends State<HomeSearchScreen> {
   final HomeSearchController controller = Get.find<HomeSearchController>();
   final TextEditingController _searchTEController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   String _selectedCategory = 'All Categories';
   String _selectedSubCategory = 'All Subcategories';
   String _selectedLocation = 'All Locations';
 
   bool _initialSearchPerformed = false;
-
-  final List<Map<String, dynamic>> _dummyServices = <Map<String, dynamic>>[
-    <String, dynamic>{
-      '_id': '1',
-      'name': 'Premium Cleaning Service',
-      'description': 'Professional home and office cleaning',
-      'location': 'Downtown Manhattan',
-      'image': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
-      'rating': 4.8,
-      'price': 85,
-      'author': <String, String>{'_id': 'author1', 'name': 'John Cleaners'}
-    },
-    <String, dynamic>{
-      '_id': '2',
-      'name': 'Green Garden Solutions',
-      'description': 'Expert gardening and lawn care',
-      'location': 'Brooklyn Heights',
-      'image': 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop',
-      'rating': 4.6,
-      'price': 65,
-      'author': <String, String>{'_id': 'author2', 'name': 'Green Thumb Inc.'}
-    },
-    <String, dynamic>{
-      '_id': '3',
-      'name': 'Quick Fix Electrical',
-      'description': '24/7 emergency electrical services',
-      'location': 'Queens',
-      'image': 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&h=300&fit=crop',
-      'rating': 4.9,
-      'price': 120,
-      'author': <String, String>{'_id': 'author3', 'name': 'ElectroFix'}
-    },
-    <String, dynamic>{
-      '_id': '4',
-      'name': 'PlumbPro Masters',
-      'description': 'Leak repair and pipe installation',
-      'location': 'Staten Island',
-      'image': 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=400&h=300&fit=crop',
-      'rating': 4.7,
-      'price': 95,
-      'author': <String, String>{'_id': 'author4', 'name': 'PlumbPro'}
-    },
-    <String, dynamic>{
-      '_id': '5',
-      'name': 'Perfect Painters',
-      'description': 'Interior and exterior painting',
-      'location': 'Upper East Side',
-      'image': 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&h=300&fit=crop',
-      'rating': 4.5,
-      'price': 150,
-      'author': <String, String>{'_id': 'author5', 'name': 'ColorCraft'}
-    },
-    <String, dynamic>{
-      '_id': '6',
-      'name': 'Master Carpenters LLC',
-      'description': 'Custom furniture and woodwork',
-      'location': 'Chelsea',
-      'image': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
-      'rating': 4.8,
-      'price': 200,
-      'author': <String, String>{'_id': 'author6', 'name': 'WoodWorks'}
-    },
-    <String, dynamic>{
-      '_id': '7',
-      'name': 'Swift Movers',
-      'description': 'Local and long distance moving',
-      'location': 'Harlem',
-      'image': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
-      'rating': 4.4,
-      'price': 180,
-      'author': <String, String>{'_id': 'author7', 'name': 'SwiftMove'}
-    },
-    <String, dynamic>{
-      '_id': '8',
-      'name': 'Elite Cleaning Professionals',
-      'description': 'Deep cleaning and sanitization',
-      'location': 'Financial District',
-      'image': 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?w=400&h=300&fit=crop',
-      'rating': 4.9,
-      'price': 110,
-      'author': <String, String>{'_id': 'author8', 'name': 'EliteClean'}
-    },
-  ];
 
   final Map<String, List<String>> _categoryToSubCategories = <String, List<String>>{
     'All Categories': <String>['All Subcategories'],
@@ -137,6 +54,29 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
     _handleInitialArguments();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refreshData() async {
+    // Reset search and filters
+    _searchTEController.clear();
+    setState(() {
+      _selectedCategory = 'All Categories';
+      _selectedSubCategory = 'All Subcategories';
+      _selectedLocation = 'All Locations';
+      _initialSearchPerformed = false;
+    });
+
+    // Refresh data from controller
+    await controller.fetchServices(refresh: true);
+
+    // Clear any existing search results
+    controller.clearFilters();
+  }
+
   void _handleInitialArguments() {
     final args = Get.arguments;
     final String? initialCategory = args?['initialCategory'] as String?;
@@ -153,13 +93,8 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
     }
   }
 
-
   List<dynamic> get _allServices {
-    final bool showDummyData = !_initialSearchPerformed &&
-        controller.filteredServices.isEmpty &&
-        _searchTEController.text.isEmpty;
-
-    return showDummyData ? _dummyServices : controller.filteredServices;
+    return controller.filteredServices;
   }
 
   void _navigateToAllServices() {
@@ -175,7 +110,6 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
       return;
     }
 
-    // Use your existing AllServicesScreen
     Get.to(
           () => AllServicesScreen(services: List<Map<String, dynamic>>.from(allServices)),
       transition: Transition.rightToLeft,
@@ -239,63 +173,65 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
         onBack: () => Get.back(),
         onFilter: _showFilterBottomSheet,
       ),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: <Widget>[
-            // Search input section
-            SliverToBoxAdapter(
-              child: SearchInputSection(
-                searchController: _searchTEController,
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        color: AppColors.primaryColor,
+        backgroundColor: Colors.white,
+        strokeWidth: 3.0,
+        displacement: 40.0,
+        edgeOffset: 0,
+        child: SafeArea(
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(), // Required for RefreshIndicator
+            slivers: <Widget>[
+              // Search input section
+              SliverToBoxAdapter(
+                child: SearchInputSection(
+                  searchController: _searchTEController,
+                  onSearch: _performSearch,
+                ),
               ),
-            ),
 
-            // Featured Providers section
-            const SliverToBoxAdapter(
-              child: FeaturedProvidersSection(),
-            ),
+              // Featured Providers section
+              const SliverToBoxAdapter(
+                child: FeaturedProvidersSection(),
+              ),
 
-            // Search results header
-            SliverToBoxAdapter(
-              child: SearchResultsHeader(
+              // Search results header
+              SliverToBoxAdapter(
+                child: SearchResultsHeader(
+                  searchTEController: _searchTEController,
+                  initialSearchPerformed: _initialSearchPerformed,
+                  controller: controller,
+                  onSeeAll: _navigateToAllServices,
+                ),
+              ),
+
+              // Search results grid
+              SearchResultsGrid(
                 searchTEController: _searchTEController,
                 initialSearchPerformed: _initialSearchPerformed,
                 controller: controller,
                 onSeeAll: _navigateToAllServices,
               ),
-            ),
 
-            ///
-            ///
-            /// Search results grid
-            ///
-            ///
-            ///
-            SearchResultsGrid(
-              dummyServices: _dummyServices,
-              searchTEController: _searchTEController,
-              initialSearchPerformed: _initialSearchPerformed,
-              controller: controller,
-              onSeeAll: _navigateToAllServices,
-            ),
+              // Ad section
+              const SliverToBoxAdapter(
+                child: AdSection(),
+              ),
 
-            // Ad section
-            const SliverToBoxAdapter(
-              child: AdSection(),
-            ),
-
-            // Bottom padding
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 20),
-            ),
-          ],
+              // Bottom padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-
-
 
 class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
@@ -335,11 +271,3 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-
-
-
-
-
-
-
-

@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import '../../../core/network/network_caller.dart';
-import '../../../core/network/network_response.dart';
-import '../../../core/utils/api/app_url.dart';
-import '../../../core/utils/token_service/token_storage_service.dart';
+import 'package:manx_mate/core/network/network_caller.dart';
+import 'package:manx_mate/core/network/network_response.dart';
+import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:manx_mate/core/utils/token_service/token_storage_service.dart';
 
 class HomeSearchController extends GetxController {
   final RxList<dynamic> _services = <dynamic>[].obs;
@@ -11,10 +11,20 @@ class HomeSearchController extends GetxController {
   final RxBool _isLoading = false.obs;
   final RxString _error = ''.obs;
 
+  // Pagination variables
+  final RxInt _currentPage = 1.obs;
+  final RxBool _hasMore = true.obs;
+  final RxBool _isLoadingMore = false.obs;
+  final RxInt _totalServices = 0.obs;
+
   List<dynamic> get services => _services.value;
   List<dynamic> get filteredServices => _filteredServices.value;
   bool get isLoading => _isLoading.value;
   String get error => _error.value;
+  int get currentPage => _currentPage.value;
+  bool get hasMore => _hasMore.value;
+  bool get isLoadingMore => _isLoadingMore.value;
+  int get totalServices => _totalServices.value;
 
   final SharedPrefService _sharedPrefService = SharedPrefService();
 
@@ -24,8 +34,20 @@ class HomeSearchController extends GetxController {
     fetchServices();
   }
 
-  Future<void> fetchServices() async {
-    _isLoading.value = true;
+  Future<void> fetchServices({bool refresh = false}) async {
+    if (refresh) {
+      _currentPage.value = 1;
+      _hasMore.value = true;
+      _services.clear();
+      _filteredServices.clear();
+    }
+
+    if (_currentPage.value == 1) {
+      _isLoading.value = true;
+    } else {
+      _isLoadingMore.value = true;
+    }
+
     _error.value = '';
 
     String? accessToken = await _sharedPrefService.getAccessToken();
@@ -35,34 +57,71 @@ class HomeSearchController extends GetxController {
     }
 
     try {
-      NetworkResponse response =
-      await NetworkCaller().getRequest(AppUrl.allService, headers: headers);
+      final url = '${AppUrl.allService}?page=${_currentPage.value}&limit=10';
+      NetworkResponse response = await NetworkCaller().getRequest(url, headers: headers);
 
       if (response.isSuccess && response.jsonResponse != null) {
-        final data = response.jsonResponse!['data']?['data'];
-        if (data is List && data.isNotEmpty) {
-          // Transform the data to match what SearchResultsGrid expects
-          final transformedData = _transformServiceData(data);
-          _services.value = transformedData;
-          _filteredServices.value = List.from(transformedData);
-          debugPrint('✅ Services loaded: ${transformedData.length} items');
-        } else {
-          _services.clear();
-          _filteredServices.clear();
-          _error.value = 'No services found';
+        final data = response.jsonResponse!['data'];
+
+        if (data != null) {
+          final servicesData = data['data'] ?? [];
+          final pagination = data['pagination'] ?? {};
+
+          // Update pagination info
+          _totalServices.value = pagination['total'] ?? 0;
+          final totalPages = pagination['totalPages'] ?? 1;
+          _hasMore.value = _currentPage.value < totalPages;
+
+          if (servicesData is List && servicesData.isNotEmpty) {
+            // Transform the data
+            final transformedData = _transformServiceData(servicesData);
+
+            if (refresh || _currentPage.value == 1) {
+              _services.value = transformedData;
+              _filteredServices.value = List.from(transformedData);
+            } else {
+              _services.addAll(transformedData);
+              _filteredServices.addAll(transformedData);
+            }
+
+            debugPrint('✅ Services loaded: ${_services.length} items (Page ${_currentPage.value})');
+          } else {
+            if (_currentPage.value == 1) {
+              _services.clear();
+              _filteredServices.clear();
+              _error.value = 'No services found';
+            }
+          }
         }
       } else {
-        _error.value = response.errorMessage ?? 'Failed to fetch services';
+        if (_currentPage.value == 1) {
+          _error.value = response.errorMessage ?? 'Failed to fetch services';
+          _services.clear();
+          _filteredServices.clear();
+        }
+      }
+    } catch (e) {
+      if (_currentPage.value == 1) {
+        _error.value = 'Error: ${e.toString()}';
         _services.clear();
         _filteredServices.clear();
       }
-    } catch (e) {
-      _error.value = 'Error: ${e.toString()}';
-      _services.clear();
-      _filteredServices.clear();
     } finally {
       _isLoading.value = false;
+      _isLoadingMore.value = false;
       update();
+    }
+  }
+
+  Future<void> loadMoreServices() async {
+    if (_isLoadingMore.value || !_hasMore.value) return;
+
+    try {
+      _currentPage.value++;
+      await fetchServices();
+    } catch (e) {
+      _currentPage.value--;
+      rethrow;
     }
   }
 
@@ -86,7 +145,6 @@ class HomeSearchController extends GetxController {
         'accessibleBySubscription': service['accessibleBySubscription'] ?? [],
         'phone': service['profileDetails']?['phone'] ?? '',
         'region': service['profileDetails']?['region'] ?? '',
-        // Add price if available in your API, otherwise use default
         'price': '99.99', // Default or fetch from actual data
       };
     }).toList();
@@ -129,7 +187,7 @@ class HomeSearchController extends GetxController {
       }).toList();
     }
 
-    // 🏷️ Category filter (exact match) - Update based on your actual category field
+    // 🏷️ Category filter (exact match)
     if (category.isNotEmpty && category != 'All Categories') {
       results = results.where((service) {
         return (service['category'] ?? '') == category;
