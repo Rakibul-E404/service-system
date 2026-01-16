@@ -6,6 +6,7 @@ import '../../core/network/network_caller.dart';
 import '../core/config/app_constants.dart';
 import '../core/data/secured_storage.dart';
 import '../core/utils/api/app_url.dart';
+import '../core/utils/token_service/token_storage_service.dart';
 
 class SubscriptionsController extends GetxController {
   // Observables
@@ -16,9 +17,18 @@ class SubscriptionsController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
   final SecureStorageService _secureStorage = SecureStorageService();
 
+  final RxString userRole = ''.obs;
+
+  Future<void> _initUserRole() async {
+    userRole.value = await Get.find<SharedPrefService>().getUserRole() ?? '';
+
+  }
+
+
   @override
   void onInit() {
     super.onInit();
+    _initUserRole();
     fetchSubscription();
   }
 
@@ -106,9 +116,17 @@ class SubscriptionsController extends GetxController {
       subscriptionData.value?.status.toLowerCase() == 'active' &&
           (subscriptionData.value?.access.contains("Email") ?? false);
 
-  bool get canMessage =>
-      subscriptionData.value?.status.toLowerCase() == 'active' &&
-          (subscriptionData.value?.access.contains("Massaging") ?? false);
+  bool get canMessage {
+
+    if (userRole.value != "provider") {
+      return true;
+    }
+
+    final bool isActive = subscriptionData.value?.status.toLowerCase() == 'active';
+    final bool hasMessagingAccess = subscriptionData.value?.access.contains("Massaging") ?? false;
+
+    return isActive && hasMessagingAccess;
+  }
 
 // Helper for the Snackbar
   void showPremiumContactAlert(String feature) {
