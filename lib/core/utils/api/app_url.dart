@@ -37,7 +37,8 @@ class AppUrl {
   static const String subscriptionGlobalGet = '$baseUrl/subscription-purchase/current-plan';
   static String subscriptionDirectPurchase(String planId) =>
       '$baseUrl/subscription-purchase/$planId/direct';
-
+  static String singleService(String serviceId) =>
+      '$baseUrl/service/single/$serviceId';
 
 
 

@@ -6,6 +6,7 @@ import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 import '../model/service_model.dart';
+import '../model/single_service_model.dart';
 
 class ServicesController extends GetxController {
   final NetworkCaller _networkCaller = NetworkCaller();
@@ -13,6 +14,9 @@ class ServicesController extends GetxController {
 
   // Observable lists
   final RxList<ServiceModel> services = <ServiceModel>[].obs;
+
+  final Rxn<SingleServiceModel> singleServiceDetails = Rxn<SingleServiceModel>();
+  final RxBool isLoadingSingleService = false.obs;
 
   // Loading states
   final RxBool isLoadingServices = false.obs;
@@ -700,6 +704,9 @@ class ServicesController extends GetxController {
     }
   }
 
+
+
+
   /// Parse and add services for load more
   void _parseAndAddServicesList(List<dynamic> servicesList) {
     final List<ServiceModel> parsedServices = [];
@@ -830,6 +837,47 @@ class ServicesController extends GetxController {
       return 'No filter applied';
     }
   }
+
+
+
+  Future<void> fetchSingleService(String serviceId) async {
+    debugPrint('🎯 ========== FETCH SINGLE SERVICE ==========');
+    debugPrint('📥 serviceId: $serviceId');
+
+    try {
+      isLoadingSingleService.value = true;
+      singleServiceDetails.value = null; // Clear previous data
+
+      final String url = AppUrl.singleService(serviceId);
+      debugPrint('🌐 URL: $url');
+
+      final NetworkResponse response = await _networkCaller.getRequest(
+        url,
+        headers: await _getHeaders(),
+      );
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        // 🔹 Use your ServiceResponseModel to parse the top level
+        final serviceResponse = ServiceResponseModel.fromJson(response.jsonResponse!);
+
+        if (serviceResponse.success) {
+          singleServiceDetails.value = serviceResponse.data;
+          debugPrint('✅ Successfully fetched: ${singleServiceDetails.value?.profileDetails.name}');
+        } else {
+          debugPrint('❌ API reported failure: ${serviceResponse.message}');
+        }
+      } else {
+        debugPrint('❌ Request failed: ${response.errorMessage}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('💥 Exception fetching single service: $e');
+      debugPrint('📚 StackTrace: $stackTrace');
+    } finally {
+      isLoadingSingleService.value = false;
+      debugPrint('🏁 ========== SINGLE FETCH COMPLETE ==========');
+    }
+  }
+
 
   /// Check if services are empty
   bool get isEmpty => services.isEmpty && !isLoadingServices.value;

@@ -347,6 +347,9 @@ class FavoriteController extends GetxController {
     }
   }
 
+
+
+
   /// Check if a service is favorited
   bool isFavorited(String serviceId) {
     return favoriteStatus[serviceId] ?? false;
@@ -359,43 +362,40 @@ class FavoriteController extends GetxController {
 
   /// Remove favorite by ID and update UI instantly
   Future<bool> removeFavorite(String favoriteId) async {
+    // 🔹 Find the service associated with this favoriteId before deleting
+    final FavoriteModel? favoriteToRemove = favorites.firstWhereOrNull(
+            (fav) => fav.id == favoriteId
+    );
+
+    final String? serviceId = favoriteToRemove?.providerServiceId ?? favoriteToRemove?.providerService?.id;
+
+    // Lock the service if we found one
+    if (serviceId != null) loadingStatus[serviceId] = true;
+
     try {
       final String? accessToken = await _sharedPrefService.getAccessToken();
-      if (accessToken == null || accessToken.isEmpty) {
-        return false;
-      }
+      if (accessToken == null) return false;
 
-      // Use AppUrl.deleteFavoriteUrl with the favorite ID
       final String url = AppUrl.deleteFavoriteUrl(favoriteId);
       developer.debugPrint('🌐 DELETE favorite: $url');
 
-      final Map<String, String> headers = {'Authorization': 'Bearer $accessToken'};
-
-      final NetworkResponse response = await _networkCaller.deleteRequest(url, headers: headers);
-
-      developer.debugPrint('📡 Delete response: ${response.statusCode} - ${response.isSuccess}');
+      final NetworkResponse response = await _networkCaller.deleteRequest(
+          url,
+          headers: {'Authorization': 'Bearer $accessToken'}
+      );
 
       if (response.isSuccess) {
-        // Find and remove the favorite from our list
-        final FavoriteModel? favoriteToRemove = favorites.firstWhereOrNull(
-                (fav) => fav.id == favoriteId
-        );
+        // 🔹 Update local list
+        favorites.removeWhere((fav) => fav.id == favoriteId);
 
-        if (favoriteToRemove != null) {
-          final String? serviceId = favoriteToRemove.providerServiceId ?? favoriteToRemove.providerService?.id;
-
-          // Remove from favorites list
-          favorites.removeWhere((fav) => fav.id == favoriteId);
-
-          // Update status maps
-          if (serviceId != null) {
-            favoriteStatus[serviceId] = false;
-            serviceToFavoriteId.remove(serviceId);
-          }
-
-          // Refresh the UI
-          favorites.refresh();
+        // 🔹 Update status maps so hearts turn grey instantly on other screens
+        if (serviceId != null) {
+          favoriteStatus[serviceId] = false;
+          serviceToFavoriteId.remove(serviceId);
         }
+
+        favorites.refresh();
+        developer.debugPrint('✅ Successfully deleted favorite $favoriteId');
         return true;
       } else {
         developer.debugPrint('❌ Delete failed: ${response.errorMessage}');
@@ -404,8 +404,12 @@ class FavoriteController extends GetxController {
     } catch (e) {
       developer.debugPrint('❌ Error removing favorite: $e');
       return false;
+    } finally {
+      if (serviceId != null) loadingStatus[serviceId] = false;
     }
   }
+
+
 
   /// Refresh favorites
   Future<void> refreshFavorites() async {
