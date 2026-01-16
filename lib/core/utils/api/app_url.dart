@@ -119,6 +119,10 @@ class AppUrl {
   }
 
   // Favorites URL
+  static String allFavoritesId() {
+    return '$baseUrlV1/$version1/favorite/ids';
+  }
+
   static String getAllFavoritesUrl(int page) {
     return '$baseUrlV1/$version1/favorite/?page=$page&limit=10';
   }

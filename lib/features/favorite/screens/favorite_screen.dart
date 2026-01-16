@@ -204,14 +204,6 @@ class FavoriteScreen extends GetView<FavoriteController> {
                         style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () => controller.refreshFavorites(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: Colors.white,
-                        ), child: null,
-                      ),
                     ],
                   ),
                 ),

@@ -1,4 +1,4 @@
-import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import '../../../core/network/network_caller.dart';
@@ -17,6 +17,7 @@ class ServicesController extends GetxController {
   // Loading states
   final RxBool isLoadingServices = false.obs;
   final RxBool isLoadingMore = false.obs;
+  final RxBool isLoadingFavorites = false.obs;
 
   // Error message
   final RxString servicesErrorMessage = ''.obs;
@@ -36,6 +37,9 @@ class ServicesController extends GetxController {
 
   // Store token for easy access
   final RxString _cachedToken = ''.obs;
+
+  // Store favorite service IDs
+  final RxSet<String> favoriteServiceIds = <String>{}.obs;
 
   @override
   void onInit() {
@@ -92,6 +96,142 @@ class ServicesController extends GetxController {
     }
   }
 
+  /// Fetch favorite service IDs from API
+  Future<void> fetchFavoriteServiceIds() async {
+    // Only fetch if user is logged in (not guest mode)
+    if (isGuestMode.value) {
+      debugPrint('👤 User is in guest mode, skipping favorite fetch');
+      return;
+    }
+
+    // Prevent duplicate calls if already loading
+    if (isLoadingFavorites.value) {
+      debugPrint('⏳ Already loading favorites, skipping duplicate call');
+      return;
+    }
+
+    debugPrint('🎯 ========== FETCHING FAVORITE SERVICE IDs ==========');
+
+    isLoadingFavorites.value = true;
+    favoriteServiceIds.clear();
+
+    try {
+      final String url = AppUrl.allFavoritesId(); // Use the allFavoritesId endpoint
+      debugPrint('🌐 Making API call to: $url');
+
+      final NetworkResponse response = await _networkCaller.getRequest(
+        url,
+        headers: await _getHeaders(),
+      );
+
+      debugPrint('📡 Favorite IDs API Response:');
+      debugPrint('   - isSuccess: ${response.isSuccess}');
+      debugPrint('   - statusCode: ${response.statusCode}');
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        _handleFavoriteIdsResponse(response.jsonResponse!);
+      } else {
+        debugPrint('❌ Failed to fetch favorite IDs');
+        debugPrint('   - Status: ${response.statusCode}');
+        debugPrint('   - Error: ${response.errorMessage}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('💥 Error fetching favorite IDs: $e');
+      debugPrint('📚 StackTrace: $stackTrace');
+    } finally {
+      isLoadingFavorites.value = false;
+      debugPrint('🏁 ========== FAVORITE IDs FETCH COMPLETED ==========');
+      debugPrint('   - Favorite IDs count: ${favoriteServiceIds.length}');
+      debugPrint('   - IDs: ${favoriteServiceIds.toList()}');
+      debugPrint('==================================================\n');
+    }
+  }
+
+  /// Handle the response from allFavoritesId endpoint
+  void _handleFavoriteIdsResponse(Map<String, dynamic> responseData) {
+    try {
+      debugPrint('🔄 Parsing favorite IDs response...');
+      debugPrint('   - Top-level keys: ${responseData.keys.toList()}');
+
+      // Check if response has 'data' key
+      if (!responseData.containsKey('data')) {
+        debugPrint('❌ No data key found in favorite IDs response');
+        return;
+      }
+
+      final dynamic dataField = responseData['data'];
+      debugPrint('   - data field type: ${dataField.runtimeType}');
+
+      if (dataField is! List) {
+        debugPrint('❌ Data field is not a List in favorite IDs response');
+        return;
+      }
+
+      final List<dynamic> favoriteList = dataField;
+      debugPrint('   - Favorite list length: ${favoriteList.length}');
+
+      if (favoriteList.isEmpty) {
+        debugPrint('📭 No favorites found');
+        return;
+      }
+
+      // Extract service IDs from favorites
+      for (int i = 0; i < favoriteList.length; i++) {
+        final dynamic favoriteItem = favoriteList[i];
+        debugPrint('   🔍 Processing favorite item $i: ${favoriteItem.runtimeType}');
+
+        if (favoriteItem is Map<String, dynamic>) {
+          // Check for serviceId or id field
+          if (favoriteItem.containsKey('serviceId')) {
+            final String? serviceId = favoriteItem['serviceId']?.toString();
+            if (serviceId != null && serviceId.isNotEmpty) {
+              favoriteServiceIds.add(serviceId);
+              debugPrint('     ✅ Added serviceId: $serviceId');
+            }
+          } else if (favoriteItem.containsKey('id')) {
+            final String? serviceId = favoriteItem['id']?.toString();
+            if (serviceId != null && serviceId.isNotEmpty) {
+              favoriteServiceIds.add(serviceId);
+              debugPrint('     ✅ Added id: $serviceId');
+            }
+          } else {
+            debugPrint('     ⚠️ No serviceId or id field found in item');
+            debugPrint('     Item keys: ${favoriteItem.keys.toList()}');
+          }
+        } else if (favoriteItem is String) {
+          // If the API returns just an array of IDs as strings
+          favoriteServiceIds.add(favoriteItem);
+          debugPrint('     ✅ Added string ID: $favoriteItem');
+        } else {
+          debugPrint('     ⚠️ Unexpected item type: ${favoriteItem.runtimeType}');
+        }
+      }
+
+      debugPrint('📊 Successfully parsed ${favoriteServiceIds.length} favorite IDs');
+
+    } catch (parseError, stackTrace) {
+      debugPrint('💥 Parse Error in favorite IDs: $parseError');
+      debugPrint('📚 StackTrace: $stackTrace');
+    }
+  }
+
+  /// Check if a service is in favorites
+  bool isServiceFavorited(String serviceId) {
+    return favoriteServiceIds.contains(serviceId);
+  }
+
+  /// Add a service to favorites (local state)
+  void addToFavorites(String serviceId) {
+    favoriteServiceIds.add(serviceId);
+    debugPrint('❤️ Added service $serviceId to local favorites');
+  }
+
+  /// Remove a service from favorites (local state)
+  void removeFromFavorites(String serviceId) {
+    favoriteServiceIds.remove(serviceId);
+    debugPrint('💔 Removed service $serviceId from local favorites');
+  }
+
   // ========== MAIN FETCH METHODS ==========
 
   /// Fetch services with both category and subcategory
@@ -141,6 +281,11 @@ class ServicesController extends GetxController {
 
       if (response.isSuccess && response.jsonResponse != null) {
         _handleSuccessResponse(response.jsonResponse!, subCategoryName);
+
+        // After loading services, fetch favorite IDs if user is logged in
+        if (!isGuestMode.value) {
+          await fetchFavoriteServiceIds();
+        }
       } else {
         servicesErrorMessage.value = response.errorMessage ?? 'Failed to fetch services';
         debugPrint('❌ API request failed');
@@ -206,6 +351,11 @@ class ServicesController extends GetxController {
 
       if (response.isSuccess && response.jsonResponse != null) {
         _handleSuccessResponse(response.jsonResponse!, subCategoryName);
+
+        // After loading services, fetch favorite IDs if user is logged in
+        if (!isGuestMode.value) {
+          await fetchFavoriteServiceIds();
+        }
       } else {
         servicesErrorMessage.value = response.errorMessage ?? 'Failed to fetch services';
         debugPrint('❌ API request failed');
@@ -516,6 +666,11 @@ class ServicesController extends GetxController {
         debugPrint('     - Author ID: ${service.authorId}');
         debugPrint('     - Location: ${service.location}');
         debugPrint('     - Rating: ${service.rating}');
+
+        // Check if this service is in favorites
+        if (favoriteServiceIds.contains(service.id)) {
+          debugPrint('     ❤️ Service is in favorites!');
+        }
       } catch (e, stackTrace) {
         failCount++;
         debugPrint('   ❌ Failed to parse service $i: $e');
@@ -539,7 +694,8 @@ class ServicesController extends GetxController {
       // Log all parsed services for verification
       for (int i = 0; i < services.length; i++) {
         final service = services[i];
-        debugPrint('   $i. ${service.name} - ${service.location} - Rating: ${service.rating}');
+        final isFav = favoriteServiceIds.contains(service.id);
+        debugPrint('   $i. ${service.name} - ${service.location} - Rating: ${service.rating} - Fav: $isFav');
       }
     }
   }
@@ -631,6 +787,7 @@ class ServicesController extends GetxController {
     currentPage.value = 1;
     hasMore.value = true;
     totalServices.value = 0;
+    favoriteServiceIds.clear();
   }
 
   /// Refresh services with current parameters
@@ -689,3 +846,15 @@ class ServicesController extends GetxController {
     super.onClose();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
