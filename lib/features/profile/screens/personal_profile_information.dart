@@ -473,12 +473,6 @@ class PersonalInformationScreen extends GetView<ProfileInformationController> {
 
 
 
-
-
-
-
-
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -487,7 +481,6 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/extensions/widget_extensions.dart';
 import '../../auth/screens/profile_service.dart';
 import '../controllers/personal_profile_information_controller.dart';
-// import '../services/profile_service.dart';
 
 class PersonalInformationScreen extends GetView<ProfileInformationController> {
   const PersonalInformationScreen({super.key});

@@ -319,14 +319,20 @@ class ProviderProfileController extends GetxController {
   // --- EXISTING CODE REMAINS THE SAME ---
 
   String get todayHours {
-    if (availability.isEmpty) return 'Loading hours...';
+    if (availability.isEmpty) return 'Loading...';
+
+    // Get current day name (e.g., "Monday")
     String dayName = DateFormat('EEEE').format(DateTime.now());
     final todayData = availability[dayName];
+
     if (todayData == null || !todayData.isAvailable) {
-      return 'Today: Closed';
+      return 'OFF';
     }
-    return 'Today: ${_formatTime(todayData.openingTime)} - ${_formatTime(todayData.closingTime)}';
+
+    return '${_formatTime(todayData.openingTime)} - ${_formatTime(todayData.closingTime)}';
   }
+
+
 
   String _formatTime(int hour) {
     final tempDate = DateTime(2026, 1, 1, hour, 0);

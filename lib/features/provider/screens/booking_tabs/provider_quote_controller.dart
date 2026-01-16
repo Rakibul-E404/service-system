@@ -125,7 +125,7 @@ class ProviderQuoteController extends GetxController {
 
   Future<void> respondToBooking({required String bookingId}) async {
     try {
-      debugPrint('🔘 Action: Accepting booking $bookingId...');
+      debugPrint('🔘 Action: Accepting quote $bookingId...');
       processingIds.add(bookingId);
 
       final token = await _getAuthToken();
@@ -177,7 +177,7 @@ class ProviderQuoteController extends GetxController {
       bookings.removeWhere((booking) => booking['_id'] == bookingId);
       debugPrint('🗑️ UI: Inquiry $bookingId removed');
 
-      Get.snackbar('Cancelled', 'Booking cancelled Successfully', backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar('Cancelled', 'Quote cancelled Successfully', backgroundColor: Colors.orange, colorText: Colors.white);
     } catch (e) {
       debugPrint('🔥 Cancel Exception: $e');
     }

@@ -1,254 +1,12 @@
-/**
 import 'package:flutter/material.dart';
-
-class ProviderAvailabilityScreen extends StatefulWidget {
-  const ProviderAvailabilityScreen({Key? key}) : super(key: key);
-
-  @override
-  State<ProviderAvailabilityScreen> createState() =>
-      _ProviderAvailabilityScreenState();
-}
-
-class _ProviderAvailabilityScreenState
-    extends State<ProviderAvailabilityScreen> {
-  // Store availability data
-  final Map<String, bool> _availability = {
-    'Monday': true,
-    'Tuesday': true,
-    'Wednesday': true,
-    'Thursday': true,
-    'Friday': true,
-    'Saturday': true,
-    'Sunday': true,
-  };
-
-  final Map<String, String> _startTime = {
-    'Monday': '10:00am',
-    'Tuesday': '10:00am',
-    'Wednesday': '10:00am',
-    'Thursday': '10:00am',
-    'Friday': '10:00am',
-    'Saturday': '10:00am',
-    'Sunday': '10:00am',
-  };
-
-  final Map<String, String> _endTime = {
-    'Monday': '11:00am',
-    'Tuesday': '11:00am',
-    'Wednesday': '11:00am',
-    'Thursday': '11:00am',
-    'Friday': '11:00am',
-    'Saturday': '11:00am',
-    'Sunday': '11:00am',
-  };
-
-  // Time options for dropdowns
-  final List<String> _timeOptions = [
-    '8:00am',
-    '9:00am',
-    '10:00am',
-    '11:00am',
-    '12:00pm',
-    '1:00pm',
-    '2:00pm',
-    '3:00pm',
-    '4:00pm',
-    '5:00pm',
-    '6:00pm',
-    '7:00pm',
-    '8:00pm',
-    '9:00pm',
-    '10:00pm',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Set Availability',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: ListView.separated(
-                itemCount: 7,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final days = [
-                    'Monday',
-                    'Tuesday',
-                    'Wednesday',
-                    'Thursday',
-                    'Friday',
-                    'Saturday',
-                    'Sunday'
-                  ];
-                  final day = days[index];
-
-                  return Row(
-                    children: [
-                      // Day Name
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          day,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Start Time Dropdown
-                      Expanded(
-                        flex: 3,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _startTime[day],
-                              items: _timeOptions.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _startTime[day] = newValue!;
-                                });
-                              },
-                              isExpanded: true,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // End Time Dropdown
-                      Expanded(
-                        flex: 3,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _endTime[day],
-                              items: _timeOptions.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _endTime[day] = newValue!;
-                                });
-                              },
-                              isExpanded: true,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Toggle Switch
-                      Expanded(
-                        flex: 1,
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Switch(
-                            value: _availability[day]!,
-                            onChanged: (value) {
-                              setState(() {
-                                _availability[day] = value;
-                              });
-                            },
-                            activeColor: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                _updateAvailability();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFD700), // Yellow color
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Update time',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _updateAvailability() {
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Availability updated successfully!')),
-    );
-
-    // Optional: Log data
-    print('Updated Availability:');
-    print(_availability);
-    print(_startTime);
-    print(_endTime);
-  }
-}*/
-
-
-
-
-
-import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/core/config/app_colors.dart';
-
-import '../controllers/availability_controller.dart'; // Adjust import based on your project
+import '../controllers/availability_controller.dart';
+import '../controllers/provider_profile_controller.dart';
 
 class ProviderAvailabilityScreen extends StatefulWidget {
-  const ProviderAvailabilityScreen({Key? key}) : super(key: key);
+  const ProviderAvailabilityScreen({super.key});
 
   @override
   State<ProviderAvailabilityScreen> createState() =>
@@ -256,39 +14,69 @@ class ProviderAvailabilityScreen extends StatefulWidget {
 }
 
 class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen> {
-  // Initialize Controller
   final AvailabilityController _controller = Get.put(AvailabilityController());
+  final ProviderProfileController _profileCtrl = Get.find<ProviderProfileController>();
 
-  final Map<String, bool> _availability = {
-    'Monday': true, 'Tuesday': true, 'Wednesday': true, 'Thursday': true,
-    'Friday': true, 'Saturday': true, 'Sunday': true,
-  };
+  late Map<String, bool> _availability;
+  late Map<String, String> _startTime;
+  late Map<String, String> _endTime;
 
-  final Map<String, String> _startTime = {
-    'Monday': '10:00am', 'Tuesday': '10:00am', 'Wednesday': '10:00am', 'Thursday': '10:00am',
-    'Friday': '10:00am', 'Saturday': '10:00am', 'Sunday': '10:00am',
-  };
-
-  final Map<String, String> _endTime = {
-    'Monday': '6:00pm', 'Tuesday': '6:00pm', 'Wednesday': '6:00pm', 'Thursday': '6:00pm',
-    'Friday': '6:00pm', 'Saturday': '6:00pm', 'Sunday': '6:00pm',
-  };
-
+  // Added time options list to match your h:00a formatting
   final List<String> _timeOptions = [
-    '8:00am', '9:00am', '10:00am', '11:00am', '12:00pm', '1:00pm', '2:00pm',
-    '3:00pm', '4:00pm', '5:00pm', '6:00pm', '7:00pm', '8:00pm', '9:00pm', '10:00pm',
+    '12:00am', '1:00am', '2:00am', '3:00am', '4:00am', '5:00am', '6:00am', '7:00am', '8:00am', '9:00am', '10:00am', '11:00am',
+    '12:00pm', '1:00pm', '2:00pm', '3:00pm', '4:00pm', '5:00pm', '6:00pm', '7:00pm', '8:00pm', '9:00pm', '10:00pm', '11:00pm'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentSettings();
+  }
+
+  void _loadCurrentSettings() {
+    _availability = {};
+    _startTime = {};
+    _endTime = {};
+
+    // Match the order of your JSON response days
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    for (var day in days) {
+      final existing = _profileCtrl.availability[day];
+      if (existing != null) {
+        _availability[day] = existing.isAvailable;
+        _startTime[day] = _formatIntToTime(existing.openingTime);
+        _endTime[day] = _formatIntToTime(existing.closingTime);
+      } else {
+        // Fallback defaults
+        _availability[day] = false;
+        _startTime[day] = '10:00am';
+        _endTime[day] = '6:00pm';
+      }
+    }
+  }
+
+  // Converts integer (e.g., 14) to string (e.g., "2:00pm") to match dropdown options
+  String _formatIntToTime(int hour) {
+    // Handle edge case for 24
+    final actualHour = hour >= 24 ? 0 : hour;
+    final tempDate = DateTime(2026, 1, 1, actualHour);
+    return DateFormat('h:00a').format(tempDate).toLowerCase();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Set Availability', style: TextStyle(color: Colors.black)),
+        title: const Text('Set Availability', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
-        elevation: 1,
+        elevation: 0.5,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -296,6 +84,7 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
           children: [
             Expanded(
               child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
                 itemCount: _availability.keys.length,
                 itemBuilder: (context, index) {
                   final day = _availability.keys.elementAt(index);
@@ -314,26 +103,34 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
   Widget _buildDayCard(String day) {
     bool isEnabled = _availability[day]!;
     return Card(
-      elevation: 2,
+      elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             Expanded(
               flex: 3,
-              child: Text(day, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              child: Text(
+                day,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isEnabled ? Colors.black : Colors.grey,
+                ),
+              ),
             ),
-            // Start Time Dropdown
             _buildTimeDropdown(day, isEnabled, isStart: true),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Text("-"),
+              child: Text("-", style: TextStyle(color: Colors.grey)),
             ),
-            // End Time Dropdown
             _buildTimeDropdown(day, isEnabled, isStart: false),
-            // Toggle
+            const SizedBox(width: 8),
             Switch(
               value: isEnabled,
               activeColor: AppColors.primaryColor,
@@ -351,18 +148,26 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: Colors.grey[200]!),
+            color: Colors.grey[50],
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: isStart ? _startTime[day] : _endTime[day],
               isDense: true,
-              items: _timeOptions.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(fontSize: 12)))).toList(),
+              dropdownColor: Colors.white,
+              style: const TextStyle(fontSize: 12, color: Colors.black),
+              items: _timeOptions.map((v) => DropdownMenuItem(
+                value: v,
+                child: Text(v),
+              )).toList(),
               onChanged: isEnabled ? (val) {
-                setState(() => isStart ? _startTime[day] = val! : _endTime[day] = val!);
+                if (val != null) {
+                  setState(() => isStart ? _startTime[day] = val : _endTime[day] = val);
+                }
               } : null,
             ),
           ),
@@ -385,11 +190,20 @@ class _ProviderAvailabilityScreenState extends State<ProviderAvailabilityScreen>
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: _controller.isLoading.value
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Text('Update Availability', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            ? const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+        )
+            : const Text(
+          'Update Availability',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ),
     ));
   }

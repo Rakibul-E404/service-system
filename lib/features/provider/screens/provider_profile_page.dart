@@ -199,9 +199,7 @@ class ProviderProfilePage extends StatelessWidget {
                               onPressed: () {
                                 // 🔹 Dual Logic Check
                                 final subController = Get.find<SubscriptionsController>();
-
                                 if (subController.canAccessOpeningHours) {
-                                  // Access Granted
                                   Get.to(() => const ProviderAvailabilityScreen());
                                 } else {
                                   // 🔹 Show message if not clickable
@@ -227,16 +225,21 @@ class ProviderProfilePage extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Obx(() {
-                                    // 🔹 Visual feedback: change text color if locked
-                                    final bool hasAccess = Get.find<SubscriptionsController>().canAccessOpeningHours;
+                                    final hoursText = controller.todayHours;
+                                    final bool isOff = hoursText == 'OFF';
 
-                                    return Text(
-                                      controller.todayHours,
-                                      style: TextStyle(
-                                        color: hasAccess ? Colors.black : Colors.grey[400],
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 14,
-                                      ),
+                                    return Row(
+                                      children: [
+                                        const Text("Today: ", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                                        Text(
+                                          hoursText,
+                                          style: TextStyle(
+                                            color: isOff ? Colors.red : Colors.black, // 🔴 Red if OFF
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
                                     );
                                   }),
                                   // 🔹 Visual feedback: change icon if locked
