@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
@@ -182,6 +183,13 @@ class _ServicesPageState extends State<ServicesPage> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      debugPrint('🔄 Retry button pressed from error state');
+                      _retryFetch();
+                    },
+                    child: const Text('Try Again'),
+                  ),
                 ],
               ),
             ),
@@ -293,8 +301,14 @@ class _ServicesPageState extends State<ServicesPage> {
                     debugPrint('   - Accessible by subscription: ${service.accessibleBySubscription}');
 
                     return Obx(() {
-                      final bool isFavorited = favoriteController.isFavorited(service.id);
+                      // Check if service is favorited using ServicesController
+                      final bool isFavorited = servicesController.isServiceFavorited(service.id);
+
+                      // Check if favorite is being toggled for this specific service
                       final bool isLoadingFav = favoriteController.isFavoriteLoading(service.id);
+
+                      debugPrint('   ❤️ Service ${service.id} favorite status: $isFavorited');
+                      debugPrint('   🔄 Favorite loading: $isLoadingFav');
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
@@ -340,11 +354,35 @@ class _ServicesPageState extends State<ServicesPage> {
                             },
                             onFavorite: () {
                               if (hasFavoriteAccess && !isLoadingFav) {
-                                // If enabled and not loading, call the API
                                 debugPrint('❤️ Favorite tapped for: ${service.name}');
                                 debugPrint('   - Service ID: ${service.id}');
-                                debugPrint('   - Has favorite access: $hasFavoriteAccess');
-                                favoriteController.toggleFavorite(service.id);
+                                debugPrint('   - Current favorite status: $isFavorited');
+
+                                // Update local state first for immediate feedback
+                                if (isFavorited) {
+                                  servicesController.removeFromFavorites(service.id);
+                                } else {
+                                  servicesController.addToFavorites(service.id);
+                                }
+
+                                // Call the API to toggle favorite
+                                favoriteController.toggleFavorite(service.id).then((_) {
+                                  // After API call completes, verify the state
+                                  debugPrint('✅ Favorite toggle completed for ${service.id}');
+
+                                  // Optional: Refresh favorite list from server
+                                  if (servicesController.isGuestMode.value == false) {
+                                    servicesController.fetchFavoriteServiceIds();
+                                  }
+                                }).catchError((error) {
+                                  // Revert local state if API call fails
+                                  if (isFavorited) {
+                                    servicesController.addToFavorites(service.id);
+                                  } else {
+                                    servicesController.removeFromFavorites(service.id);
+                                  }
+                                  debugPrint('❌ Error toggling favorite: $error');
+                                });
                               } else if (!hasFavoriteAccess) {
                                 // If disabled, show message but don't call API
                                 debugPrint('🚫 Favorite button disabled for: ${service.name}');
@@ -404,3 +442,16 @@ class _ServicesPageState extends State<ServicesPage> {
     super.dispose();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
