@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:manx_mate/core/extensions/context_extensions.dart';
 import '../controllers/subscription_controller.dart';
-
-
-
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class SubscriptionPage extends GetView<SubscriptionController> {
   const SubscriptionPage({super.key});

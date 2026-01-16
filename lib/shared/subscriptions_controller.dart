@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/shared/subscriptions_get_response_model.dart';
 import '../../core/network/network_caller.dart';
 import '../core/config/app_constants.dart';
@@ -128,16 +129,32 @@ class SubscriptionsController extends GetxController {
     return isActive && hasMessagingAccess;
   }
 
-// Helper for the Snackbar
+// Helper for the Alert Dialog with Upgrade Plan button
   void showPremiumContactAlert(String feature) {
-    Get.snackbar(
-      "Premium Feature",
-      "The $feature option is only available for active Premium members.",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.amber[800],
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(15),
-      icon: const Icon(Icons.stars, color: Colors.white),
+    Get.dialog(
+      AlertDialog(
+        title: const Text("Premium Feature"),
+        content: Text("The $feature option is only available for active Premium members."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back(); // Close the dialog
+            },
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back(); // Close the dialog first
+              Get.toNamed(AppRoutes.subscriptionPageRoute); // Navigate to subscription page
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber[800],
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Upgrade Plan"),
+          ),
+        ],
+      ),
     );
   }
 }
