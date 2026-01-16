@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
-import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/common/widgets/reusable_button.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import 'package:manx_mate/features/provider/screens/booking_tabs/provider_quote_controller.dart';
@@ -162,7 +160,7 @@ class ProviderQuoteTab extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: isProcessing ? null : () => _showConfirmationDialog(context, 'Cancel Booking', 'Are you sure?', () => controller.cancelBookingLocally(bookingId)),
+                      onPressed: isProcessing ? null : () => _showConfirmationDialog(context, 'Cancel Quote', 'Are you sure?', () => controller.cancelBookingLocally(bookingId)),
                       style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                       child: isProcessing ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
@@ -170,7 +168,7 @@ class ProviderQuoteTab extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: isProcessing ? null : () => _showConfirmationDialog(context, 'Accept Booking', 'Are you sure?', () => controller.respondToBooking(bookingId: bookingId)),
+                      onPressed: isProcessing ? null : () => _showConfirmationDialog(context, 'Accept Quote', 'Are you sure?', () => controller.respondToBooking(bookingId: bookingId)),
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                       child: isProcessing ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Accept', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
