@@ -1,4 +1,5 @@
 
+
 import 'package:flutter/cupertino.dart' as developer show debugPrint;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -452,7 +453,6 @@ class FavoriteController extends GetxController {
     super.onClose();
   }
 }
-
 
 
 
