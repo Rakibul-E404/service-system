@@ -8,6 +8,7 @@ import 'package:manx_mate/core/config/app_constants.dart';
 import 'package:manx_mate/core/data/secured_storage.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../auth/screens/profile_service.dart';
 
 class ProfileInformationController extends GetxController {
   RxBool isEditing = false.obs;
@@ -87,20 +88,7 @@ class ProfileInformationController extends GetxController {
                     pickImage(ImageSource.gallery);
                   },
                 ),
-                if (selectedImageFile.value != null || profileImage.value.isNotEmpty)
-                  ListTile(
-                    leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text('Remove Photo'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      removeImage();
-                    },
-                  ),
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
+
               ],
             ),
           ),
@@ -375,68 +363,40 @@ class ProfileInformationController extends GetxController {
 
       isLoading.value = false;
 
+      // Inside ProfileInformationController -> updateProfile()
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         final bool success = data['success'] ?? false;
-        final String message = data['message'] ?? 'Profile updated successfully';
 
         if (success) {
-          // Update reactive values only for changed fields
-          if (updateFields.containsKey('name')) name.value = nameController.text;
-          if (updateFields.containsKey('location')) location.value = selectedLocation.value;
-          if (updateFields.containsKey('image')) {
-            profileImage.value = data['data']?['image'] ?? profileImage.value;
+          // 🔹 STEP 1: Sync with Global ProfileService
+          final profileService = Get.find<ProfileService>();
+
+          // Update the service with the new values
+          profileService.updateProfileData(
+            newName: nameController.text.trim(),
+            newLocation: selectedLocation.value,
+            newImage: data['data']?['image'], // Update image from API response
+          );
+
+          // 🔹 STEP 2: Update local controller variables
+          name.value = nameController.text;
+          location.value = selectedLocation.value;
+          if (data['data']?['image'] != null) {
+            profileImage.value = data['data']['image'];
           }
 
           selectedImageFile.value = null;
           isEditing.value = false;
 
-          Get.snackbar(
-            'Success',
-            message,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-            icon: const Icon(Icons.check_circle, color: Colors.white),
-          );
-
-          await fetchUserProfile();
-          debugPrint('✅ Profile updated successfully (partial)');
-        } else {
-          Get.snackbar(
-            'Error',
-            message,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP,
-          );
+          Get.snackbar('Success', 'Profile updated successfully',
+              backgroundColor: Colors.green, colorText: Colors.white);
         }
-      } else {
-        final String errorMessage = response.data['message'] ?? 'Failed to update profile';
-        debugPrint('❌ Update Failed: $errorMessage');
-
-        Get.snackbar(
-          'Error',
-          errorMessage,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
       }
-
-      debugPrint('═══════════════════════════════════════');
-    } catch (e, stackTrace) {
+    } catch (e) {
+      debugPrint('Update Error: $e');
+    } finally {
       isLoading.value = false;
-      debugPrint('❌ Update Profile Error: $e');
-      debugPrint('StackTrace: $stackTrace');
-
-      Get.snackbar(
-        'Error',
-        'Failed to update profile',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
     }
   }
 
