@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/extensions/context_extensions.dart';
+import '../../home/controllers/user_booking_service_controller.dart';
 import '../model/user_provider_profile_response_model.dart';
 
 class ProviderBookingBottomSheet extends StatefulWidget {
@@ -30,6 +31,12 @@ class _ProviderBookingBottomSheetState extends State<ProviderBookingBottomSheet>
   String? _selectedRegion;
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
+
+
+  final UserBookingServiceController _bookingController =
+  Get.isRegistered<UserBookingServiceController>()
+      ? Get.find<UserBookingServiceController>()
+      : Get.put(UserBookingServiceController());
 
   // Helper to convert opening/closing times (int) to readable slots
   List<String> _getAvailableSlots(AvailabilityDay? availability) {
@@ -127,14 +134,16 @@ class _ProviderBookingBottomSheetState extends State<ProviderBookingBottomSheet>
 
             const SizedBox(height: 24),
 
-            SizedBox(
+            // Inside build method of _ProviderBookingBottomSheetState
+            Obx(() => SizedBox(
               width: double.infinity,
               height: 55,
               child: ReusableButton(
-                onTap: _submit,
-                label: "Confirm Booking",
+                // Disable click if loading
+                onTap: _bookingController.isBookingLoading.value ? () {} : _submit,
+                label: _bookingController.isBookingLoading.value ? "Processing..." : "Confirm Booking",
               ),
-            ),
+            )),
             const SizedBox(height: 20),
           ],
         ),
@@ -220,12 +229,25 @@ class _ProviderBookingBottomSheetState extends State<ProviderBookingBottomSheet>
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_selectedTimeLabel == null || _selectedRegion == null || _addressController.text.isEmpty) {
-      Get.snackbar("Error", "Please fill all required fields", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Error", "Please fill all required fields",
+          backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
-    // Call your booking controller here
-    widget.onSubmitSuccess?.call();
+
+    // ✅ Here is where we use the ID from the selected service
+    bool success = await _bookingController.confirmBooking(
+      serviceId: widget.selectedService.id, // This is the ID chosen from the dropdown
+      details: _noteController.text.trim(),
+      selectedDate: _selectedDate,
+      selectedTimeLabel: _selectedTimeLabel!,
+      region: _selectedRegion!,
+      location: _addressController.text.trim(),
+    );
+
+    if (success) {
+      widget.onSubmitSuccess?.call();
+    }
   }
 }
