@@ -242,6 +242,7 @@ import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/features/home/controllers/home_service_details_controller.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
+import '../../../core/utils/api/app_url.dart';
 import '../../favorite/controllers/favorite_controller.dart';
 import '../controllers/service_controller.dart';
 import '../model/single_service_model.dart';
@@ -262,16 +263,12 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
   final TextEditingController _additionalNoteTEController = TextEditingController();
   final TextEditingController _dateTEController = TextEditingController();
 
-  final RxString _selectedServiceId = ''.obs;
-
   @override
   void initState() {
     super.initState();
-    // Get the ID from arguments and fetch fresh data
     final String serviceId = Get.arguments['serviceId'] ?? '';
     if (serviceId.isNotEmpty) {
       servicesController.fetchSingleService(serviceId);
-      _selectedServiceId.value = serviceId;
     }
   }
 
@@ -285,7 +282,6 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
       }),
       body: SafeArea(
         child: Obx(() {
-          // Handle Loading State
           if (servicesController.isLoadingSingleService.value) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -297,6 +293,7 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
           }
 
           final profile = service.profileDetails;
+          final subCategory = service.subCategory;
           final isFav = servicesController.isServiceFavorited(service.id);
           final access = service.accessibleBySubscription;
 
@@ -305,7 +302,6 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Header with Back and Favorite
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -325,13 +321,14 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
 
                 const SizedBox(height: AppSizes.md),
                 CustomCachedImage(
-                  imageUrl: profile.image,
+                  imageUrl: profile.image.startsWith('http')
+                      ? profile.image
+                      : "${AppUrl.imageBaseUrl}/${profile.image}",
                   width: context.screenWidth,
                   height: context.screenHeight * 0.4,
                 ),
                 const SizedBox(height: AppSizes.md),
 
-                // Name and Contact Row
                 Row(
                   children: <Widget>[
                     Expanded(
@@ -352,20 +349,13 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
                 ),
 
                 const SizedBox(height: AppSizes.md),
-
-                /// Dropdown (UI visually same as before, but locked to this service)
-                _buildStaticServiceDropdown(profile.name),
-
+                _buildStaticServiceDropdown(subCategory.name),
                 const SizedBox(height: AppSizes.md),
                 Text('Service Provider', style: context.txtTheme.titleLarge),
                 const SizedBox(height: AppSizes.sm),
-
-                /// Service Provider Card
                 _buildProviderCard(context, service),
-
                 const SizedBox(height: AppSizes.md),
 
-                // Description Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -384,7 +374,7 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
                 const Divider(color: AppColors.primaryColor, thickness: 2),
                 Text(profile.description),
 
-                const SizedBox(height: 100), // Space for FAB
+                const SizedBox(height: 100),
               ],
             ),
           );
@@ -458,10 +448,11 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
           spacing: AppSizes.md,
           children: <Widget>[
             CustomCachedImage(
-              imageUrl: service.profileDetails.image,
+              imageUrl: service.profileDetails.image.startsWith('http')
+                  ? service.profileDetails.image
+                  : "${AppUrl.imageBaseUrl}/${service.profileDetails.image}",
               height: 70,
               width: 70,
-
             ),
             Expanded(
               child: Column(
@@ -500,23 +491,32 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
       child: ReusableButton(
         onTap: () {
           if (service == null) return;
+
+          // Use the modal but remove the default footer button
           CustomModalBottomSheet.show(
             title: 'Book A Slot',
             height: context.screenHeight * 0.9,
             context: context,
-            buttonText: 'Confirm Booking',
+            // REMOVED: buttonText and onButtonPressed logic moved inside the child
+            buttonText: '',
             onButtonPressed: () {},
             child: BookingBottomSheet(
+              service: service,
               dateTEController: _dateTEController,
               timeController: timeController,
               additionalNoteTEController: _additionalNoteTEController,
               preSelectedServiceId: service.id,
               preSelectedDate: DateTime.now(),
-              preSelectedTime: '10:00 AM',
               onSubmitSuccess: () {
-                Navigator.pop(context);
-                Get.snackbar('Success', 'Booking submitted successfully!',
-                    backgroundColor: Colors.green, colorText: Colors.white);
+                // This is called when the internal button in BookingBottomSheet succeeds
+                Get.back(); // Closes the BottomSheet
+                Get.snackbar(
+                  'Success',
+                  'Booking submitted successfully!',
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.TOP,
+                );
               },
             ),
           );
@@ -524,6 +524,5 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
         label: "Book A Slot",
       ),
     );
-  }
-}
+  }}
 

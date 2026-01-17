@@ -1,468 +1,253 @@
 import 'package:flutter/material.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/config/app_sizes.dart';
+import '../../../core/extensions/context_extensions.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
 
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+
+import '../controllers/user_booking_service_controller.dart';
+import '../model/single_service_model.dart';
+
 class BookingBottomSheet extends StatefulWidget {
   const BookingBottomSheet({
     super.key,
-    required TextEditingController dateTEController,
+    required this.dateTEController,
     required this.timeController,
-    required TextEditingController additionalNoteTEController,
+    required this.additionalNoteTEController,
+    required this.service,
     this.onSubmitSuccess,
     this.preSelectedServiceId,
     this.preSelectedDate,
-    this.preSelectedTime,
-  })  : _dateTEController = dateTEController,
-        _additionalNoteTEController = additionalNoteTEController;
+  });
 
-  final TextEditingController _dateTEController;
+  final TextEditingController dateTEController;
   final TimeController timeController;
-  final TextEditingController _additionalNoteTEController;
+  final TextEditingController additionalNoteTEController;
+  final SingleServiceModel service;
   final VoidCallback? onSubmitSuccess;
   final String? preSelectedServiceId;
   final DateTime? preSelectedDate;
-  final String? preSelectedTime;
 
   @override
   State<BookingBottomSheet> createState() => _BookingBottomSheetState();
 }
 
 class _BookingBottomSheetState extends State<BookingBottomSheet> {
+  // Initialize the new controller
+  final UserBookingServiceController _bookingController = Get.put(UserBookingServiceController());
+
+  DateTime _selectedDate = DateTime.now();
+  String? _selectedTimeLabel;
   String? _selectedLocation;
-  bool _isSubmitting = false;
-
-  // Scroll controller for smooth scrolling
-  final ScrollController _scrollController = ScrollController();
-
-  // Address field (no dropdown suggestions)
   final TextEditingController _addressController = TextEditingController();
-  final FocusNode _addressFocusNode = FocusNode();
-
-  // Focus node for additional notes
-  final FocusNode _notesFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _selectedLocation = null;
-
-    // Pre-fill the date if provided
-    if (widget.preSelectedDate != null) {
-      widget._dateTEController.text = _formatDate(widget.preSelectedDate!);
-    } else {
-      // Set default to today
-      widget._dateTEController.text = _formatDate(DateTime.now());
-    }
-
-    // Pre-fill time if provided
-    if (widget.preSelectedTime != null) {
-      widget.timeController.updateSelectedTime(widget.preSelectedTime!);
-    }
-
-    // Handle focus changes for address field
-    _addressFocusNode.addListener(() {
-      if (_addressFocusNode.hasFocus) {
-        _scrollToCurrentField();
-      }
-    });
-
-    // Handle focus changes for notes field
-    _notesFocusNode.addListener(() {
-      if (_notesFocusNode.hasFocus) {
-        _scrollToCurrentField();
-      }
-    });
+    _selectedDate = widget.preSelectedDate ?? DateTime.now();
+    widget.dateTEController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
   }
 
-  // Scroll to keep focused field visible above keyboard
-  void _scrollToCurrentField({double extraPadding = 120.0}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients && mounted) {
-        final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-        final double maxScrollExtent = _scrollController.position.maxScrollExtent;
-        final double currentOffset = _scrollController.offset;
+  List<String> _getAvailableSlots(DayAvailability? availability) {
+    if (availability == null || !availability.isAvailable) return [];
+    List<String> slots = [];
+    int start = availability.openingTime;
+    int end = availability.closingTime;
 
-        // Scroll to bottom if needed
-        if (keyboardHeight > 0 && currentOffset < maxScrollExtent) {
-          _scrollController.animateTo(
-            maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      }
-    });
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDateTime(DateTime date, String time) {
-    final List<String> timeParts = time.split(' ');
-    final String timeValue = timeParts[0];
-    final String period = timeParts.length > 1 ? timeParts[1].toLowerCase() : 'am';
-
-    final List<String> hourMinuteParts = timeValue.split(':');
-    int hour = int.parse(hourMinuteParts[0]);
-    final int minute = hourMinuteParts.length > 1 ? int.parse(hourMinuteParts[1]) : 0;
-
-    if (period == 'pm' && hour < 12) hour += 12;
-    if (period == 'am' && hour == 12) hour = 0;
-
-    final DateTime dateTime = DateTime(date.year, date.month, date.day, hour, minute);
-    return dateTime.toIso8601String();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _addressController.dispose();
-    _addressFocusNode.dispose();
-    _notesFocusNode.dispose();
-    super.dispose();
-  }
-
-  bool _validateFields() {
-    debugPrint('🔍 ========== VALIDATING BOOKING FIELDS ==========');
-
-    if (widget.preSelectedServiceId == null || widget.preSelectedServiceId!.isEmpty) {
-      debugPrint('❌ Validation Failed: Service ID is required');
-      _showSnackBar('Service ID is required', isError: true);
-      return false;
-    }
-
-    if (_selectedLocation == null || _selectedLocation!.isEmpty) {
-      debugPrint('❌ Validation Failed: Region not selected');
-      _showSnackBar('Please select a region', isError: true);
-      return false;
-    }
-
-    if (_addressController.text.trim().isEmpty) {
-      debugPrint('❌ Validation Failed: Address is empty');
-      _showSnackBar('Please enter your address', isError: true);
-      return false;
-    }
-
-    if (widget._dateTEController.text.trim().isEmpty) {
-      debugPrint('❌ Validation Failed: Date is empty');
-      _showSnackBar('Please select a date', isError: true);
-      return false;
-    }
-
-    if (widget._additionalNoteTEController.text.trim().isEmpty) {
-      debugPrint('❌ Validation Failed: Additional notes are empty');
-      _showSnackBar('Please add additional notes', isError: true);
-      return false;
-    }
-
-    debugPrint('✅ ========== ALL BOOKING FIELDS VALIDATED SUCCESSFULLY ==========');
-    return true;
-  }
-
-  Future<void> _submitBooking() async {
-    FocusScope.of(context).unfocus();
-
-    debugPrint('🎬 ========== SUBMIT BOOKING INITIATED ==========');
-
-    if (!_validateFields()) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      final SharedPrefService sharedPrefService = SharedPrefService();
-      final String? accessToken = await sharedPrefService.getAccessToken();
-
-      final List<String> dateParts = widget._dateTEController.text.trim().split('-');
-      final DateTime selectedDate = DateTime(
-        int.parse(dateParts[0]),
-        int.parse(dateParts[1]),
-        int.parse(dateParts[2]),
-      );
-
-      final DateTime selectedDateTime = widget.timeController.selectedTime.value;
-      final int hour = selectedDateTime.hour;
-      final int minute = selectedDateTime.minute;
-
+    for (int hour = start; hour < end; hour++) {
       final String period = hour >= 12 ? 'PM' : 'AM';
       final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-      final String timeString = '$displayHour:${minute.toString().padLeft(2, '0')} $period';
-
-      final String fullLocation = '${_selectedLocation} - ${_addressController.text.trim()}';
-
-      final Map<String, dynamic> result = await _submitBookingToApi(
-        serviceId: widget.preSelectedServiceId!,
-        selectedDate: selectedDate,
-        selectedTime: timeString,
-        location: fullLocation,
-        description: widget._additionalNoteTEController.text.trim(),
-        accessToken: accessToken,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      if (result['success'] == true) {
-        const String successMessage = 'Booking submitted successfully!';
-        debugPrint('🎉 $successMessage');
-        _showSnackBar(successMessage);
-
-        widget._additionalNoteTEController.clear();
-        _addressController.clear();
-        setState(() {
-          _selectedLocation = null;
-        });
-
-        widget.onSubmitSuccess?.call();
-
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            Navigator.pop(context);
-          }
-        });
-      } else {
-        _showSnackBar(
-          result['message'] ?? 'Failed to submit booking',
-          isError: true,
-        );
-      }
-    } catch (e) {
-      debugPrint('💥 Exception caught in _submitBooking: $e');
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-      });
-      _showSnackBar('Error: $e', isError: true);
+      slots.add('$displayHour:00 $period');
     }
-  }
-
-  Future<Map<String, dynamic>> _submitBookingToApi({
-    required String serviceId,
-    required DateTime selectedDate,
-    required String selectedTime,
-    required String location,
-    required String description,
-    String? accessToken,
-  }) async {
-    try {
-      final Map<String, String>? headers = accessToken != null && accessToken.isNotEmpty
-          ? <String, String>{'Authorization': 'Bearer $accessToken'}
-          : null;
-
-      final String formattedDateTime = _formatDateTime(selectedDate, selectedTime);
-
-      final Map<String, dynamic> body = <String, dynamic>{
-        'service': serviceId,
-        'description': description,
-        'bookingDate': formattedDateTime,
-        'location': location.toLowerCase(),
-      };
-
-      final NetworkResponse response = await NetworkCaller().postRequest(
-        AppUrl.bookingUrl,
-        body: body,
-        headers: headers,
-      );
-
-      if (response.isSuccess) {
-        return <String, dynamic>{
-          'success': true,
-          'data': response.jsonResponse,
-        };
-      } else {
-        return <String, dynamic>{
-          'success': false,
-          'message': response.errorMessage ?? 'Failed to submit booking',
-          'error': response.jsonResponse,
-        };
-      }
-    } catch (e) {
-      debugPrint('💥 ========== BOOKING SUBMISSION ERROR ==========');
-      return <String, dynamic>{
-        'success': false,
-        'message': 'Error submitting booking: $e',
-      };
-    }
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    return slots;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: MediaQuery.of(context).viewInsets,
-      child: Scrollbar(
-        thumbVisibility: true,
-        thickness: 6,
-        radius: const Radius.circular(8),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              /// ==================== REGION DROPDOWN ====================
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.primaryColor, width: 1.8),
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _selectedLocation,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedLocation = newValue ?? '';
-                    });
-                  },
-                  items: <String>['north', 'south', 'east', 'west']
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value.toUpperCase()),
-                    );
-                  }).toList(),
-                  decoration: const InputDecoration(
-                    labelText: 'Location',
-                    labelStyle: TextStyle(color: AppColors.greyColor),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-              ),
+    final String dayKey = DateFormat('EEEE').format(_selectedDate);
+    final DayAvailability? availability = widget.service.profileDetails.availability.days[dayKey];
+    final List<String> slots = _getAvailableSlots(availability);
 
-              const SizedBox(height: AppSizes.md),
+    return Container(
+      padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16, right: 16, top: 16
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Book services", style: context.txtTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const Divider(height: 30, thickness: 1),
 
-              /// ==================== SIMPLE ADDRESS FIELD ====================
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.primaryColor, width: 1.8),
+            _buildCalendarHeader(),
+            const SizedBox(height: 12),
+            _buildHorizontalCalendar(),
+
+            const Divider(height: 40, thickness: 1),
+
+            Text("Available Slots for $dayKey", style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            if (slots.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("No available slots on this day", style: TextStyle(color: Colors.red))))
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisExtent: 45,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
                 ),
-                child: TextFormField(
-                  controller: _addressController,
-                  focusNode: _addressFocusNode,
-                  decoration: const InputDecoration(
-                    labelText: 'Address',
-                    hintText: 'Enter your full address',
-                    prefixIcon: Icon(Icons.location_on, color: AppColors.primaryColor),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 20,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppSizes.md),
-
-              /// ==================== DATE PICKER ====================
-              GestureDetector(
-                onTap: () async {
-                  FocusScope.of(context).unfocus();
-                  final DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: widget.preSelectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      widget._dateTEController.text = _formatDate(pickedDate);
-                    });
-                  }
-                },
-                child: AbsorbPointer(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.whiteColor,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.primaryColor, width: 1.8),
-                    ),
-                    child: TextFormField(
-                      controller: widget._dateTEController,
-                      decoration: const InputDecoration(
-                        hintText: 'Select date',
-                        prefixIcon: Icon(Icons.calendar_today, color: AppColors.primaryColor),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 20,
-                        ),
-                        labelStyle: TextStyle(color: AppColors.primaryColor),
+                itemCount: slots.length,
+                itemBuilder: (context, index) {
+                  final time = slots[index];
+                  final bool isSelected = _selectedTimeLabel == time;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedTimeLabel = time),
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primaryColor : AppColors.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.primaryColor),
                       ),
+                      child: Text(time, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
 
-              const SizedBox(height: AppSizes.sm),
+            const SizedBox(height: 24),
+            Text("Booking Details", style: context.txtTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
 
-              /// ==================== TIME PICKER ====================
-              SizedBox(
-                width: double.infinity,
-                child: TimePickerWidget(
-                  label: 'Time',
-                  controller: widget.timeController,
-                  showTimeIcon: true,
-                ),
+            _buildRegionDropdown(),
+            const SizedBox(height: 12),
+            _buildCustomTextField(controller: _addressController, label: "Full Address", icon: Icons.location_on_outlined),
+            const SizedBox(height: 12),
+            _buildCustomTextField(controller: widget.additionalNoteTEController, label: "Additional Notes", maxLines: 3),
+
+            const SizedBox(height: 24),
+
+            /// --- Integrated Submit Button with Loading State ---
+            Obx(() => SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ReusableButton(
+                onTap: _bookingController.isBookingLoading.value ? () {} : _submitBooking,
+                label: _bookingController.isBookingLoading.value ? "Processing..." : "Confirm Booking",
               ),
-
-              const SizedBox(height: AppSizes.sm),
-
-              /// ==================== ADDITIONAL NOTE ====================
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.primaryColor, width: 1.8),
-                ),
-                child: TextFormField(
-                  controller: widget._additionalNoteTEController,
-                  focusNode: _notesFocusNode,
-                  textInputAction: TextInputAction.done,
-                  maxLines: 5,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Additional note",
-                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 120), // Extra space for keyboard
-            ],
-          ),
+            )),
+            const SizedBox(height: 20),
+          ],
         ),
+      ),
+    );
+  }
+
+  // --- Methods ---
+
+  Future<void> _submitBooking() async {
+    if (_selectedTimeLabel == null || _selectedLocation == null || _addressController.text.isEmpty) {
+      Get.snackbar("Required Fields", "Please select a time slot, region, and enter your address.",
+          backgroundColor: Colors.orange, colorText: Colors.white);
+      return;
+    }
+
+    bool success = await _bookingController.confirmBooking(
+      serviceId: widget.service.id,
+      details: widget.additionalNoteTEController.text.trim(),
+      selectedDate: _selectedDate,
+      selectedTimeLabel: _selectedTimeLabel!,
+      region: _selectedLocation!,
+      location: _addressController.text.trim(),
+    );
+
+    if (success) {
+      widget.onSubmitSuccess?.call();
+    }
+  }
+
+  // --- UI Helpers (Calendar and Dropdown from previous steps) ---
+  Widget _buildCalendarHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(color: AppColors.primaryColor, borderRadius: BorderRadius.circular(8)),
+      child: Center(child: Text(DateFormat('MMMM yyyy').format(_selectedDate), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+    );
+  }
+
+  Widget _buildHorizontalCalendar() {
+    return SizedBox(
+      height: 90,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 14,
+        itemBuilder: (context, index) {
+          final date = DateTime.now().add(Duration(days: index));
+          final bool isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month;
+          return GestureDetector(
+            onTap: () => setState(() {
+              _selectedDate = date;
+              _selectedTimeLabel = null;
+            }),
+            child: Container(
+              width: 60,
+              margin: const EdgeInsets.only(right: 10, top: 10, bottom: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primaryColor : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primaryColor),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(DateFormat('E').format(date), style: const TextStyle(fontSize: 12)),
+                  Text(date.day.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRegionDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          hint: const Text("Select Region"),
+          value: _selectedLocation,
+          items: ['north', 'south', 'east', 'west'].map((e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase()))).toList(),
+          onChanged: (v) => setState(() => _selectedLocation = v),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomTextField({required TextEditingController controller, required String label, IconData? icon, int maxLines = 1}) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon != null ? Icon(icon, color: AppColors.primaryColor) : null,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
