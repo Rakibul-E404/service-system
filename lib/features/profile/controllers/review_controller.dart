@@ -4,9 +4,12 @@ import '../../../core/network/network_caller.dart';
 import '../../../core/network/network_response.dart';
 import '../../../core/utils/api/app_url.dart';
 import '../../../core/utils/token_service/token_storage_service.dart';
+import '../model/review_response_model.dart';
+import 'package:flutter/material.dart';
 
 class MyReviewController extends GetxController {
-  RxList<Review> reviews = <Review>[].obs;
+  // Use ReviewModel from your new model classes
+  RxList<ReviewModel> reviews = <ReviewModel>[].obs;
   RxBool isLoading = true.obs;
   RxString errorMessage = ''.obs;
   RxList<Service> services = <Service>[].obs;
@@ -20,15 +23,12 @@ class MyReviewController extends GetxController {
     loadAllServicesAndReviews();
   }
 
-  // Fetch all services and then fetch reviews for each service
   Future<void> loadAllServicesAndReviews() async {
     try {
       isLoading(true);
       errorMessage('');
 
-      // Step 1: Fetch all services
-      final servicesUrl = AppUrl.baseUrl + "/service/all"; // Use correct URL for all services
-
+      final servicesUrl = AppUrl.baseUrl + "/service/all";
       final String? token = await _sharedPrefService.getAccessToken();
       Map<String, String>? headers;
       if (token != null && token.isNotEmpty) {
@@ -47,9 +47,9 @@ class MyReviewController extends GetxController {
           final List<dynamic> servicesData = data['data'];
           services.value = servicesData.map((json) => Service.fromJson(json)).toList();
 
-          // Step 2: Fetch reviews for each service
-          List<Review> allReviews = [];
+          List<ReviewModel> allReviews = [];
           for (var service in services) {
+            // Updated to fetch using the new model logic
             final reviewsList = await fetchReviewsForService(service.id, headers);
             allReviews.addAll(reviewsList);
           }
@@ -69,60 +69,65 @@ class MyReviewController extends GetxController {
       }
     } catch (e) {
       errorMessage.value = 'Something went wrong. Please try again.';
-      print('Error loading services and reviews: $e');
     } finally {
       isLoading(false);
     }
   }
 
-  // Fetch reviews for a specific service
-  Future<List<Review>> fetchReviewsForService(
-      String providerServiceId,
-      Map<String, String>? headers,
-      ) async {
+  /// 🔹 UPDATED: Uses ReviewResponse Model
+  /// 🔹 UPDATED: Handles internal token retrieval if headers are null
+  Future<List<ReviewModel>> fetchReviewsForService(
+      String providerServiceId, [
+        Map<String, String>? headers,
+      ]) async {
     try {
+      isLoading(true); // Start loading state for UI feedback
+
       final url = AppUrl.getReviewsUrl(providerServiceId);
 
+      // If headers aren't provided (like from the Tab click), fetch them now
+      Map<String, String>? finalHeaders = headers;
+      if (finalHeaders == null) {
+        final String? token = await _sharedPrefService.getAccessToken();
+        if (token != null) {
+          finalHeaders = {'Authorization': 'Bearer $token'};
+        }
+      }
+
+      debugPrint('🚀 Fetching Reviews from: $url');
+
       final NetworkResponse response = await _networkCaller.getRequest(
-        url,
-        headers: headers,
+          url,
+          headers: finalHeaders
       );
 
       if (response.isSuccess && response.jsonResponse != null) {
-        final data = response.jsonResponse!['data'];
+        final reviewResponse = ReviewResponse.fromJson(response.jsonResponse!);
 
-        if (data != null && data['data'] != null) {
-          final List<dynamic> reviewData = data['data'];
-          return reviewData.map((json) => Review.fromJson(json)).toList();
-        }
+        // Update the RxList so the UI updates automatically
+        reviews.assignAll(reviewResponse.data.reviews);
+
+        debugPrint('📊 Parsed ${reviews.length} reviews for service: $providerServiceId');
+        return reviews;
+      } else {
+        debugPrint('❌ Review API Failed: ${response.statusCode}');
+        return [];
       }
+    } catch (e, stacktrace) {
+      debugPrint('🔥 Error: $e \n $stacktrace');
       return [];
-    } catch (e) {
-      print('Error fetching reviews for service $providerServiceId: $e');
-      return [];
+    } finally {
+      isLoading(false); // Stop loading state
     }
   }
 
-  // Get average rating
+  // Updated helper methods to use ReviewModel
   double getAverageRating() {
     if (reviews.isEmpty) return 0.0;
-    double total = reviews.fold(0.0, (double sum, Review review) => sum + review.rating);
+    double total = reviews.fold(0.0, (sum, review) => sum + review.rating);
     return total / reviews.length;
   }
 
-  // Get reviews grouped by service
-  Map<String, List<Review>> getReviewsByService() {
-    Map<String, List<Review>> grouped = {};
-    for (var review in reviews) {
-      if (!grouped.containsKey(review.providerServiceId)) {
-        grouped[review.providerServiceId] = [];
-      }
-      grouped[review.providerServiceId]!.add(review);
-    }
-    return grouped;
-  }
-
-  // Get service name by ID
   String getServiceName(String serviceId) {
     try {
       return services.firstWhere((s) => s.id == serviceId).name;
@@ -131,7 +136,6 @@ class MyReviewController extends GetxController {
     }
   }
 }
-
 // Service Model
 class Service {
   final String id;
