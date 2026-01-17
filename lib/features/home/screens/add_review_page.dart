@@ -78,6 +78,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         Get.back();
+        Get.back();
 
         Get.snackbar(
           'Thank You!',
@@ -86,6 +87,8 @@ class _AddReviewPageState extends State<AddReviewPage> {
           colorText: Colors.white,
         );
       } else {
+        print("Hello");
+        print(response.body);
         final Map<String, dynamic> res =
         jsonDecode(response.body);
         throw res['message'] ?? 'Failed to submit review';
