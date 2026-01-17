@@ -494,6 +494,7 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                         onTap: () {
                           debugPrint('🎯 Navigating to services for subcategory: ${subCategory.name}');
 
+
                           Get.toNamed(
                             AppRoutes.servicesRoute,
                             arguments: {
