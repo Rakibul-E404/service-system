@@ -94,11 +94,11 @@ class AppUrl {
   }
 
   // Settings URLs
-  static const String privacyPolicy = '$baseUrl/settings/privacy_policy';
+  static const String privacyPolicy = '$baseUrl/settings/privacyPolicy';
   static const String termsAndConditions = '$baseUrl/settings/termsAndConditions';
-  static const String aboutUs = '$baseUrl/settings/about_us';
-  static const String hostPolicy = '$baseUrl/settings/host_policy';
-  static const String contactUs = '$baseUrl/settings/contact_us';
+  static const String aboutUs = '$baseUrl/settings/about';
+  static const String hostPolicy = '$baseUrl/settings/hostPolicy';
+  static const String contactUs = '$baseUrl/settings/contactUs';
 
   // Home screens URLs
   static const String allCategory = '$baseUrlV1/$version1/category';

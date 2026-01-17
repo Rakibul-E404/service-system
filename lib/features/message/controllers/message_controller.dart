@@ -1084,6 +1084,12 @@ class MessageController extends GetxController {
   // 🔹 ScrollController for automatic scrolling in IndividualChatScreen
   final ScrollController chatScrollController = ScrollController();
 
+
+  String? getOtherUserIdFromList(List<String> userIds) {
+    // Finds the ID in the list that is NOT the logged-in user
+    return userIds.firstWhereOrNull((id) => id != _currentUserId);
+  }
+
   @override
   void onInit() {
     super.onInit();

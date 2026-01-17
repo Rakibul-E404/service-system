@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/config/app_colors.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
 import '../../home/screens/provider_details_screen.dart';
 import '../../profile/screens/report_page.dart';
 import '../controllers/message_controller.dart';
@@ -39,28 +41,56 @@ class IndividualChatScreen extends GetView<MessageController> {
 
           return Row(
             children: <Widget>[
-              CircleAvatar(
-                radius: 18,
-                backgroundImage: imageUrl.isNotEmpty
-                    ? NetworkImage(imageUrl)
-                    : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+              GestureDetector(
+                onTap: () async {
+                  // Get the user role to determine if we should navigate to provider profile
+                  final SharedPrefService sharedPrefService = Get.find<SharedPrefService>();
+                  final String? currentUserRole = await sharedPrefService.getUserRole();
+
+                  // Only allow navigation if the current user is not a provider
+                  if (currentUserRole != 'provider') {
+                    // Check if the other user is a provider by checking their role
+                    // For now, we'll assume if we have their ID, we can navigate to their profile
+                    Get.toNamed(AppRoutes.userProviderDetailsPage, arguments: {'profileId': otherUser.id});
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundImage: imageUrl.isNotEmpty
+                      ? NetworkImage(imageUrl)
+                      : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      otherUser.name,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                child: GestureDetector(
+                  onTap: () async {
+                    // Get the user role to determine if we should navigate to provider profile
+                    final SharedPrefService sharedPrefService = Get.find<SharedPrefService>();
+                    final String? currentUserRole = await sharedPrefService.getUserRole();
 
-                  ],
+                    // Only allow navigation if the current user is not a provider
+                    if (currentUserRole != 'provider') {
+                      // Check if the other user is a provider by checking their role
+                      // For now, we'll assume if we have their ID, we can navigate to their profile
+                      Get.toNamed(AppRoutes.userProviderDetailsPage, arguments: {'profileId': otherUser.id});
+                    }
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        otherUser.name,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                    ],
+                  ),
                 ),
               ),
             ],
