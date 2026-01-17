@@ -41,6 +41,10 @@ class AppUrl {
       '$baseUrl/service/single/$serviceId';
   static const String userConfirmBookingService = '$baseUrl/booking';
 
+  static String userProviderProfile(String profileId) =>
+      '$baseUrl/service/provider/$profileId';
+
+
 
 
 

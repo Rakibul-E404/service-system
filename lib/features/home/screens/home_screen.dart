@@ -38,16 +38,6 @@ class HomeScreen extends StatelessWidget {
     final GlobalKey<InquiryBottomSheetState> inquirySheetKey =
     GlobalKey<InquiryBottomSheetState>();
 
-    // ✅ Now includes both category and subcategory
-    final Map<int, Map<String, String>> imageIndexToSearchMap = {
-      0: {'category': 'Cleaning', 'subcategory': 'Home Cleaning'},
-      1: {'category': 'Gardening', 'subcategory': 'Garden Maintenance'},
-      2: {'category': 'Electrical', 'subcategory': 'Electrical Services'},
-      3: {'category': 'Plumbing', 'subcategory': 'Plumbing Services'},
-      4: {'category': 'Painting', 'subcategory': 'Painting Services'},
-      5: {'category': 'Carpentry', 'subcategory': 'Carpentry Services'},
-      6: {'category': 'Moving', 'subcategory': 'Moving Services'},
-    };
 
     return Scaffold(
       body: RefreshIndicator(
