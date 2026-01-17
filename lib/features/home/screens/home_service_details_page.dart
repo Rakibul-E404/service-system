@@ -492,37 +492,39 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
         onTap: () {
           if (service == null) return;
 
-          // Use the modal but remove the default footer button
-          CustomModalBottomSheet.show(
-            title: 'Book A Slot',
-            height: context.screenHeight * 0.9,
+          showModalBottomSheet(
             context: context,
-            // REMOVED: buttonText and onButtonPressed logic moved inside the child
-            buttonText: '',
-            onButtonPressed: () {},
-            child: BookingBottomSheet(
-              service: service,
-              dateTEController: _dateTEController,
-              timeController: timeController,
-              additionalNoteTEController: _additionalNoteTEController,
-              preSelectedServiceId: service.id,
-              preSelectedDate: DateTime.now(),
-              onSubmitSuccess: () {
-                // This is called when the internal button in BookingBottomSheet succeeds
-                Get.back(); // Closes the BottomSheet
-                Get.snackbar(
-                  'Success',
-                  'Booking submitted successfully!',
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                );
-              },
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => FractionallySizedBox(
+              heightFactor: 0.9,
+              child: BookingBottomSheet(
+                service: service,
+                dateTEController: _dateTEController,
+                timeController: timeController,
+                additionalNoteTEController: _additionalNoteTEController,
+                preSelectedServiceId: service.id,
+                preSelectedDate: DateTime.now(),
+                onSubmitSuccess: () {
+                  Get.back(); // Close bottom sheet
+                  Get.snackbar(
+                    'Success',
+                    'Booking submitted successfully!',
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                },
+              ),
             ),
           );
         },
         label: "Book A Slot",
       ),
     );
-  }}
+  }
+
+}
 
