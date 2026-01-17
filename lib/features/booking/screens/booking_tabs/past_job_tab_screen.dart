@@ -125,6 +125,8 @@ class PastJobTab extends StatelessWidget {
         }
 
         final Map<String, dynamic> job = controller.pastJobs[index];
+        print("AMi TOky");
+        print(job);
         return _buildJobCard(job);
       },
     );

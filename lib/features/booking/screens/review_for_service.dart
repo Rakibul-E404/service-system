@@ -293,7 +293,7 @@ class ReviewForServiceScreen extends GetView<ReviewController> {
 
                       Obx(
                             () => Column(
-                          children: [
+                          children: <Widget>[
                             RatingBar(
                               filledIcon: CupertinoIcons.star_fill,
                               filledColor: AppColors.primaryColor,
@@ -357,7 +357,7 @@ class ReviewForServiceScreen extends GetView<ReviewController> {
                           : ReusableButton(
                         label: 'Submit Review',
                         onTap: () async {
-                          final success = await reviewController.submitReview(bookingId);
+                          final bool success = await reviewController.submitReview(bookingId);
                           if (success) {
                             // Show success dialog
                             await Get.dialog(
@@ -367,7 +367,7 @@ class ReviewForServiceScreen extends GetView<ReviewController> {
                                 ),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: [
+                                  children: <Widget>[
                                     const Icon(
                                       Icons.check_circle,
                                       color: Colors.green,
