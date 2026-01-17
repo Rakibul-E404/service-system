@@ -6,6 +6,8 @@ import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 
+import '../../../core/routes/app_routes.dart';
+
 // ==============================================
 // MODEL: Advertisement Model
 // ==============================================
@@ -15,12 +17,14 @@ class Advertisement {
   final String title; // Fallback only (not in API)
   final String image; // Mapped from 'content'
   final String profileId; // Mapped from 'profileId'
+  final String author;
 
   Advertisement({
     required this.id,
     required this.title,
     required this.image,
     required this.profileId,
+    required this.author,
   });
 
   factory Advertisement.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,7 @@ class Advertisement {
       title: 'Sponsored Ad', // API doesn't provide title
       image: json['content']?.toString() ?? '',
       profileId: json['profileId']?.toString() ?? '',
+      author: json['author']?.toString() ?? '',
     );
   }
 
@@ -197,14 +202,55 @@ class AdvertisementsSection extends StatelessWidget {
     if (controller.isLoading.value && !controller.hasAdvertisements) {
       return _buildLoading();
     }
-    if (controller.errorMessage.isNotEmpty) {
+
+    // ✅ FIX: Use .value to check the actual string content
+    if (controller.errorMessage.value.isNotEmpty) {
       return _buildError(controller);
     }
+
     if (!controller.hasAdvertisements) {
       return _buildEmpty(controller);
     }
+
     return _buildCarousel(controller);
   }
+
+  Widget _buildError(AdvertisementController controller) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal, vertical: AppSizes.lg),
+      padding: const EdgeInsets.all(AppSizes.lg),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error, color: Colors.red.shade400, size: 48),
+          const SizedBox(height: AppSizes.md),
+
+          // ✅ FIX: Access the string value directly, remove "as String"
+          Text(
+              controller.errorMessage.value,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.red.shade700)
+          ),
+
+          const SizedBox(height: AppSizes.md),
+          ElevatedButton.icon(
+            onPressed: controller.retryFetch,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildLoading() {
     return Container(
@@ -228,34 +274,6 @@ class AdvertisementsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildError(AdvertisementController controller) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal, vertical: AppSizes.lg),
-      padding: const EdgeInsets.all(AppSizes.lg),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.shade100),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.error, color: Colors.red.shade400, size: 48),
-          const SizedBox(height: AppSizes.md),
-          Text(controller.errorMessage as String, textAlign: TextAlign.center, style: TextStyle(color: Colors.red.shade700)),
-          const SizedBox(height: AppSizes.md),
-          ElevatedButton.icon(
-            onPressed: controller.retryFetch,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmpty(AdvertisementController controller) {
     return Container(
@@ -334,14 +352,33 @@ class AdvertisementsSection extends StatelessWidget {
 
   Widget _buildAdCard(Advertisement ad) {
     return GestureDetector(
-      onTap: () => Get.snackbar('Advertisement', 'Ad tapped', backgroundColor: AppColors.primaryColor.withOpacity(0.9), colorText: Colors.white),
+      onTap: () {
+        if (ad.author.isNotEmpty) {
+          Get.toNamed(
+            AppRoutes.userProviderDetailsPage, // Use your actual route name for UserProviderProfilePage
+            arguments: {'profileId': ad.author},
+          );
+        } else {
+          Get.snackbar(
+            'Notice',
+            'Provider profile not available',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+        }
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: ClipRRect(
@@ -361,12 +398,25 @@ class AdvertisementsSection extends StatelessWidget {
                         color: AppColors.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text('AD', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryColor)),
+                      child: const Text(
+                        'AD',
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryColor
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(ad.title, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                          ad.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis
+                      ),
                     ),
+                    const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
                   ],
                 ),
               ),
@@ -376,6 +426,7 @@ class AdvertisementsSection extends StatelessWidget {
       ),
     );
   }
+
 
   Widget _buildImage(String url) {
     if (url.isEmpty) {
