@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/features/profile/screens/provider_booking_bottom_sheet.dart';
 import '../../../core/common/components/custom_network_image.dart';
 import '../../../core/common/widgets/reusable_button.dart';
@@ -141,6 +143,14 @@ class _UserProviderProfilePageState extends State<UserProviderProfilePage> {
                           onSubmitSuccess: () {
                             Get.back();
                             Get.snackbar("Success", "Booking request sent!");
+
+                            // Store flags to indicate we should navigate to booking tab and then active jobs tab
+                            GetStorage storage = GetStorage();
+                            storage.write('should_navigate_to_booking_after_home', true);
+                            storage.write('should_navigate_to_active_jobs', true);
+
+                            // Navigate to main bottom nav first
+                            Get.toNamed(AppRoutes.mainBottomNavPage);
                           },
                         ),
                       ),
