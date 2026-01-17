@@ -301,7 +301,7 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
             ),
           );
         },
-        label: "Book A Slot",
+        label: "Book A Slot ",
       ),
     );
   }
