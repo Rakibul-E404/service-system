@@ -17,9 +17,9 @@ class HomeTopBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        boxShadow: [
+        boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -41,11 +41,11 @@ class HomeTopBar extends StatelessWidget {
               children: <Widget>[
                 // Profile Image - Use GetBuilder instead of Obx
                 GetBuilder<ProfileController>(
-                  builder: (controller) {
-                    final imageUrl = controller.getImageUrl();
+                  builder: (ProfileController controller) {
+                    final String imageUrl = controller.getImageUrl();
                     return GestureDetector(
                       onTap: () {
-                        Get.toNamed(AppRoutes.profilePage);
+                        Get.toNamed(AppRoutes.personalProfileInformationPage);
                       },
                       child: CircleAvatar(
                         radius: 22, // Reduced from AppSizes.xl
@@ -71,7 +71,7 @@ class HomeTopBar extends StatelessWidget {
                       height: 40, // Fixed height
                       decoration: BoxDecoration(
                         color: AppColors.whiteColor,
-                        border: Border.all(color: AppColors.greyColor.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.greyColor.withValues(alpha: 0.3)),
                         borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                       ),
                       child: IconButton(
@@ -93,7 +93,7 @@ class HomeTopBar extends StatelessWidget {
                       height: 40, // Fixed height
                       decoration: BoxDecoration(
                         color: AppColors.whiteColor,
-                        border: Border.all(color: AppColors.greyColor.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.greyColor.withValues(alpha: 0.3)),
                         borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                       ),
                       child: IconButton(
