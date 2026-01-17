@@ -28,7 +28,7 @@ class AppUrl {
 
   static const String getBusinessProfile = '$baseUrl/business_profile/self';
   static const String featuredProviders = '$baseUrlV1/$version1/business_profile/featured-providers';
-  static const String putAvailabilityPart = '$baseUrl//business_profile/ability';
+  static const String putAvailabilityPart = '$baseUrl/business_profile/ability';
   static const String updateBusinessProfile = '$baseUrl/business_profile';
   static const String createService = '$baseUrl/service/';
   static const String subCategorySelfService = '$baseUrl/service/self';
@@ -136,6 +136,10 @@ class AppUrl {
 
   static String addFavoriteUrl(String serviceId) {
     return '$baseUrlV1/$version1/favorite/$serviceId';
+  }
+
+  static String favToDetail(String serviceId) {
+    return '$baseUrlV1/$version1/service/single/$serviceId';
   }
 
   static String deleteFavoriteUrl(String serviceId) {
