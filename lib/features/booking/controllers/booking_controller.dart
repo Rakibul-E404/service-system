@@ -135,6 +135,9 @@ class BookingScreenController extends GetxController
 
   final ProfileService profileService = Get.find<ProfileService>();
 
+  // Reactive variable to control navigation to active jobs tab
+  final RxBool navigateToActiveJobsTab = false.obs;
+
   // Tab Controllers
   final QuoteController quoteController = Get.put(QuoteController());
   final ActiveJobController activeController = Get.put(ActiveJobController());
@@ -148,6 +151,18 @@ class BookingScreenController extends GetxController
     tabController = TabController(length: 4, vsync: this);
 
     tabController.addListener(_handleTabChange);
+
+    // Listen for navigation requests to active jobs tab
+    ever(navigateToActiveJobsTab, (shouldNavigate) {
+      if (shouldNavigate) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          tabController.animateTo(1); // Switch to Active Job tab (index 1)
+          activeController.refreshActiveJobs(); // Refresh active jobs
+          // Reset the flag after navigation
+          navigateToActiveJobsTab.value = false;
+        });
+      }
+    });
 
     // Initial fetch after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -182,6 +197,7 @@ class BookingScreenController extends GetxController
     ongoingController.fetchOngoingJobs();
     pastController.fetchPastJobs();
   }
+
 
   @override
   void onClose() {

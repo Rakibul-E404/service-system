@@ -233,16 +233,20 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 import 'package:manx_mate/core/common/widgets/reusable_button.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/features/booking/screens/booking_screen_controller.dart';
+import 'package:manx_mate/features/booking/screens/booking_tabs/tab_controllers/active_job_tab_controller.dart';
 import 'package:manx_mate/features/home/controllers/home_service_details_controller.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../booking/controllers/booking_controller.dart';
 import '../../favorite/controllers/favorite_controller.dart';
 import '../controllers/service_controller.dart';
 import '../model/single_service_model.dart';
@@ -516,6 +520,19 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
                     backgroundColor: Colors.green,
                     colorText: Colors.white,
                   );
+
+                  // Navigate to the booking screen and show the ActiveJobTab
+                  // Store a flag to indicate we should navigate to active jobs after booking
+                  GetStorage storage = GetStorage();
+                  storage.write('should_navigate_to_active_jobs', true);
+
+                  // Navigate to main bottom nav first
+                  Get.toNamed(AppRoutes.mainBottomNavPage);
+
+                  // After a delay, navigate to booking screen
+                  Future.delayed(const Duration(milliseconds: 800), () {
+                    Get.toNamed(AppRoutes.bookingPage);
+                  });
                 },
               ),
             ),
