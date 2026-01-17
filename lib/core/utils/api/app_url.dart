@@ -39,6 +39,8 @@ class AppUrl {
       '$baseUrl/subscription-purchase/$planId/direct';
   static String singleService(String serviceId) =>
       '$baseUrl/service/single/$serviceId';
+  static const String userConfirmBookingService = '$baseUrl/booking';
+
 
 
 
@@ -89,7 +91,7 @@ class AppUrl {
 
   // Settings URLs
   static const String privacyPolicy = '$baseUrl/settings/privacy_policy';
-  static const String termsAndConditions = '$baseUrl/settings/terms_and_conditions';
+  static const String termsAndConditions = '$baseUrl/settings/termsAndConditions';
   static const String aboutUs = '$baseUrl/settings/about_us';
   static const String hostPolicy = '$baseUrl/settings/host_policy';
   static const String contactUs = '$baseUrl/settings/contact_us';
