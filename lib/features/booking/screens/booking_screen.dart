@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../core/config/app_colors.dart';
 import '../../home/widget/home_top_bar.dart';
 import '../controllers/booking_controller.dart';
@@ -15,6 +16,21 @@ class BookingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final BookingScreenController controller =
     Get.put(BookingScreenController());
+
+    // Check if we should navigate to active jobs tab after booking
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GetStorage storage = GetStorage();
+      bool? shouldNavigate = storage.read('should_navigate_to_active_jobs');
+      if (shouldNavigate == true) {
+        // Reset the flag
+        storage.write('should_navigate_to_active_jobs', false);
+        // Navigate to active jobs tab after a short delay to ensure UI is ready
+        Future.delayed(const Duration(milliseconds: 300), () {
+          controller.tabController.animateTo(1); // Switch to Active Job tab (index 1)
+          controller.activeController.refreshActiveJobs(); // Refresh active jobs
+        });
+      }
+    });
 
     return Scaffold(
       body: SafeArea(

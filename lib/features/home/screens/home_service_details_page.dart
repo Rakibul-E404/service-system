@@ -233,16 +233,20 @@ class HomeServiceDetailsPage extends GetView<HomeServiceDetailsController> {
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 import 'package:manx_mate/core/common/widgets/reusable_button.dart';
 import 'package:manx_mate/core/config/app_colors.dart';
 import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
+import 'package:manx_mate/features/booking/screens/booking_screen_controller.dart';
+import 'package:manx_mate/features/booking/screens/booking_tabs/tab_controllers/active_job_tab_controller.dart';
 import 'package:manx_mate/features/home/controllers/home_service_details_controller.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/time_picker_widget.dart';
 import '../../../core/utils/api/app_url.dart';
+import '../../booking/controllers/booking_controller.dart';
 import '../../favorite/controllers/favorite_controller.dart';
 import '../controllers/service_controller.dart';
 import '../model/single_service_model.dart';
@@ -492,37 +496,48 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
         onTap: () {
           if (service == null) return;
 
-          // Use the modal but remove the default footer button
-          CustomModalBottomSheet.show(
-            title: 'Book A Slot',
-            height: context.screenHeight * 0.9,
+          showModalBottomSheet(
             context: context,
-            // REMOVED: buttonText and onButtonPressed logic moved inside the child
-            buttonText: '',
-            onButtonPressed: () {},
-            child: BookingBottomSheet(
-              service: service,
-              dateTEController: _dateTEController,
-              timeController: timeController,
-              additionalNoteTEController: _additionalNoteTEController,
-              preSelectedServiceId: service.id,
-              preSelectedDate: DateTime.now(),
-              onSubmitSuccess: () {
-                // This is called when the internal button in BookingBottomSheet succeeds
-                Get.back(); // Closes the BottomSheet
-                Get.snackbar(
-                  'Success',
-                  'Booking submitted successfully!',
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                );
-              },
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => FractionallySizedBox(
+              heightFactor: 0.9,
+              child: BookingBottomSheet(
+                service: service,
+                dateTEController: _dateTEController,
+                timeController: timeController,
+                additionalNoteTEController: _additionalNoteTEController,
+                preSelectedServiceId: service.id,
+                preSelectedDate: DateTime.now(),
+                onSubmitSuccess: () {
+                  Get.back(); // Close bottom sheet
+                  Get.snackbar(
+                    'Success',
+                    'Booking submitted successfully!',
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+
+                  // Navigate to the booking screen and show the ActiveJobTab
+                  // Store flags to indicate we should navigate to booking tab and then active jobs tab
+                  GetStorage storage = GetStorage();
+                  storage.write('should_navigate_to_booking_after_home', true);
+                  storage.write('should_navigate_to_active_jobs', true);
+
+                  // Navigate to main bottom nav first
+                  Get.toNamed(AppRoutes.mainBottomNavPage);
+                },
+              ),
             ),
           );
         },
         label: "Book A Slot",
       ),
     );
-  }}
+  }
+
+}
 
