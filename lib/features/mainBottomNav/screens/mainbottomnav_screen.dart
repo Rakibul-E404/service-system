@@ -2,6 +2,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:manx_mate/features/booking/screens/booking_screen.dart';
 import 'package:manx_mate/features/favorite/screens/favorite_screen.dart';
 import 'package:manx_mate/features/home/screens/home_screen.dart';
@@ -46,6 +47,23 @@ class _MainBottomNavScreenState extends State<MainBottomNavScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if we should navigate to booking tab after booking
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GetStorage storage = GetStorage();
+      bool? shouldNavigateToBooking = storage.read('should_navigate_to_booking_after_home');
+      if (shouldNavigateToBooking == true) {
+        // Reset the flag
+        storage.write('should_navigate_to_booking_after_home', false);
+        // Navigate to booking tab (index 1) after a short delay to ensure UI is ready
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _pageController.jumpToPage(1); // Jump to booking tab (index 1)
+          setState(() {
+            selectedIndex = 1;
+          });
+        });
+      }
+    });
+
     return Scaffold(
       body: PageView.builder(
         controller: _pageController,

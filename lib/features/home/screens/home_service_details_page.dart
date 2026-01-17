@@ -522,17 +522,13 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
                   );
 
                   // Navigate to the booking screen and show the ActiveJobTab
-                  // Store a flag to indicate we should navigate to active jobs after booking
+                  // Store flags to indicate we should navigate to booking tab and then active jobs tab
                   GetStorage storage = GetStorage();
+                  storage.write('should_navigate_to_booking_after_home', true);
                   storage.write('should_navigate_to_active_jobs', true);
 
                   // Navigate to main bottom nav first
                   Get.toNamed(AppRoutes.mainBottomNavPage);
-
-                  // After a delay, navigate to booking screen
-                  Future.delayed(const Duration(milliseconds: 800), () {
-                    Get.toNamed(AppRoutes.bookingPage);
-                  });
                 },
               ),
             ),
