@@ -181,12 +181,12 @@ class AppNavigation {
       transition: Transition.rightToLeft,
       binding: ProfileBinding(),
     ),
-    GetPage<dynamic>(
-      name: AppRoutes.myReviewPage,
-      page: () => const MyReviewRatingsPage(),
-      transition: Transition.rightToLeft,
-      binding: ProfileBinding(),
-    ),
+    // GetPage<dynamic>(
+    //   name: AppRoutes.myReviewPage,
+    //   page: () => const MyReviewRatingsPage(),
+    //   transition: Transition.rightToLeft,
+    //   binding: ProfileBinding(),
+    // ),
     GetPage<dynamic>(
       name: AppRoutes.changePasswordPage,
       page: () => const ChangePassword(),

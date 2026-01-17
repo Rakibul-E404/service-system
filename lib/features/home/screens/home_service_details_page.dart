@@ -248,6 +248,7 @@ import '../../../core/common/widgets/time_picker_widget.dart';
 import '../../../core/utils/api/app_url.dart';
 import '../../booking/controllers/booking_controller.dart';
 import '../../favorite/controllers/favorite_controller.dart';
+import '../../profile/controllers/review_controller.dart';
 import '../controllers/service_controller.dart';
 import '../model/single_service_model.dart';
 import '../widget/booking_bottom_sheet.dart';
@@ -259,21 +260,49 @@ class HomeServiceDetailsPage extends StatefulWidget {
   State<HomeServiceDetailsPage> createState() => _HomeServiceDetailsPageState();
 }
 
-class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
+class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage>
+    with SingleTickerProviderStateMixin {
   final ServicesController servicesController = Get.find<ServicesController>();
   final FavoriteController favoriteController = Get.find<FavoriteController>();
   final TimeController timeController = Get.put(TimeController());
 
+  // Register or Find Review Controller
+  final MyReviewController reviewController = Get.isRegistered<MyReviewController>()
+      ? Get.find<MyReviewController>()
+      : Get.put(MyReviewController());
+
+  late TabController _tabController;
   final TextEditingController _additionalNoteTEController = TextEditingController();
   final TextEditingController _dateTEController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
     final String serviceId = Get.arguments['serviceId'] ?? '';
+
+    // Initial fetch for service details
     if (serviceId.isNotEmpty) {
       servicesController.fetchSingleService(serviceId);
     }
+
+    // 🔹 Trigger review fetch ONLY when switching to the Review Tab
+    _tabController.addListener(() {
+      if (_tabController.index == 1 && !_tabController.indexIsChanging) {
+        if (serviceId.isNotEmpty) {
+          reviewController.fetchReviewsForService(serviceId, null);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _additionalNoteTEController.dispose();
+    _dateTEController.dispose();
+    super.dispose();
   }
 
   @override
@@ -291,113 +320,189 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
           }
 
           final service = servicesController.singleServiceDetails.value;
-
           if (service == null) {
             return const Center(child: Text("Service details not found."));
           }
 
           final profile = service.profileDetails;
-          final subCategory = service.subCategory;
           final isFav = servicesController.isServiceFavorited(service.id);
-          final access = service.accessibleBySubscription;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: const Icon(CupertinoIcons.back),
-                    ),
-                    IconButton(
-                      onPressed: () => favoriteController.toggleFavorite(service.id),
-                      icon: Icon(
-                        isFav ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                        color: isFav ? Colors.red : null,
+          return Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeaderActions(isFav, service.id),
+                      _buildServiceImage(profile.image),
+                      const SizedBox(height: AppSizes.md),
+                      _buildTitleAndContacts(profile.name, service.accessibleBySubscription),
+                      const SizedBox(height: AppSizes.sm),
+                      Text(service.subCategory.name),
+                      _buildDetailRow(Icons.location_on_outlined, profile.location),
+                      _buildDetailRow(Icons.phone_outlined, profile.phone),
+                      _buildDetailRow(Icons.star_outline,
+                          "${profile.averageRating} (${profile.totalReviews} Ratings)"),
+                      const SizedBox(height: AppSizes.md),
+                      _buildStaticServiceDropdown(service.subCategory.name),
+                      const SizedBox(height: AppSizes.md),
+                      Text('Service Provider', style: context.txtTheme.titleLarge),
+                      const SizedBox(height: AppSizes.sm),
+                      _buildProviderCard(context, service),
+                      const SizedBox(height: AppSizes.md),
+
+                      // --- Tab Bar ---
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: AppColors.primaryColor,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: AppColors.primaryColor,
+                        indicatorWeight: 3,
+                        tabs: const [
+                          Tab(text: "Description"),
+                          Tab(text: "Reviews"),
+                        ],
                       ),
-                    ),
-                  ],
+
+                      // --- Tab View Content ---
+                      // We use Obx here so the Review List reacts to the fetch state
+                      Obx(() => SizedBox(
+                        height: _calculateTabHeight(),
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            // Tab 1: Description
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              child: Text(profile.description,
+                                  style: const TextStyle(height: 1.5)),
+                            ),
+                            // Tab 2: Reviews
+                            _buildReviewList(service.id),
+                          ],
+                        ),
+                      )),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
                 ),
-
-                const SizedBox(height: AppSizes.md),
-                CustomCachedImage(
-                  imageUrl: profile.image.startsWith('http')
-                      ? profile.image
-                      : "${AppUrl.imageBaseUrl}/${profile.image}",
-                  width: context.screenWidth,
-                  height: context.screenHeight * 0.4,
-                ),
-                const SizedBox(height: AppSizes.md),
-
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(profile.name, style: context.txtTheme.titleLarge),
-                    ),
-                    _buildContactIcons(access),
-                  ],
-                ),
-
-                const SizedBox(height: AppSizes.sm),
-                Text(service.subCategory.name),
-
-                _buildDetailRow(Icons.location_on_outlined, profile.location),
-                _buildDetailRow(Icons.phone_outlined, profile.phone),
-                _buildDetailRow(
-                    Icons.star_outline,
-                    "${profile.averageRating} (${profile.totalReviews} Ratings)"
-                ),
-
-                const SizedBox(height: AppSizes.md),
-                _buildStaticServiceDropdown(subCategory.name),
-                const SizedBox(height: AppSizes.md),
-                Text('Service Provider', style: context.txtTheme.titleLarge),
-                const SizedBox(height: AppSizes.sm),
-                _buildProviderCard(context, service),
-                const SizedBox(height: AppSizes.md),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(
-                      "Description",
-                      style: context.txtTheme.headlineMedium?.copyWith(
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text("Review", style: TextStyle(color: AppColors.primaryColor)),
-                    ),
-                  ],
-                ),
-                const Divider(color: AppColors.primaryColor, thickness: 2),
-                Text(profile.description),
-
-                const SizedBox(height: 100),
-              ],
-            ),
+              ),
+            ],
           );
         }),
       ),
     );
   }
 
-  // --- Helper Widgets ---
+  // Dynamic height calculation for the TabBarView area
+  double _calculateTabHeight() {
+    // If reviews are loading or present, give it more space
+    if (reviewController.isLoading.value) return 200.0;
+    if (reviewController.reviews.isNotEmpty && _tabController.index == 1) {
+      return (reviewController.reviews.length * 120.0).clamp(300.0, 800.0);
+    }
+    return 400.0;
+  }
 
-  Widget _buildContactIcons(List<String> access) {
+  Widget _buildReviewList(String serviceId) {
+    if (reviewController.isLoading.value) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Note: Adjusting filter logic to check if current list matches this service
+    if (reviewController.reviews.isEmpty) {
+      return const Center(
+          child: Padding(
+            padding: EdgeInsets.only(top: 20),
+            child: Text("No reviews for this service yet."),
+          ));
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: reviewController.reviews.length,
+      separatorBuilder: (_, __) => const Divider(),
+      itemBuilder: (context, index) {
+        final review = reviewController.reviews[index];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(review.author.image.startsWith('http')
+                      ? review.author.image
+                      : "${AppUrl.imageBaseUrl}/${review.author.image}"),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(review.author.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(review.formattedDate,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: List.generate(
+                      5,
+                          (i) => Icon(
+                        Icons.star,
+                        size: 16,
+                        color: i < review.rating ? Colors.amber : Colors.grey[300],
+                      )),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(review.description),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- Utility Component Builders ---
+
+  Widget _buildHeaderActions(bool isFav, String serviceId) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: <Widget>[
-        if (access.contains('Call')) const Icon(Icons.call, size: 26),
-        const SizedBox(width: 12),
-        if (access.contains('Email')) const Icon(Icons.email, size: 26),
-        const SizedBox(width: 12),
-        if (access.contains('Messaging')) const Icon(CupertinoIcons.chat_bubble_fill, size: 26),
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(onPressed: () => Get.back(), icon: const Icon(CupertinoIcons.back)),
+        IconButton(
+          onPressed: () => favoriteController.toggleFavorite(serviceId),
+          icon: Icon(isFav ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+              color: isFav ? Colors.red : null),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildServiceImage(String imageUrl) {
+    return CustomCachedImage(
+      imageUrl: imageUrl.startsWith('http') ? imageUrl : "${AppUrl.imageBaseUrl}/$imageUrl",
+      width: double.infinity,
+      height: 250,
+    );
+  }
+
+  Widget _buildTitleAndContacts(String name, List<String> access) {
+    return Row(
+      children: [
+        Expanded(child: Text(name, style: context.txtTheme.titleLarge)),
+        if (access.contains('Call')) const Icon(Icons.call, size: 22),
+        const SizedBox(width: 8),
+        if (access.contains('Email')) const Icon(Icons.email, size: 22),
+        const SizedBox(width: 8),
+        if (access.contains('Messaging'))
+          const Icon(CupertinoIcons.chat_bubble_fill, size: 22),
       ],
     );
   }
@@ -406,9 +511,9 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
     return Padding(
       padding: const EdgeInsets.only(top: 4.0),
       child: Row(
-        spacing: 8,
         children: <Widget>[
           Icon(icon, size: 18),
+          const SizedBox(width: 8),
           Text(text),
         ],
       ),
@@ -430,7 +535,8 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
           const SizedBox(width: 12),
           Text(
             serviceName,
-            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textBlackColor),
+            style:
+            const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textBlackColor),
           ),
           const Spacer(),
           const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryColor),
@@ -449,7 +555,6 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
           color: AppColors.primaryColor.withOpacity(0.1),
         ),
         child: Row(
-          spacing: AppSizes.md,
           children: <Widget>[
             CustomCachedImage(
               imageUrl: service.profileDetails.image.startsWith('http')
@@ -458,6 +563,7 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
               height: 70,
               width: 70,
             ),
+            const SizedBox(width: AppSizes.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,7 +601,6 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
       child: ReusableButton(
         onTap: () {
           if (service == null) return;
-
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -513,21 +618,12 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
                 preSelectedServiceId: service.id,
                 preSelectedDate: DateTime.now(),
                 onSubmitSuccess: () {
-                  Get.back(); // Close bottom sheet
-                  Get.snackbar(
-                    'Success',
-                    'Booking submitted successfully!',
-                    backgroundColor: Colors.green,
-                    colorText: Colors.white,
-                  );
-
-                  // Navigate to the booking screen and show the ActiveJobTab
-                  // Store flags to indicate we should navigate to booking tab and then active jobs tab
+                  Get.back();
+                  Get.snackbar('Success', 'Booking submitted successfully!',
+                      backgroundColor: Colors.green, colorText: Colors.white);
                   GetStorage storage = GetStorage();
                   storage.write('should_navigate_to_booking_after_home', true);
                   storage.write('should_navigate_to_active_jobs', true);
-
-                  // Navigate to main bottom nav first
                   Get.toNamed(AppRoutes.mainBottomNavPage);
                 },
               ),
@@ -538,6 +634,4 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage> {
       ),
     );
   }
-
 }
-
