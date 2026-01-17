@@ -59,4 +59,8 @@ class AppRoutes {
   static const String changePasswordPage = "/change-password-screen";
   static const String privacyPolicyTemplatePage = "/privacy-policy-template-screen";
   static const String reportPage = "/report-screen";
+
+
+  static const String userProviderDetailsPage = "/userProviderDetailsPage";
+
 }

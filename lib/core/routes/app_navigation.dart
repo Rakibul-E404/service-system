@@ -42,6 +42,7 @@ import '../../features/home/controllers/sub_categories_controller.dart';
 import '../../features/home/screens/home_search_screen.dart';
 import '../../features/home/screens/service_page.dart';
 import '../../features/profile/controllers/privacy_policy_screen_controller.dart';
+import '../../features/profile/screens/user_provider_profile_page.dart';
 import '../../features/provider/screens/provider_profile_page.dart';
 import 'app_routes.dart';
 
@@ -263,5 +264,10 @@ class AppNavigation {
       transition: Transition.circularReveal,
       binding: SplashScreenBinding(),
     ),
+
+    GetPage<dynamic>(
+      name: AppRoutes.userProviderDetailsPage,
+      page: () => const UserProviderProfilePage(),
+          ),
   ];
 }

@@ -49,8 +49,8 @@ class _ProviderBookingBottomSheetState extends State<ProviderBookingBottomSheet>
 
   @override
   Widget build(BuildContext context) {
-    // Get the day of the week (e.g., "monday", "tuesday") to match your Map keys
-    final String dayKey = DateFormat('EEEE').format(_selectedDate).toLowerCase();
+
+    final String dayKey = DateFormat('EEEE').format(_selectedDate);
     final AvailabilityDay? availability = widget.providerProfile.availability[dayKey];
     final List<String> slots = _getAvailableSlots(availability);
 
