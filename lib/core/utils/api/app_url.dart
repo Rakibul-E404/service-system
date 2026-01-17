@@ -115,6 +115,10 @@ class AppUrl {
   }
 
   // Reviews URL
+  static String addReviewsUrl(String serviceId) {
+    return '$baseUrlV1/$version1/review/$serviceId';
+  }
+
   static String getReviewsUrl(String providerServiceId) {
     return '$baseUrl/review/all/$providerServiceId';
   }
