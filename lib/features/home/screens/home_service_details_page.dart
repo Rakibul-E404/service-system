@@ -538,8 +538,8 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage>
             style:
             const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textBlackColor),
           ),
-          const Spacer(),
-          const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryColor),
+          // const Spacer(),
+          // const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryColor),
         ],
       ),
     );
