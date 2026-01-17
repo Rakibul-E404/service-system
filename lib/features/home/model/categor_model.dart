@@ -1,10 +1,14 @@
 import '../../../core/utils/api/app_url.dart';
 
+/// =======================
+/// Category Model
+/// =======================
 class CategoryModel {
   final String id;
   final String name;
   final String description;
   final String image;
+  final String? bannerImage;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -13,17 +17,18 @@ class CategoryModel {
     required this.name,
     required this.description,
     required this.image,
+    this.bannerImage,
     this.createdAt,
     this.updatedAt,
   });
 
-  // Convert JSON to CategoryModel
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       image: json['image'] ?? '',
+      bannerImage: json['bannerImage'],
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'])
           : null,
@@ -33,32 +38,41 @@ class CategoryModel {
     );
   }
 
-  // Convert CategoryModel to JSON
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
       'name': name,
       'description': description,
       'image': image,
+      if (bannerImage != null) 'bannerImage': bannerImage,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 
-  // Get full image URL
+  /// Full category image URL
   String get fullImageUrl {
     if (image.isEmpty) return '';
     if (image.startsWith('http')) return image;
 
-    String cleanPath = image;
-    if (cleanPath.startsWith('/')) {
-      cleanPath = cleanPath.substring(1);
-    }
+    final cleanPath = image.startsWith('/') ? image.substring(1) : image;
+    return '${AppUrl.imageBaseUrl}/$cleanPath';
+  }
+
+  /// Full banner image URL
+  String get fullBannerImageUrl {
+    if (bannerImage == null || bannerImage!.isEmpty) return '';
+    if (bannerImage!.startsWith('http')) return bannerImage!;
+
+    final cleanPath =
+    bannerImage!.startsWith('/') ? bannerImage!.substring(1) : bannerImage!;
     return '${AppUrl.imageBaseUrl}/$cleanPath';
   }
 }
 
-// Pagination model
+/// =======================
+/// Pagination Model
+/// =======================
 class Pagination {
   final int page;
   final int limit;
@@ -91,7 +105,9 @@ class Pagination {
   }
 }
 
-// Response wrapper for API
+/// =======================
+/// Category API Response
+/// =======================
 class CategoryResponse {
   final bool success;
   final int code;
@@ -111,28 +127,25 @@ class CategoryResponse {
     List<CategoryModel> categoryList = [];
     Pagination? paginationData;
 
-    // Handle nested data structure: data -> data -> array
-    if (json['data'] != null) {
-      var outerData = json['data'];
+    final outerData = json['data'];
 
-      if (outerData is Map<String, dynamic>) {
-        // Extract the inner data array
-        if (outerData['data'] != null && outerData['data'] is List) {
-          categoryList = (outerData['data'] as List)
-              .map((item) => CategoryModel.fromJson(item as Map<String, dynamic>))
-              .toList();
-        }
-
-        // Extract pagination if exists
-        if (outerData['pagination'] != null && outerData['pagination'] is Map<String, dynamic>) {
-          paginationData = Pagination.fromJson(outerData['pagination'] as Map<String, dynamic>);
-        }
-      } else if (outerData is List) {
-        // Fallback: if data is directly a list
-        categoryList = outerData
-            .map((item) => CategoryModel.fromJson(item as Map<String, dynamic>))
+    /// Case 1: data is paginated object
+    if (outerData is Map<String, dynamic>) {
+      if (outerData['data'] is List) {
+        categoryList = (outerData['data'] as List)
+            .map((e) => CategoryModel.fromJson(e))
             .toList();
       }
+
+      if (outerData['pagination'] is Map<String, dynamic>) {
+        paginationData = Pagination.fromJson(outerData['pagination']);
+      }
+    }
+
+    /// Case 2: data is direct list
+    else if (outerData is List) {
+      categoryList =
+          outerData.map((e) => CategoryModel.fromJson(e)).toList();
     }
 
     return CategoryResponse(
@@ -150,7 +163,7 @@ class CategoryResponse {
       'code': code,
       'message': message,
       'data': {
-        'data': categories.map((item) => item.toJson()).toList(),
+        'data': categories.map((e) => e.toJson()).toList(),
         if (pagination != null) 'pagination': pagination!.toJson(),
       },
     };

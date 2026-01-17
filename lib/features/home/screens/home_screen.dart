@@ -12,7 +12,9 @@ import '../../../core/common/components/image_carousel.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/config/app_images.dart';
+import '../../../core/utils/api/app_url.dart';
 import '../../profile/controllers/profile_controller.dart';
+import '../../provider/controllers/category_controller.dart';
 import '../controllers/home_controller.dart';
 import '../widget/home_top_bar.dart';
 import '../widget/inquiry_bottom_sheet.dart';
@@ -56,30 +58,65 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               const HomeTopBar(),
 
-              ImageSlider(
-                imgList: const <String>[
-                  AppImages.loginImage1,
-                  AppImages.loginImage2,
-                  AppImages.loginImage3,
-                  AppImages.loginImage4,
-                  AppImages.loginImage5,
-                  AppImages.loginImage6,
-                  AppImages.loginImage7,
-                ],
-                height: 200,
-                onImageTap: (int index) {
-                  final Map<String, String>? data = imageIndexToSearchMap[index];
-                  if (data != null) {
+
+              Obx(() {
+                // 1. Safely find the controller
+                final CategoryController catController = Get.isRegistered<CategoryController>()
+                    ? Get.find<CategoryController>()
+                    : Get.put(CategoryController());
+
+                // 2. Show loading state
+                if (catController.isLoading.value && catController.categories.isEmpty) {
+                  return const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                // 3. Prepare the list of banner images with explicit URL logic
+                final List<String> dynamicImages = catController.categories.map((cat) {
+                  // Determine which raw string to use (Banner preferred, then Main Image)
+                  String rawPath = (cat.bannerImage != null && cat.bannerImage!.isNotEmpty)
+                      ? cat.bannerImage!
+                      : cat.image;
+
+                  if (rawPath.isEmpty) return "";
+
+                  // LOGIC: If it doesn't start with http, prepend the Base URL
+                  if (!rawPath.startsWith('http')) {
+                    // Ensure there is a single slash between base URL and path
+                    final cleanPath = rawPath.startsWith('/') ? rawPath.substring(1) : rawPath;
+                    return '${AppUrl.imageBaseUrl}/$cleanPath';
+                  }
+
+                  return rawPath;
+                }).where((img) => img.isNotEmpty).toList();
+
+                // 4. Fallback if list is empty
+                if (dynamicImages.isEmpty) {
+                  return const SizedBox(
+                      height: 200,
+                      child: Center(child: Text("No Promotions Available"))
+                  );
+                }
+
+                return ImageSlider(
+                  imgList: dynamicImages,
+                  height: 200,
+                  onImageTap: (int index) {
+                    final category = catController.categories[index];
                     Get.toNamed(
-                      AppRoutes.homeSearchRoute,
+                      AppRoutes.homeSubCategoriesPage,
                       arguments: {
-                        'initialCategory': data['category'],
-                        'initialSubCategory': data['subcategory'],
+                        'categoryId': category.id,
+                        'categoryName': category.name,
                       },
                     );
-                  }
-                },
-              ),
+                  },
+                );
+              }),
+
+// ...
 
               const SizedBox(height: AppSizes.xl),
 
