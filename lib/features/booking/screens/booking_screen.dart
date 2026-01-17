@@ -88,7 +88,7 @@ class BookingScreen extends StatelessWidget {
                     fontSize: 16,
                   ),
                   tabs: const <Widget>[
-                    Tab(text: "Quote"),
+                    Tab(text: "Inquiry"),///Quote
                     Tab(text: "Active Job"),
                     Tab(text: "Ongoing Job"),
                     Tab(text: "Past Job"),

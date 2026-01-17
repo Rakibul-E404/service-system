@@ -495,13 +495,13 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage>
 
   Widget _buildTitleAndContacts(String name, List<String> access) {
     return Row(
-      children: [
+      children: <Widget>[
         Expanded(child: Text(name, style: context.txtTheme.titleLarge)),
         if (access.contains('Call')) const Icon(Icons.call, size: 22),
         const SizedBox(width: 8),
         if (access.contains('Email')) const Icon(Icons.email, size: 22),
         const SizedBox(width: 8),
-        if (access.contains('Messaging'))
+        if (access.contains('Massaging'))
           const Icon(CupertinoIcons.chat_bubble_fill, size: 22),
       ],
     );

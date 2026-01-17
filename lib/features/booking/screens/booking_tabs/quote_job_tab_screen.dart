@@ -206,25 +206,14 @@ class QuoteTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Business Name
-                    const Text(
-                      'FreshOps Business',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
 
                     // Service Name
                     Text(
                       quote.subCategory.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
 
