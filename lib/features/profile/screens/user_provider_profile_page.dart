@@ -181,13 +181,13 @@ class _UserProviderProfilePageState extends State<UserProviderProfilePage> {
           hint: const Text("Select a service"),
           value: _selectedService,
           icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryColor),
-          items: services.map((service) {
+          items: services.map((UserProviderService service) {
             return DropdownMenuItem<UserProviderService>(
               value: service,
               child: Text(service.name),
             );
           }).toList(),
-          onChanged: (value) {
+          onChanged: (UserProviderService? value) {
             setState(() {
               _selectedService = value;
             });

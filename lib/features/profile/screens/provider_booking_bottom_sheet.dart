@@ -221,11 +221,26 @@ class _ProviderBookingBottomSheetState extends State<ProviderBookingBottomSheet>
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      // decoration: InputDecoration(
+      //   labelText: label,
+      //   prefixIcon: icon != null ? Icon(icon, color: AppColors.primaryColor) : null,
+      //   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      // ),
+
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: icon != null ? Icon(icon, color: AppColors.primaryColor) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+        ),
       ),
+
     );
   }
 

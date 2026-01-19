@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:manx_mate/features/message/controllers/message_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_colors.dart';
 import '../../home/screens/add_review_page.dart';
@@ -273,13 +274,15 @@ class JobDetailsModal {
                             label: 'Message',
                             color: Colors.purple,
                             onTap: () {
-                              Get.back();
-                              Get.snackbar(
-                                'Coming Soon',
-                                'In-app messaging will be available soon.',
-                                backgroundColor: Colors.purple,
-                                colorText: Colors.white,
-                              );
+
+                              // Get.back();
+                              // Get.snackbar(
+                              //   'Coming Soon',
+                              //   'In-app messaging will be available soon.',
+                              //   backgroundColor: Colors.purple,
+                              //   colorText: Colors.white,
+                              // );
+                              Get.put(MessageController()).createConversation(job["service"]["author"]["authorId"]);
                             },
                           ),
                         ],
@@ -304,17 +307,40 @@ class JobDetailsModal {
     child: Icon(Icons.business, size: 40, color: Colors.grey.shade400),
   );
 
-  // ✅ Accurate past job detection
+  // // ✅ Accurate past job detection
+  // static bool _isPastJob(dynamic bookingDate) {
+  //   try {
+  //     if (bookingDate == null) return false;
+  //     final DateTime date = bookingDate is String
+  //         ? DateTime.parse(bookingDate).toLocal()
+  //         : bookingDate;
+  //     // Consider "past" only if BEFORE today (not including today)
+  //     final now = DateTime.now();
+  //     return DateTime(date.year, date.month, date.day)
+  //         .isBefore(DateTime(now.year, now.month, now.day));
+  //   } catch (_) {
+  //     return false;
+  //   }
+  // }
+
+
+  // ✅ Correct past job detection - should include today's completed jobs
   static bool _isPastJob(dynamic bookingDate) {
     try {
       if (bookingDate == null) return false;
+
       final DateTime date = bookingDate is String
           ? DateTime.parse(bookingDate).toLocal()
           : bookingDate;
-      // Consider "past" only if BEFORE today (not including today)
+
       final now = DateTime.now();
-      return DateTime(date.year, date.month, date.day)
-          .isBefore(DateTime(now.year, now.month, now.day));
+
+      // Consider "past" if date is on or before today
+      // We compare just the year, month, and day (ignoring time)
+      final DateTime jobDate = DateTime(date.year, date.month, date.day);
+      final DateTime today = DateTime(now.year, now.month, now.day);
+
+      return jobDate.isBefore(today) || jobDate.isAtSameMomentAs(today);
     } catch (_) {
       return false;
     }

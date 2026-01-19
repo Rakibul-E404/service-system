@@ -23,6 +23,32 @@ class ConversationAllListResponseModel {
     );
   }
 }
+
+
+class ConversationSingleResponseModel {
+  final bool success;
+  final int code;
+  final String message;
+  final ConversationModel data;
+
+  ConversationSingleResponseModel({
+    required this.success,
+    required this.code,
+    required this.message,
+    required this.data,
+  });
+
+  factory ConversationSingleResponseModel.fromJson(Map<String, dynamic> json) {
+    return ConversationSingleResponseModel(
+      success: json['success'] ?? false,
+      code: json['code'] ?? 0,
+      message: json['message'] ?? '',
+      data: ConversationModel.fromJson(json['data'] as Map<String, dynamic>),
+    );
+  }
+}
+
+
 class ConversationModel {
   final String id;
   final List<ConversationUser> users;
