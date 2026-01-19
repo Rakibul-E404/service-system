@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/features/booking/screens/booking_tabs/tab_controllers/past_job_tab_controller.dart';
@@ -126,8 +125,6 @@ class PastJobTab extends StatelessWidget {
         }
 
         final Map<String, dynamic> job = controller.pastJobs[index];
-        print("AMi TOky");
-        print(job);
         return _buildJobCard(job);
       },
     );
@@ -150,8 +147,8 @@ class PastJobTab extends StatelessWidget {
       }
     }
 
-    // Get status
-    String status = job['status']?.toString() ?? 'completed';
+    // Check if review is missing
+    bool hasReview = job['rating'] != null && job['rating'] > 0;
 
     return GestureDetector(
       onTap: () => _showJobDetailsModal(job),
@@ -165,121 +162,91 @@ class PastJobTab extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Provider Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey.shade200,
-                    child: Icon(
-                      Icons.business,
-                      size: 40,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                )
-                    : Container(
-                  width: 100,
-                  height: 100,
-                  color: Colors.grey.shade200,
-                  child: Icon(
-                    Icons.business,
-                    size: 40,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              // Content Section
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Business Name
-                    Text(
-                      author['name']?.toString() ?? 'Unknown Provider',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    // Service Name
-                    Text(
-                      subCategory['name']?.toString() ?? 'Unknown Service',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-
-                    // Location Row
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 18,
-                          color: Colors.grey.shade600,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Provider Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: imageUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            job['location']?.toString() ?? 'Location not specified',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.grey.shade200,
+                        child: Icon(
+                          Icons.business,
+                          size: 40,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    )
+                        : Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey.shade200,
+                      child: Icon(
+                        Icons.business,
+                        size: 40,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Content Section
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Business Name
+                        Text(
+                          author['name']?.toString() ?? 'Unknown Provider',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
-                      ],
-                    ),
-
-                    // Completion Date (if available)
-                    if (job['updatedAt'] != null || job['completedAt'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Row(
+                        const SizedBox(height: 4),
+                        // Service Name
+                        Text(
+                          subCategory['name']?.toString() ?? 'Unknown Service',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Location Row
+                        Row(
                           children: [
                             Icon(
-                              Icons.check_circle_outline,
-                              size: 16,
+                              Icons.location_on_outlined,
+                              size: 18,
                               color: Colors.grey.shade600,
                             ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                _formatCompletionDate(job['completedAt'] ?? job['updatedAt']),
+                                job['location']?.toString() ?? 'Location not specified',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   color: Colors.grey.shade600,
                                 ),
                                 maxLines: 1,
@@ -288,46 +255,72 @@ class PastJobTab extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-
-                    // Rating Section (if rated)
-                    if (job['rating'] != null && job['rating'] > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.star,
-                              size: 16,
-                              color: Colors.amber,
+                        // Completion Date
+                        if (job['updatedAt'] != null || job['completedAt'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.check_circle_outline,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    _formatCompletionDate(job['completedAt'] ?? job['updatedAt']),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${job['rating']}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            if (job['review'] != null && job['review'].toString().isNotEmpty)
-                              Expanded(
-                                child: Text(
-                                  '• ${job['review']}',
+                          ),
+                        // Rating Section (if rated)
+                        if (hasReview)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${job['rating']}',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey.shade600,
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
+                                const SizedBox(width: 4),
+                                if (job['review'] != null && job['review'].toString().isNotEmpty)
+                                  Expanded(
+                                    child: Text(
+                                      '• ${job['review']}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -346,47 +339,14 @@ class PastJobTab extends StatelessWidget {
     }
   }
 
-
   void _showJobDetailsModal(Map<String, dynamic> job) {
     JobDetailsModal.show(
       context: Get.context!,
       job: job,
-      showCancelButton: false, // Past jobs can't be cancelled
-      showContactButtons: false, // Usually no need to contact for past jobs
+      showCancelButton: false,
+      showContactButtons: false,
       customTitle: 'Past Job Details',
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///
-///
-///
-///
-/// todO:::fixing to show the review button
-///
-///
-///
-///
-
-
-
-
-
-
 

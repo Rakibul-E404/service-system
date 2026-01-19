@@ -1,11 +1,10 @@
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/config/app_colors.dart';
+import '../../home/screens/add_review_page.dart';
 
 class JobDetailsModal {
   static void show({
@@ -16,40 +15,35 @@ class JobDetailsModal {
     VoidCallback? onCancelPressed,
     String? customTitle,
   }) {
-    // Extract service and provider data
     final Map<String, dynamic> service = job['service'] ?? <String, dynamic>{};
     final Map<String, dynamic> author = service['author'] ?? <String, dynamic>{};
     final Map<String, dynamic> subCategory = service['subCategory'] ?? <String, dynamic>{};
 
-    // Build image URL
     String imageUrl = '';
     if (author['image'] != null && author['image'].toString().isNotEmpty) {
       final String imagePath = author['image'].toString();
-      if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-        imageUrl = imagePath;
-      } else {
-        imageUrl = '${AppUrl.imageBaseUrl}/$imagePath';
-      }
+      imageUrl = imagePath.startsWith('http')
+          ? imagePath
+          : '${AppUrl.imageBaseUrl}/$imagePath';
     }
 
-    // Extract contact info
     final String? providerPhone = author['phone']?.toString();
     final String? providerEmail = author['email']?.toString();
+
+    // ✅ Only show "Give Review" for PAST jobs (based on bookingDate)
+    final bool isPastJob = _isPastJob(job['bookingDate']);
 
     Get.bottomSheet(
       Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12, bottom: 8),
               width: 40,
@@ -60,7 +54,6 @@ class JobDetailsModal {
               ),
             ),
 
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -68,16 +61,11 @@ class JobDetailsModal {
                 children: <Widget>[
                   Text(
                     customTitle ?? 'Job Details',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
                     onPressed: () => Get.back(),
                     icon: const Icon(Icons.close),
-                    color: Colors.grey.shade600,
                   ),
                 ],
               ),
@@ -85,55 +73,29 @@ class JobDetailsModal {
 
             const Divider(height: 1),
 
-            // Content
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    // Provider Image and Info
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: imageUrl.isNotEmpty
                               ? CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                  placeholder: (BuildContext context, String url) => Container(
-                                    width: 100,
-                                    height: 100,
-                                    color: Colors.grey.shade200,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    ),
-                                  ),
-                                  errorWidget: (BuildContext context, String url, Object error) =>
-                                      Container(
-                                        width: 100,
-                                        height: 100,
-                                        color: Colors.grey.shade200,
-                                        child: Icon(
-                                          Icons.business,
-                                          size: 40,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                      ),
-                                )
-                              : Container(
-                                  width: 100,
-                                  height: 100,
-                                  color: Colors.grey.shade200,
-                                  child: Icon(
-                                    Icons.business,
-                                    size: 40,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                ),
+                            imageUrl: imageUrl,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(
+                              color: Colors.grey.shade200,
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
+                            errorWidget: (_, __, ___) => _fallbackImage(),
+                          )
+                              : _fallbackImage(),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -142,22 +104,13 @@ class JobDetailsModal {
                             children: <Widget>[
                               Text(
                                 author['name']?.toString() ?? 'Unknown Provider',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 subCategory['name']?.toString() ?? 'Unknown Service',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.grey.shade700,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: TextStyle(color: Colors.grey.shade700),
                               ),
-                              const SizedBox(height: 8),
                             ],
                           ),
                         ),
@@ -166,34 +119,27 @@ class JobDetailsModal {
 
                     const SizedBox(height: 24),
 
-                    // Details Section
                     _buildDetailItem(
                       icon: Icons.calendar_today,
                       iconColor: Colors.blue,
                       title: 'Booking Date',
                       value: _formatDate(job['bookingDate']),
                     ),
-
                     const SizedBox(height: 16),
-
                     _buildDetailItem(
                       icon: Icons.location_on_outlined,
                       iconColor: Colors.red,
                       title: 'Location',
                       value: job['location']?.toString() ?? 'Not specified',
                     ),
-
                     const SizedBox(height: 16),
-
                     _buildDetailItem(
                       icon: Icons.map_outlined,
                       iconColor: Colors.green,
                       title: 'Region',
                       value: _capitalizeFirst(job['region']?.toString() ?? ''),
                     ),
-
                     const SizedBox(height: 16),
-
                     _buildDetailItem(
                       icon: Icons.access_time,
                       iconColor: Colors.purple,
@@ -201,20 +147,11 @@ class JobDetailsModal {
                       value: _formatRelativeTime(job['createdAt']),
                     ),
 
-                    // Additional Information
-                    if (job['details'] != null && job['details'].toString().isNotEmpty) ...<Widget>[
+                    if (job['details'] != null && job['details'].toString().isNotEmpty) ...[
                       const SizedBox(height: 24),
-                      const Text(
-                        'Job Details',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
+                      const Text('Job Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       Container(
-                        width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
@@ -223,15 +160,59 @@ class JobDetailsModal {
                         ),
                         child: Text(
                           job['details'].toString(),
-                          style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.5),
+                          style: const TextStyle(fontSize: 14, height: 1.5),
                         ),
                       ),
                     ],
 
                     const SizedBox(height: 24),
 
-                    // Action Buttons (Conditional)
-                    if (showCancelButton) ...<Widget>[
+                    // ✅ GIVE REVIEW BUTTON — ONLY FOR PAST JOBS
+                    if (isPastJob) ...[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.rate_review),
+                              label: const Text(
+                                'Give Review',
+                                style: TextStyle(color: AppColors.whiteColor),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () {
+                                final String? serviceId = job['_id']?.toString();
+                                if (serviceId == null || serviceId.isEmpty) {
+                                  Get.snackbar(
+                                    'Error',
+                                    'Job ID not found.',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                  );
+                                  return;
+                                }
+                                Get.back();
+                                Get.to(
+                                      () => AddReviewPage(
+                                    providerName: author['name']?.toString() ?? 'Provider',
+                                    serviceId: serviceId,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Cancel button only for NON-past jobs
+                    if (showCancelButton && !isPastJob) ...[
                       Row(
                         children: <Widget>[
                           Expanded(
@@ -240,34 +221,23 @@ class JobDetailsModal {
                                 Get.back();
                                 onCancelPressed?.call();
                               },
+                              icon: const Icon(Icons.cancel),
                               label: const Text('Cancel Job'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.red,
                                 side: const BorderSide(color: Colors.red),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
                     ],
 
-                    // Additional Contact Options
+                    // ✅ QUICK CONTACT WITH MESSAGE BUTTON
                     if (showContactButtons &&
-                        (providerPhone != null || providerEmail != null)) ...<Widget>[
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Quick Contact',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey,
-                        ),
-                      ),
+                        (providerPhone != null || providerEmail != null)) ...[
+                      const SizedBox(height: 24),
+                      const Text('Quick Contact', style: TextStyle(color: Colors.grey)),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -294,12 +264,11 @@ class JobDetailsModal {
                                 _launchEmail(providerEmail);
                               },
                             ),
-                          if (providerPhone != null && providerEmail != null)
+                          // ✅ MESSAGE BUTTON
+                          if (providerPhone != null || providerEmail != null)
                             const SizedBox(width: 16),
-                          // Message button can stay if you have chat, but we'll omit logic for now
-                          // You can keep it as a placeholder or remove
                           _buildContactOption(
-                            icon: CupertinoIcons.chat_bubble_text_fill,
+                            icon: Icons.chat_bubble_outline,
                             label: 'Message',
                             color: Colors.purple,
                             onTap: () {
@@ -315,8 +284,6 @@ class JobDetailsModal {
                         ],
                       ),
                     ],
-
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -326,14 +293,36 @@ class JobDetailsModal {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      enableDrag: true,
     );
   }
 
-  static Future<void> _launchPhoneNumber(String phoneNumber) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
+  static Widget _fallbackImage() => Container(
+    width: 100,
+    height: 100,
+    color: Colors.grey.shade200,
+    child: Icon(Icons.business, size: 40, color: Colors.grey.shade400),
+  );
+
+  // ✅ Accurate past job detection
+  static bool _isPastJob(dynamic bookingDate) {
+    try {
+      if (bookingDate == null) return false;
+      final DateTime date = bookingDate is String
+          ? DateTime.parse(bookingDate).toLocal()
+          : bookingDate;
+      // Consider "past" only if BEFORE today (not including today)
+      final now = DateTime.now();
+      return DateTime(date.year, date.month, date.day)
+          .isBefore(DateTime(now.year, now.month, now.day));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> _launchPhoneNumber(String phone) async {
+    final Uri uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
     } else {
       Get.snackbar(
         'Error',
@@ -345,14 +334,13 @@ class JobDetailsModal {
   }
 
   static Future<void> _launchEmail(String email) async {
-    final Uri emailUri = Uri(scheme: 'mailto', path: email);
-
+    final Uri uri = Uri(scheme: 'mailto', path: email);
     try {
-      final bool launched = await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+      final bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched) {
         Get.snackbar(
           'No Email App',
-          'No email app found. Please install one to contact the provider.',
+          'No email app found.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -360,14 +348,12 @@ class JobDetailsModal {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Unable to open email. Make sure an email app is installed.',
+        'Unable to open email.',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
   }
-
-  // ========== Rest of the helper methods (unchanged) ==========
 
   static Widget _buildDetailItem({
     required IconData icon,
@@ -376,7 +362,6 @@ class JobDetailsModal {
     required String value,
   }) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Container(
           padding: const EdgeInsets.all(8),
@@ -391,23 +376,9 @@ class JobDetailsModal {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(title, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
               const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             ],
           ),
         ),
@@ -432,96 +403,38 @@ class JobDetailsModal {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
-            child: Icon(icon, size: 24, color: color),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 6),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
-  static String _formatDate(dynamic dateValue) {
-    if (dateValue == null) return 'Date not set';
-
+  static String _formatDate(dynamic date) {
     try {
-      DateTime date;
-      if (dateValue is String) {
-        date = DateTime.parse(dateValue).toLocal();
-      } else if (dateValue is DateTime) {
-        date = dateValue;
-      } else {
-        return 'Invalid date';
-      }
-
-      return '${_getDayName(date.weekday)}, ${date.day} ${_getMonthName(date.month)} ${date.year}';
-    } catch (e) {
-      return 'Date not available';
+      final DateTime d = date is String ? DateTime.parse(date) : date;
+      return '${d.day}/${d.month}/${d.year}';
+    } catch (_) {
+      return 'Date not set';
     }
   }
 
-  static String _formatRelativeTime(dynamic dateValue) {
-    if (dateValue == null) {
+  static String _formatRelativeTime(dynamic date) {
+    try {
+      final DateTime d = date is String ? DateTime.parse(date) : date;
+      final Duration diff = DateTime.now().difference(d);
+      if (diff.inDays > 0) return '${diff.inDays} days ago';
+      if (diff.inHours > 0) return '${diff.inHours} hours ago';
+      if (diff.inMinutes > 0) return '${diff.inMinutes} minutes ago';
+      return 'just now';
+    } catch (_) {
       return 'Recently';
     }
-
-    try {
-      DateTime date;
-      if (dateValue is String) {
-        date = DateTime.parse(dateValue).toLocal();
-      } else if (dateValue is DateTime) {
-        date = dateValue;
-      } else {
-        return 'Recently';
-      }
-
-      final DateTime now = DateTime.now();
-      final Duration difference = now.difference(date);
-
-      if (difference.inDays > 365) {
-        final int years = (difference.inDays / 365).floor();
-        return '$years ${years == 1 ? 'year' : 'years'} ago';
-      } else if (difference.inDays > 30) {
-        final int months = (difference.inDays / 30).floor();
-        return '$months ${months == 1 ? 'month' : 'months'} ago';
-      } else if (difference.inDays > 0) {
-        return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-      } else {
-        return 'just now';
-      }
-    } catch (e) {
-      return 'Recently';
-    }
-  }
-
-  static String _getDayName(int weekday) {
-    const List<String> days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[weekday - 1];
-  }
-
-  static String _getMonthName(int month) {
-    const List<String> months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
   }
 
   static String _capitalizeFirst(String text) {
@@ -529,12 +442,3 @@ class JobDetailsModal {
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 }
-
-
-
-
-
-
-
-
-
