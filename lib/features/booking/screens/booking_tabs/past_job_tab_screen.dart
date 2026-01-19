@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/features/booking/screens/booking_tabs/tab_controllers/past_job_tab_controller.dart';
@@ -356,3 +357,36 @@ class PastJobTab extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///
+///
+///
+///
+/// todO:::fixing to show the review button
+///
+///
+///
+///
+
+
+
+
+
+
+

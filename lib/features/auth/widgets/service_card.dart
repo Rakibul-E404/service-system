@@ -1,24 +1,24 @@
 /**
-import 'package:flutter/material.dart';
-import 'package:manx_mate/core/common/components/custom_network_image.dart';
+    import 'package:flutter/material.dart';
+    import 'package:manx_mate/core/common/components/custom_network_image.dart';
 
-class ServiceCard extends StatelessWidget {
-  final String imageUrl;
-  final String title;
-  final String subtitle;
-  final String location;
-  final double rating;
-  final VoidCallback? onTap;
-  final VoidCallback? onFavorite;
-  final bool isFavorited;
-  final bool showFavorite;
-  final bool showLocationAndRating;
-  final double? width;
-  final double? height;
-  final bool isGuestMode;
-  final bool isFavoriteEnabled; // New parameter
+    class ServiceCard extends StatelessWidget {
+    final String imageUrl;
+    final String title;
+    final String subtitle;
+    final String location;
+    final double rating;
+    final VoidCallback? onTap;
+    final VoidCallback? onFavorite;
+    final bool isFavorited;
+    final bool showFavorite;
+    final bool showLocationAndRating;
+    final double? width;
+    final double? height;
+    final bool isGuestMode;
+    final bool isFavoriteEnabled; // New parameter
 
-  const ServiceCard({
+    const ServiceCard({
     super.key,
     required this.imageUrl,
     required this.title,
@@ -34,162 +34,177 @@ class ServiceCard extends StatelessWidget {
     this.height,
     this.isGuestMode = false,
     this.isFavoriteEnabled = true, // Default to enabled
-  });
+    });
 
-  @override
-  Widget build(BuildContext context) {
+    @override
+    Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width ?? 200,
-        height: height ?? 250,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withAlpha(20),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            // Image Section
-            Container(
-              height: 120,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Stack(
-                children: <Widget>[
-                  // Image
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                    child: CustomCachedImage(
-                      imageUrl: imageUrl,
-                      width: double.infinity,
-                      height: 120,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  // Heart/Favorite Button (conditionally rendered)
-                  if (showFavorite && !isGuestMode)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: GestureDetector(
-                        onTap: onFavorite, // Always tappable
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isFavorited ? Icons.favorite : Icons.favorite_border,
-                            color: !isFavoriteEnabled
-                                ? Colors.grey[400] // Disabled color
-                                : isFavorited
-                                ? Colors.red
-                                : Colors.grey[600],
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Content Section
-            Flexible(
-              fit: FlexFit.loose,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    // Title
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Subtitle (Description)
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      maxLines: showLocationAndRating ? 2 : 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-
-                    // Location and Rating Row
-                    if (showLocationAndRating && !isGuestMode)
-                      Row(
-                        children: <Widget>[
-                          Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[500]),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              location,
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
-                          const SizedBox(width: 2),
-                          Text(
-                            rating.toString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    onTap: onTap,
+    child: Container(
+    width: width ?? 200,
+    height: height ?? 250,
+    decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: <BoxShadow>[
+    BoxShadow(
+    color: Colors.black.withAlpha(20),
+    blurRadius: 8,
+    offset: const Offset(0, 2),
+    ),
+    ],
+    ),
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+    // Image Section
+    Container(
+    height: 120,
+    decoration: const BoxDecoration(
+    borderRadius: BorderRadius.only(
+    topLeft: Radius.circular(12),
+    topRight: Radius.circular(12),
+    ),
+    ),
+    child: Stack(
+    children: <Widget>[
+    // Image
+    ClipRRect(
+    borderRadius: const BorderRadius.only(
+    topLeft: Radius.circular(12),
+    topRight: Radius.circular(12),
+    ),
+    child: CustomCachedImage(
+    imageUrl: imageUrl,
+    width: double.infinity,
+    height: 120,
+    fit: BoxFit.cover,
+    ),
+    ),
+    // Heart/Favorite Button (conditionally rendered)
+    if (showFavorite && !isGuestMode)
+    Positioned(
+    top: 8,
+    left: 8,
+    child: GestureDetector(
+    onTap: () {
+    // Check if favorite is enabled and not loading
+    if (isFavoriteEnabled && onFavorite != null) {
+    debugPrint('❤️ ServiceCard: Favorite button tapped (enabled)');
+    onFavorite!();
+    } else {
+    debugPrint('🚫 ServiceCard: Favorite button tapped (disabled)');
+    // Optionally show a snackbar or haptic feedback
+    if (!isFavoriteEnabled) {
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+    content: Text('Adding favorites is not available for this service'),
+    duration: Duration(seconds: 2),
+    ),
     );
-  }
-}*/
+    }
+    }
+    },
+    child: Container(
+    padding: const EdgeInsets.all(6),
+    decoration: BoxDecoration(
+    color: Colors.white.withOpacity(0.9), // Fixed: changed from withValues to withOpacity
+    shape: BoxShape.circle,
+    ),
+    child: Icon(
+    isFavorited ? Icons.favorite : Icons.favorite_border,
+    color: !isFavoriteEnabled
+    ? Colors.grey[400] // Disabled color
+    : isFavorited
+    ? Colors.red
+    : Colors.grey[600],
+    size: 18,
+    ),
+    ),
+    ),
+    ),
+    ],
+    ),
+    ),
 
+    // Content Section
+    Flexible(
+    fit: FlexFit.loose,
+    child: Padding(
+    padding: const EdgeInsets.all(12),
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+    // Title
+    Text(
+    title,
+    style: const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.black87,
+    ),
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    ),
+    const SizedBox(height: 4),
 
+    // Subtitle (Description)
+    Text(
+    subtitle,
+    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+    maxLines: showLocationAndRating ? 2 : 3,
+    overflow: TextOverflow.ellipsis,
+    ),
+    const Spacer(),
 
+    // Location and Rating Row
+    if (showLocationAndRating && !isGuestMode)
+    Row(
+    children: <Widget>[
+    Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[500]),
+    const SizedBox(width: 4),
+    Expanded(
+    child: Text(
+    location,
+    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    ),
+    ),
+    const SizedBox(width: 8),
+    const Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
+    const SizedBox(width: 2),
+    Text(
+    rating.toStringAsFixed(1), // Fixed: show 1 decimal place
+    style: TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: Colors.grey[700],
+    ),
+    ),
+    ],
+    ),
+    ],
+    ),
+    ),
+    ),
+    ],
+    ),
+    ),
+    );
+    }
+    }*/
 
-
-
-
-
-
-
+///
+///
+/// todo:: showing the sponsored mark
+///
+///
+///
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:manx_mate/core/common/components/custom_network_image.dart';
 
 class ServiceCard extends StatelessWidget {
@@ -206,7 +221,10 @@ class ServiceCard extends StatelessWidget {
   final double? width;
   final double? height;
   final bool isGuestMode;
-  final bool isFavoriteEnabled; // New parameter
+  final bool isFavoriteEnabled;
+
+  // ✅ NEW
+  final bool isSponsored;
 
   const ServiceCard({
     super.key,
@@ -223,7 +241,8 @@ class ServiceCard extends StatelessWidget {
     this.width,
     this.height,
     this.isGuestMode = false,
-    this.isFavoriteEnabled = true, // Default to enabled
+    this.isFavoriteEnabled = true,
+    this.isSponsored = false, // ✅ DEFAULT
   });
 
   @override
@@ -237,17 +256,13 @@ class ServiceCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withAlpha(20),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 8, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Image Section
+            // IMAGE SECTION
             Container(
               height: 120,
               decoration: const BoxDecoration(
@@ -258,7 +273,7 @@ class ServiceCard extends StatelessWidget {
               ),
               child: Stack(
                 children: <Widget>[
-                  // Image
+                  // IMAGE
                   ClipRRect(
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
@@ -271,40 +286,35 @@ class ServiceCard extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  // Heart/Favorite Button (conditionally rendered)
+
+                  // ❤️ FAVORITE BUTTON (TOP-LEFT)
                   if (showFavorite && !isGuestMode)
                     Positioned(
                       top: 8,
                       left: 8,
                       child: GestureDetector(
                         onTap: () {
-                          // Check if favorite is enabled and not loading
                           if (isFavoriteEnabled && onFavorite != null) {
-                            debugPrint('❤️ ServiceCard: Favorite button tapped (enabled)');
                             onFavorite!();
-                          } else {
-                            debugPrint('🚫 ServiceCard: Favorite button tapped (disabled)');
-                            // Optionally show a snackbar or haptic feedback
-                            if (!isFavoriteEnabled) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Adding favorites is not available for this service'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
+                          } else if (!isFavoriteEnabled) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Adding favorites is not available for this service'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
                           }
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9), // Fixed: changed from withValues to withOpacity
+                            color: Colors.white.withOpacity(0.9),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             isFavorited ? Icons.favorite : Icons.favorite_border,
                             color: !isFavoriteEnabled
-                                ? Colors.grey[400] // Disabled color
+                                ? Colors.grey[400]
                                 : isFavorited
                                 ? Colors.red
                                 : Colors.grey[600],
@@ -313,11 +323,35 @@ class ServiceCard extends StatelessWidget {
                         ),
                       ),
                     ),
+
+                  // ⭐ SPONSORED BADGE (BOTTOM-RIGHT)
+                  if (isSponsored)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          // color: Colors.black.withOpacity(0.75),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/sponsor_icon.svg',
+                              width: 25,
+                              height: 25,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
 
-            // Content Section
+            // CONTENT SECTION
             Flexible(
               fit: FlexFit.loose,
               child: Padding(
@@ -326,7 +360,7 @@ class ServiceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    // Title
+                    // TITLE
                     Text(
                       title,
                       style: const TextStyle(
@@ -339,16 +373,17 @@ class ServiceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Subtitle (Description)
+                    // SUBTITLE
                     Text(
                       subtitle,
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       maxLines: showLocationAndRating ? 2 : 3,
                       overflow: TextOverflow.ellipsis,
                     ),
+
                     const Spacer(),
 
-                    // Location and Rating Row
+                    // LOCATION + RATING
                     if (showLocationAndRating && !isGuestMode)
                       Row(
                         children: <Widget>[
@@ -366,7 +401,7 @@ class ServiceCard extends StatelessWidget {
                           const Icon(Icons.star, size: 14, color: Color(0xffed9d34)),
                           const SizedBox(width: 2),
                           Text(
-                            rating.toStringAsFixed(1), // Fixed: show 1 decimal place
+                            rating.toStringAsFixed(1),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
