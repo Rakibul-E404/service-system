@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -268,7 +269,7 @@ class JobDetailsModal {
                           if (providerPhone != null || providerEmail != null)
                             const SizedBox(width: 16),
                           _buildContactOption(
-                            icon: Icons.chat_bubble_outline,
+                            icon: CupertinoIcons.chat_bubble_fill,
                             label: 'Message',
                             color: Colors.purple,
                             onTap: () {

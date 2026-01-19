@@ -180,6 +180,8 @@ class AdvertisementsSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
       child: Row(
         children: [
+
+          const SizedBox(height: 30),
           Icon(Icons.campaign_rounded, color: AppColors.primaryColor, size: 24),
           const SizedBox(width: 10),
           const Expanded(
@@ -314,8 +316,8 @@ class AdvertisementsSection extends StatelessWidget {
             return _buildAdCard(ad);
           },
           options: CarouselOptions(
-            height: 300,
-            viewportFraction: 0.85,
+            height: 200,
+            viewportFraction: 0.99,
             enlargeCenterPage: true,
             autoPlay: true,
             autoPlayInterval: const Duration(seconds: 4),
@@ -388,38 +390,38 @@ class AdvertisementsSection extends StatelessWidget {
               Expanded(
                 child: _buildImage(ad.fullImageUrl),
               ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'AD',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryColor
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                          ad.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis
-                      ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                  ],
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.all(12),
+              //   child: Row(
+              //     children: [
+              //       Container(
+              //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              //         decoration: BoxDecoration(
+              //           color: AppColors.primaryColor.withOpacity(0.1),
+              //           borderRadius: BorderRadius.circular(4),
+              //         ),
+              //         child: const Text(
+              //           'AD',
+              //           style: TextStyle(
+              //               fontSize: 10,
+              //               fontWeight: FontWeight.bold,
+              //               color: AppColors.primaryColor
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(width: 10),
+              //       Expanded(
+              //         child: Text(
+              //             ad.title,
+              //             style: const TextStyle(fontWeight: FontWeight.w600),
+              //             maxLines: 1,
+              //             overflow: TextOverflow.ellipsis
+              //         ),
+              //       ),
+              //       // const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -437,7 +439,7 @@ class AdvertisementsSection extends StatelessWidget {
     }
     return Image.network(
       url,
-      fit: BoxFit.cover,
+      fit: BoxFit.fill,
       loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? progress) => progress == null ? child : Container(color: Colors.grey.shade100, child: const Center(child: CircularProgressIndicator(color: AppColors.primaryColor))),
       errorBuilder: (BuildContext context, Object error, StackTrace? stack) => Container(
         color: Colors.grey.shade100,

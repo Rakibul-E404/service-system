@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manx_mate/features/home/screens/search_input_section.dart';
 import 'package:manx_mate/features/home/screens/search_results_grid.dart';
+import 'package:manx_mate/features/home/screens/user_advertisement.dart';
 import '../../../core/config/app_colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../controllers/home_search_controller.dart';
@@ -40,13 +41,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
     'Moving': <String>['Moving Services', 'Packing', 'Local Move'],
   };
 
-  final List<String> _locationOptions = <String>[
-    'All Locations',
-    'North',
-    'South',
-    'East',
-    'West'
-  ];
+  final List<String> _locationOptions = <String>['All Locations', 'North', 'South', 'East', 'West'];
 
   @override
   void initState() {
@@ -111,7 +106,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
     }
 
     Get.to(
-          () => AllServicesScreen(services: List<Map<String, dynamic>>.from(allServices)),
+      () => AllServicesScreen(services: List<Map<String, dynamic>>.from(allServices)),
       transition: Transition.rightToLeft,
     );
   }
@@ -119,7 +114,9 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   void _performSearch() {
     final String keyword = _searchTEController.text.trim();
     final String category = _selectedCategory == 'All Categories' ? '' : _selectedCategory;
-    final String subcategory = _selectedSubCategory == 'All Subcategories' ? '' : _selectedSubCategory;
+    final String subcategory = _selectedSubCategory == 'All Subcategories'
+        ? ''
+        : _selectedSubCategory;
     final String location = _selectedLocation == 'All Locations' ? '' : _selectedLocation;
 
     setState(() {
@@ -169,10 +166,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: SearchAppBar(
-        onBack: () => Get.back(),
-        onFilter: _showFilterBottomSheet,
-      ),
+      appBar: SearchAppBar(onBack: () => Get.back(), onFilter: _showFilterBottomSheet),
       body: RefreshIndicator(
         onRefresh: _refreshData,
         color: AppColors.primaryColor,
@@ -183,7 +177,8 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
         child: SafeArea(
           child: CustomScrollView(
             controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(), // Required for RefreshIndicator
+            physics: const AlwaysScrollableScrollPhysics(),
+            // Required for RefreshIndicator
             slivers: <Widget>[
               // Search input section
               SliverToBoxAdapter(
@@ -194,9 +189,7 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
               ),
 
               // Featured Providers section
-              const SliverToBoxAdapter(
-                child: FeaturedProvidersSection(),
-              ),
+              const SliverToBoxAdapter(child: FeaturedProvidersSection()),
 
               // Search results header
               SliverToBoxAdapter(
@@ -218,13 +211,16 @@ class _HomeSearchScreenState extends State<HomeSearchScreen> {
 
               // Ad section
               const SliverToBoxAdapter(
-                child: AdSection(),
+                child: Column(
+                  children: [
+                    SizedBox(height: 20), // space above
+                    AdvertisementsSection(), // dynamic content
+                  ],
+                ),
               ),
 
               // Bottom padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 20),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),
         ),
@@ -237,11 +233,7 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   final VoidCallback onFilter;
 
-  const SearchAppBar({
-    super.key,
-    required this.onBack,
-    required this.onFilter,
-  });
+  const SearchAppBar({super.key, required this.onBack, required this.onFilter});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -250,22 +242,13 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.whiteColor,
-      title: Text(
-        "Service",
-        style: context.txtTheme.headlineLarge?.copyWith(
-          fontSize: 25,
-        ),
-      ),
+      title: Text("Service", style: context.txtTheme.headlineLarge?.copyWith(fontSize: 25)),
       centerTitle: true,
-      leading: IconButton(
-        onPressed: onBack,
-        icon: const Icon(CupertinoIcons.back, size: 25),
-      ),
+      leading: IconButton(onPressed: onBack, icon: const Icon(CupertinoIcons.back, size: 25)),
       actions: <Widget>[
         IconButton(
           onPressed: onFilter,
-          icon: const Icon(Icons.filter_alt_rounded,
-              color: AppColors.primaryColor, size: 25),
+          icon: const Icon(Icons.filter_alt_rounded, color: AppColors.primaryColor, size: 25),
         ),
       ],
     );
