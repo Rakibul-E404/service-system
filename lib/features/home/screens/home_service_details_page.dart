@@ -224,6 +224,7 @@ class _HomeServiceDetailsPageState extends State<HomeServiceDetailsPage>
                       color: Colors.purple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
+
                     child:  Icon(CupertinoIcons.chat_bubble_fill, size: 22, color: Colors.purple[300]),
                   ),
                 ),
