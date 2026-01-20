@@ -38,17 +38,17 @@ class _MessageScreenState extends State<MessageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0.5,
-        title: const Text(
-          'Messages',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.white,
+      //   surfaceTintColor: Colors.white,
+      //   elevation: 0.5,
+      //   title: const Text(
+      //     'Messages',
+      //     style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+      //   ),
+      //   centerTitle: true,
+      //
+      // ),
       body: SafeArea(
         child: Obx(() {
           if (!profileService.isLoggedIn.value) {
@@ -248,42 +248,25 @@ class _MessageScreenState extends State<MessageScreen> {
 
   Widget _buildLoginPrompt(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              "Login Required",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Please log in to see your messages and start chatting.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Get.offAllNamed(AppRoutes.roleSelectionRoute),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text(
-                  "Go to Login",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.person_off, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text(
+            'Not Logged In',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          const Text('Please login to view your messages'),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              Get.offAllNamed('/role-selection');
+            },
+            child: const Text('Go to Login'),
+          ),
+        ],
       ),
     );
   }

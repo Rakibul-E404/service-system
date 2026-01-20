@@ -12,7 +12,6 @@ import '../../../core/common/components/image_carousel.dart';
 import '../../../core/common/widgets/app_bottom_sheet.dart';
 import '../../../core/common/widgets/reusable_button.dart';
 import '../../../core/config/app_images.dart';
-import '../../../core/utils/api/app_url.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../provider/controllers/category_controller.dart';
 import '../controllers/home_controller.dart';
@@ -27,6 +26,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Get.lazyPut(() => ProfileController());
     final HomeController controller = Get.put(HomeController());
+    final CategoryController catController = Get.put(CategoryController()); // Add this
     final TimeController timeController = Get.put(TimeController());
     final TextEditingController serviceNameTEController =
     TextEditingController();
@@ -38,75 +38,106 @@ class HomeScreen extends StatelessWidget {
     final GlobalKey<InquiryBottomSheetState> inquirySheetKey =
     GlobalKey<InquiryBottomSheetState>();
 
-
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () => controller.refreshAll(),
+        onRefresh: () async {
+          await controller.refreshAll();
+          await catController.refreshBanners(); // Refresh banners too
+        },
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               const HomeTopBar(),
 
-
+              // // ================ UPDATED BANNER SECTION ================
               Obx(() {
-                // 1. Safely find the controller
-                final CategoryController catController = Get.isRegistered<CategoryController>()
-                    ? Get.find<CategoryController>()
-                    : Get.put(CategoryController());
-
-                // 2. Show loading state
-                if (catController.isLoading.value && catController.categories.isEmpty) {
-                  return const SizedBox(
+                // Show loading state
+                if (catController.isLoadingBanners.value && catController.banners.isEmpty) {
+                  return SizedBox(
                     height: 200,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
                   );
                 }
 
-                // 3. Prepare the list of banner images with explicit URL logic
-                final List<String> dynamicImages = catController.categories.map((cat) {
-                  // Determine which raw string to use (Banner preferred, then Main Image)
-                  String rawPath = (cat.bannerImage != null && cat.bannerImage!.isNotEmpty)
-                      ? cat.bannerImage!
-                      : cat.image;
+                // Get banners list
+                final List<String> bannerImages = catController.banners.toList();
 
-                  if (rawPath.isEmpty) return "";
-
-                  // LOGIC: If it doesn't start with http, prepend the Base URL
-                  if (!rawPath.startsWith('http')) {
-                    // Ensure there is a single slash between base URL and path
-                    final cleanPath = rawPath.startsWith('/') ? rawPath.substring(1) : rawPath;
-                    return '${AppUrl.imageBaseUrl}/$cleanPath';
-                  }
-
-                  return rawPath;
-                }).where((img) => img.isNotEmpty).toList();
-
-                // 4. Fallback if list is empty
-                if (dynamicImages.isEmpty) {
-                  return const SizedBox(
-                      height: 200,
-                      child: Center(child: Text("No Promotions Available"))
+                // Handle empty banners gracefully
+                if (bannerImages.isEmpty) {
+                  return Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primaryColor.withOpacity(0.05),
+                          AppColors.greyColor.withOpacity(0.02),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.campaign_outlined,
+                            size: 48,
+                            color: AppColors.greyColor.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Promotions will appear here',
+                            style: TextStyle(
+                              color: AppColors.greyColor.withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 }
 
+                // Show banners in carousel with navigation
                 return ImageSlider(
-                  imgList: dynamicImages,
+                  imgList: bannerImages,
                   height: 200,
                   onImageTap: (int index) {
-                    final category = catController.categories[index];
-                    Get.toNamed(
-                      AppRoutes.homeSubCategoriesPage,
-                      arguments: {
-                        'categoryId': category.id,
-                        'categoryName': category.name,
-                      },
-                    );
+                    final String? categoryName = catController.getCategoryNameByBannerIndex(index);
+                    final String? categoryId = catController.getCategoryIdByBannerIndex(index);
+
+                    debugPrint('🎯 Banner tapped - Index: $index');
+                    debugPrint('   Category Name: $categoryName');
+                    debugPrint('   Category ID: $categoryId');
+
+                    if (categoryName != null && categoryId != null) {
+                      // Navigate with both category name and ID
+                      Get.toNamed(
+                        AppRoutes.homeServiceSearchScreen,
+                        arguments: {
+                          'initialCategory': categoryName,
+                          'initialCategoryId': categoryId,
+                          'fromBanner': true,
+                        },
+                      );
+                    } else {
+                      debugPrint('⚠️ Banner $index - Missing category data');
+                      Get.toNamed(AppRoutes.homeServiceSearchScreen);
+                    }
                   },
                 );
               }),
+// ================ END BANNER SECTION ================
 
-// ...
+
+
 
               const SizedBox(height: AppSizes.xl),
 
@@ -173,14 +204,12 @@ class HomeScreen extends StatelessWidget {
                         );
                       }
 
-                      // Calculate page count for pagination
                       final int totalItems = controller.categories.length;
                       const int itemsPerPage = 3;
                       final int totalPages = (totalItems / itemsPerPage).ceil();
 
                       return Column(
                         children: [
-                          // Categories Grid with Pagination
                           SizedBox(
                             height: 140,
                             child: PageView.builder(
@@ -234,8 +263,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
 
-
-                          /// Pagination Indicators :::::
+                          /// Pagination Indicators
                           Obx(() {
                             if (totalPages <= 1) {
                               return const SizedBox.shrink();
@@ -342,6 +370,7 @@ class HomeScreen extends StatelessWidget {
                                   onButtonPressed: () {
                                     inquirySheetKey.currentState
                                         ?.submitInquiry();
+                                    Get.back();
                                   },
                                   child: InquiryBottomSheet(
                                     isFromHomeScreen: true,

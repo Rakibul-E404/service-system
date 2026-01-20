@@ -578,7 +578,7 @@ class InquiryBottomSheetState extends State<InquiryBottomSheet> {
                   );
                 }).toList(),
                 decoration: InputDecoration(
-                  labelText: 'Location',
+                  labelText: 'Region',
                   labelStyle: TextStyle(color: AppColors.primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(18),

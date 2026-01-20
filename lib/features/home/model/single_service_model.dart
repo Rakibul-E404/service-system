@@ -99,6 +99,7 @@ class ProfileDetailsModel {
   final String image;
   final String description;
   final String phone;
+  final String email;
   final AvailabilityModel availability;
   final double averageRating;
   final int totalReviews;
@@ -111,6 +112,7 @@ class ProfileDetailsModel {
     required this.image,
     required this.description,
     required this.phone,
+    required this.email,
     required this.availability,
     required this.averageRating,
     required this.totalReviews,
@@ -125,6 +127,7 @@ class ProfileDetailsModel {
       image: json['image'] ?? '',
       description: json['description'] ?? '',
       phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
       availability: AvailabilityModel.fromJson(json['availability'] ?? {}),
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
       totalReviews: json['totalReviews'] ?? 0,

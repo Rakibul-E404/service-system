@@ -240,7 +240,12 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     );
   }
 
-  Widget _buildCustomTextField({required TextEditingController controller, required String label, IconData? icon, int maxLines = 1}) {
+  Widget _buildCustomTextField({
+    required TextEditingController controller,
+    required String label,
+    IconData? icon,
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -248,7 +253,18 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
         labelText: label,
         prefixIcon: icon != null ? Icon(icon, color: AppColors.primaryColor) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+        ),
       ),
     );
   }
+
+
+
 }

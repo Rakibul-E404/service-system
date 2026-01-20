@@ -33,9 +33,23 @@ class FilterBottomSheet {
               if (category == 'All Categories') {
                 return <String>['All Subcategories'];
               }
+              // Get subcategories for the selected category
+              final subCats = categoryToSubCategories[category];
+              if (subCats == null || subCats.isEmpty) {
+                return <String>['All Subcategories'];
+              }
+              // Ensure "All Subcategories" is always first
+              if (subCats.first != 'All Subcategories') {
+                return <String>['All Subcategories', ...subCats];
+              }
+              return subCats;
+            }
+
+            // Get available categories (excluding 'All Categories' key)
+            List<String> getCategoryList() {
               return <String>[
-                'All Subcategories',
-                ...?categoryToSubCategories[category]
+                'All Categories',
+                ...categoryToSubCategories.keys.where((k) => k != 'All Categories')
               ];
             }
 
@@ -44,32 +58,45 @@ class FilterBottomSheet {
                 AppSizes.md,
                 AppSizes.sm,
                 AppSizes.md,
-                MediaQuery.of(context).viewInsets.bottom,
+                MediaQuery.of(context).viewInsets.bottom + AppSizes.md,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: AppSizes.md),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   Text('Filters', style: context.txtTheme.headlineSmall),
                   const SizedBox(height: AppSizes.md),
+
+                  // Category Dropdown
                   Text('Category', style: context.txtTheme.labelMedium),
                   const SizedBox(height: AppSizes.sm),
                   _buildFilterDropdown(
                     value: tempSelectedCategory,
-                    items: [
-                      'All Categories',
-                      ...categoryToSubCategories.keys
-                          .where((k) => k != 'All Categories')
-                    ],
+                    items: getCategoryList(),
                     onChanged: (val) {
                       if (val != null) {
-                        tempSelectedCategory = val;
-                        tempSelectedSubCategory = 'All Subcategories';
-                        setState(() {});
+                        setState(() {
+                          tempSelectedCategory = val;
+                          // Reset subcategory when category changes
+                          tempSelectedSubCategory = 'All Subcategories';
+                        });
                       }
                     },
                   ),
                   const SizedBox(height: AppSizes.md),
+
+                  // Subcategory Dropdown
                   Text('Subcategory', style: context.txtTheme.labelMedium),
                   const SizedBox(height: AppSizes.sm),
                   _buildFilterDropdown(
@@ -77,12 +104,15 @@ class FilterBottomSheet {
                     items: getSubCategories(tempSelectedCategory),
                     onChanged: (val) {
                       if (val != null) {
-                        tempSelectedSubCategory = val;
-                        setState(() {});
+                        setState(() {
+                          tempSelectedSubCategory = val;
+                        });
                       }
                     },
                   ),
                   const SizedBox(height: AppSizes.md),
+
+                  // Location Dropdown
                   Text('Location', style: context.txtTheme.labelMedium),
                   const SizedBox(height: AppSizes.sm),
                   _buildFilterDropdown(
@@ -90,12 +120,15 @@ class FilterBottomSheet {
                     items: locationOptions,
                     onChanged: (String? val) {
                       if (val != null) {
-                        tempSelectedLocation = val;
-                        setState(() {});
+                        setState(() {
+                          tempSelectedLocation = val;
+                        });
                       }
                     },
                   ),
                   const SizedBox(height: AppSizes.xl),
+
+                  // Action Buttons
                   Row(
                     children: [
                       Expanded(
@@ -104,6 +137,9 @@ class FilterBottomSheet {
                             Get.back();
                             onClear();
                           },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                           child: const Text('Clear'),
                         ),
                       ),
@@ -111,10 +147,16 @@ class FilterBottomSheet {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            onApply(tempSelectedCategory, tempSelectedSubCategory,
-                                tempSelectedLocation);
+                            onApply(
+                              tempSelectedCategory,
+                              tempSelectedSubCategory,
+                              tempSelectedLocation,
+                            );
                             Get.back();
                           },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                           child: const Text('Apply'),
                         ),
                       ),
@@ -135,23 +177,30 @@ class FilterBottomSheet {
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
+    // Ensure the value exists in items, otherwise use first item
+    final String safeValue = items.contains(value) ? value : items.first;
+
     return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: safeValue,
+          isExpanded: true,
+          icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
+          items: items.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
         ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-            items: items.map((item) {
-              return DropdownMenuItem<String>(value: item, child: Text(item));
-            }).toList(),
-            onChanged: onChanged,
-          ),
-        ));
-    }
+      ),
+    );
+  }
 }

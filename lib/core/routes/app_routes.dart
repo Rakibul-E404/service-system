@@ -30,7 +30,7 @@ class AppRoutes {
 
   // Home routes
   static const String homeRoute = "/home-screen";
-  static const String homeSearchRoute = "/home-search-screen";
+  static const String homeServiceSearchScreen = "/home-search-screen";
   static const String homeServiceDetailsRoute = "/home-service-details-screen";
   static const String homeSubCategoriesPage = "/home-sub-categories-screen";
   static const String notificationPage = "/notification-screen";

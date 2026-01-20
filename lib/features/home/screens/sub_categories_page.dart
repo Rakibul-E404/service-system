@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../../core/utils/token_service/token_storage_service.dart';
 import '../model/categor_model.dart';
 import 'package:flutter/material.dart';
 import '../../auth/widgets/service_card.dart';
@@ -480,32 +481,71 @@ class SubCategoriesPage extends GetView<SubCategoriesController> {
                     shrinkWrap: true,
                     physics: const BouncingScrollPhysics(),
                     itemCount: controller.subCategories.length,
+                    // itemBuilder: (BuildContext context, int index) {
+                    //   final subCategory = controller.subCategories[index];
+                    //
+                    //   return ServiceCard(
+                    //     imageUrl: subCategory.fullImageUrl,
+                    //     title: subCategory.name,
+                    //     subtitle: subCategory.description,
+                    //     location: '',
+                    //     rating: 0.0,
+                    //     showFavorite: false,
+                    //     showLocationAndRating: false,
+                    //     onTap: () {
+                    //       debugPrint('🎯 Navigating to services for subcategory: ${subCategory.name}');
+                    //
+                    //
+                    //       Get.toNamed(
+                    //         AppRoutes.servicesRoute,
+                    //         arguments: {
+                    //           'categoryId': controller.categoryId.value,
+                    //           'subCategoryId': subCategory.id,
+                    //           'subCategoryName': subCategory.name,
+                    //         },
+                    //       );
+                    //     },
+                    //   );
+                    // },
+
                     itemBuilder: (BuildContext context, int index) {
                       final subCategory = controller.subCategories[index];
 
-                      return ServiceCard(
-                        imageUrl: subCategory.fullImageUrl,
-                        title: subCategory.name,
-                        subtitle: subCategory.description,
-                        location: '',
-                        rating: 0.0,
-                        showFavorite: false,
-                        showLocationAndRating: false,
-                        onTap: () {
-                          debugPrint('🎯 Navigating to services for subcategory: ${subCategory.name}');
+                      return FutureBuilder<String?>(
+                        future: SharedPrefService().getAccessToken(),
+                        builder: (context, snapshot) {
+                          final token = snapshot.data;
+                          final bool canSelect = token != null;
 
+                          return ServiceCard(
+                            imageUrl: subCategory.fullImageUrl,
+                            title: subCategory.name,
+                            subtitle: subCategory.description,
+                            location: '',
+                            rating: 0.0,
+                            showFavorite: false,
+                            showLocationAndRating: false,
+                            onTap: canSelect
+                                ? () {
+                              debugPrint('🎯 Navigating to services for subcategory: ${subCategory.name}');
 
-                          Get.toNamed(
-                            AppRoutes.servicesRoute,
-                            arguments: {
-                              'categoryId': controller.categoryId.value,
-                              'subCategoryId': subCategory.id,
-                              'subCategoryName': subCategory.name,
-                            },
+                              Get.toNamed(
+                                AppRoutes.servicesRoute,
+                                arguments: {
+                                  'categoryId': controller.categoryId.value,
+                                  'subCategoryId': subCategory.id,
+                                  'subCategoryName': subCategory.name,
+                                },
+                              );
+                            }
+                                : null, // Disabled if no token
                           );
                         },
                       );
                     },
+
+
+
                   );
                 }),
               ),

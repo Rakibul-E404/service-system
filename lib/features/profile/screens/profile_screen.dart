@@ -30,29 +30,53 @@ class ProfileScreen extends StatelessWidget {
 
           if (!profileService.isLoggedIn.value) {
             return Center(
+              // child: Column(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     const Icon(Icons.person_off, size: 64, color: Colors.grey),
+              //     const SizedBox(height: 16),
+              //     Text(
+              //       'Not Logged In',
+              //       style: Theme.of(context).textTheme.headlineSmall,
+              //     ),
+              //     const SizedBox(height: 8),
+              //     Text(
+              //       'Please login to view your profile',
+              //       style: Theme.of(context).textTheme.bodyMedium,
+              //     ),
+              //     const SizedBox(height: 24),
+              //     ElevatedButton(
+              //       onPressed: () {
+              //         Get.offAllNamed(AppRoutes.roleSelectionRoute);
+              //       },
+              //       child: const Text('Go to Login'),
+              //     ),
+              //   ],
+              // ),
+
+
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.person_off, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Not Logged In',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Please login to view your profile',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  const Text('Please login to view your profile'),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      Get.offAllNamed(AppRoutes.roleSelectionRoute);
+                      Get.offAllNamed('/role-selection');
                     },
                     child: const Text('Go to Login'),
                   ),
                 ],
               ),
+
+
             );
           }
 

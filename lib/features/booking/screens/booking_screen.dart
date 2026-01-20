@@ -39,7 +39,7 @@ class BookingScreen extends StatelessWidget {
           if (!controller.profileService.isLoggedIn.value) {
             return Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.person_off, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),

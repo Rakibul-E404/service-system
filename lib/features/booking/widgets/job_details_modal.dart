@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:manx_mate/core/utils/api/app_url.dart';
+import 'package:manx_mate/features/message/controllers/message_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_colors.dart';
 import '../../home/screens/add_review_page.dart';
@@ -30,8 +32,8 @@ class JobDetailsModal {
     final String? providerPhone = author['phone']?.toString();
     final String? providerEmail = author['email']?.toString();
 
-    // final bool isPastJob = _isPastJob(job['bookingDate']);
-    final bool isPastJob =true;
+    // ✅ Only show "Give Review" for PAST jobs (based on bookingDate)
+    final bool isPastJob = _isPastJob(job['bookingDate']);
 
     Get.bottomSheet(
       Container(
@@ -158,22 +160,26 @@ class JobDetailsModal {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade200),
                         ),
-                        child: Text(job['details'].toString()),
+                        child: Text(
+                          job['details'].toString(),
+                          style: const TextStyle(fontSize: 14, height: 1.5),
+                        ),
                       ),
                     ],
 
                     const SizedBox(height: 24),
 
-                    // ✅ ADD REVIEW BUTTON (PAST JOB ONLY)
+                    // ✅ GIVE REVIEW BUTTON — ONLY FOR PAST JOBS
                     if (isPastJob) ...[
                       Row(
                         children: <Widget>[
                           Expanded(
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.rate_review),
-                              label: const Text('Give Review',style: TextStyle(
-                                color: AppColors.whiteColor
-                              ),),
+                              label: const Text(
+                                'Give Review',
+                                style: TextStyle(color: AppColors.whiteColor),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryColor,
                                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -182,15 +188,23 @@ class JobDetailsModal {
                                 ),
                               ),
                               onPressed: () {
-                                // print(service);
-                                // print("rolalala");
+                                final String? serviceId = job['_id']?.toString();
+                                if (serviceId == null || serviceId.isEmpty) {
+                                  Get.snackbar(
+                                    'Error',
+                                    'Job ID not found.',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                  );
+                                  return;
+                                }
+                                Get.back();
                                 Get.to(
                                       () => AddReviewPage(
                                     providerName: author['name']?.toString() ?? 'Provider',
-                                    serviceId: job['_id'].toString(),
+                                    serviceId: serviceId,
                                   ),
                                 );
-
                               },
                             ),
                           ),
@@ -199,6 +213,7 @@ class JobDetailsModal {
                       const SizedBox(height: 12),
                     ],
 
+                    // Cancel button only for NON-past jobs
                     if (showCancelButton && !isPastJob) ...[
                       Row(
                         children: <Widget>[
@@ -220,7 +235,9 @@ class JobDetailsModal {
                       ),
                     ],
 
-                    if (showContactButtons && (providerPhone != null || providerEmail != null)) ...[
+                    // ✅ QUICK CONTACT WITH MESSAGE BUTTON
+                    if (showContactButtons &&
+                        (providerPhone != null || providerEmail != null)) ...[
                       const SizedBox(height: 24),
                       const Text('Quick Contact', style: TextStyle(color: Colors.grey)),
                       const SizedBox(height: 12),
@@ -237,7 +254,8 @@ class JobDetailsModal {
                                 _launchPhoneNumber(providerPhone);
                               },
                             ),
-                          if (providerEmail != null) const SizedBox(width: 16),
+                          if (providerPhone != null && providerEmail != null)
+                            const SizedBox(width: 16),
                           if (providerEmail != null)
                             _buildContactOption(
                               icon: Icons.email,
@@ -248,6 +266,25 @@ class JobDetailsModal {
                                 _launchEmail(providerEmail);
                               },
                             ),
+                          // ✅ MESSAGE BUTTON
+                          if (providerPhone != null || providerEmail != null)
+                            const SizedBox(width: 16),
+                          _buildContactOption(
+                            icon: CupertinoIcons.chat_bubble_fill,
+                            label: 'Message',
+                            color: Colors.purple,
+                            onTap: () {
+
+                              // Get.back();
+                              // Get.snackbar(
+                              //   'Coming Soon',
+                              //   'In-app messaging will be available soon.',
+                              //   backgroundColor: Colors.purple,
+                              //   colorText: Colors.white,
+                              // );
+                              Get.put(MessageController()).createConversation(job["service"]["author"]["authorId"]);
+                            },
+                          ),
                         ],
                       ),
                     ],
@@ -270,13 +307,40 @@ class JobDetailsModal {
     child: Icon(Icons.business, size: 40, color: Colors.grey.shade400),
   );
 
+  // // ✅ Accurate past job detection
+  // static bool _isPastJob(dynamic bookingDate) {
+  //   try {
+  //     if (bookingDate == null) return false;
+  //     final DateTime date = bookingDate is String
+  //         ? DateTime.parse(bookingDate).toLocal()
+  //         : bookingDate;
+  //     // Consider "past" only if BEFORE today (not including today)
+  //     final now = DateTime.now();
+  //     return DateTime(date.year, date.month, date.day)
+  //         .isBefore(DateTime(now.year, now.month, now.day));
+  //   } catch (_) {
+  //     return false;
+  //   }
+  // }
+
+
+  // ✅ Correct past job detection - should include today's completed jobs
   static bool _isPastJob(dynamic bookingDate) {
     try {
       if (bookingDate == null) return false;
+
       final DateTime date = bookingDate is String
           ? DateTime.parse(bookingDate).toLocal()
           : bookingDate;
-      return date.isBefore(DateTime.now());
+
+      final now = DateTime.now();
+
+      // Consider "past" if date is on or before today
+      // We compare just the year, month, and day (ignoring time)
+      final DateTime jobDate = DateTime(date.year, date.month, date.day);
+      final DateTime today = DateTime(now.year, now.month, now.day);
+
+      return jobDate.isBefore(today) || jobDate.isAtSameMomentAs(today);
     } catch (_) {
       return false;
     }
@@ -284,12 +348,38 @@ class JobDetailsModal {
 
   static Future<void> _launchPhoneNumber(String phone) async {
     final Uri uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      Get.snackbar(
+        'Error',
+        'Could not launch dialer',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   static Future<void> _launchEmail(String email) async {
     final Uri uri = Uri(scheme: 'mailto', path: email);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        Get.snackbar(
+          'No Email App',
+          'No email app found.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Unable to open email.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   static Widget _buildDetailItem({
@@ -313,9 +403,9 @@ class JobDetailsModal {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(title, style: TextStyle(color: Colors.grey.shade600)),
+              Text(title, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
               const SizedBox(height: 4),
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             ],
           ),
         ),
@@ -338,11 +428,15 @@ class JobDetailsModal {
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
-            child: Icon(icon, color: color),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 6),
-          Text(label, style: TextStyle(color: color)),
+          Text(
+            label,
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );

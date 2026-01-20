@@ -257,7 +257,7 @@ class SignUpController extends GetxController {
       final Map<String, dynamic> requestBody = {
         'name': name,
         'email': email,
-        'location': location.toLowerCase(),
+        'region': location.toLowerCase(),
         'password': password,
         'role': selectedRole.value,
       };

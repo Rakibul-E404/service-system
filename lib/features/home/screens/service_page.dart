@@ -1,3 +1,5 @@
+/**
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
@@ -441,9 +443,304 @@ class _ServicesPageState extends State<ServicesPage> {
     super.dispose();
   }
 }
+*/
 
 
 
 
 
 
+
+
+
+
+
+
+///
+///
+/// todo:: adding sponsored icon
+///
+///
+///
+
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../auth/widgets/service_card.dart';
+import '../controllers/service_controller.dart';
+import '../../favorite/controllers/favorite_controller.dart';
+
+class ServicesPage extends StatefulWidget {
+  const ServicesPage({super.key});
+
+  @override
+  State<ServicesPage> createState() => _ServicesPageState();
+}
+
+class _ServicesPageState extends State<ServicesPage> {
+  late final ServicesController servicesController;
+  late final FavoriteController favoriteController;
+
+  String subCategoryName = 'Services';
+  String subCategoryId = '';
+  String categoryId = '';
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    servicesController = Get.put(ServicesController());
+    favoriteController = Get.put(FavoriteController());
+
+    final dynamic args = Get.arguments;
+    if (args != null && args is Map<String, dynamic>) {
+      subCategoryName = args['subCategoryName']?.toString() ?? 'Services';
+      subCategoryId = args['subCategoryId']?.toString() ?? '';
+      categoryId = args['categoryId']?.toString() ?? '';
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_initialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fetchServicesIfNeeded();
+        _initialized = true;
+      });
+    }
+  }
+
+  void _fetchServicesIfNeeded() {
+    if (subCategoryId.isNotEmpty &&
+        servicesController.services.isEmpty &&
+        !servicesController.isLoadingServices.value) {
+      _fetchServices();
+    }
+  }
+
+  void _fetchServices() {
+    if (categoryId.isNotEmpty) {
+      servicesController.fetchServicesByCategoryAndSubCategory(
+        categoryId,
+        subCategoryId,
+        subCategoryName,
+      );
+    } else {
+      servicesController.fetchServicesBySubCategoryOnly(
+        subCategoryId,
+        subCategoryName,
+      );
+    }
+  }
+
+  void _retryFetch() {
+    if (categoryId.isNotEmpty) {
+      servicesController.retryServicesWithCategoryAndSubCategory(
+        categoryId,
+        subCategoryId,
+        subCategoryName,
+      );
+    } else {
+      servicesController.retryServicesWithSubCategoryOnly(
+        subCategoryId,
+        subCategoryName,
+      );
+    }
+  }
+
+  void _loadMoreServices() {
+    servicesController.loadMoreServices();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(subCategoryName),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      body: Obx(() {
+        final isLoading = servicesController.isLoadingServices.value;
+        final isLoadingMore = servicesController.isLoadingMore.value;
+        final errorMsg = servicesController.servicesErrorMessage.value;
+        final servicesList = servicesController.services.toList();
+        final hasMore = servicesController.hasMore.value;
+        final totalServices = servicesController.totalServices.value;
+
+        // INITIAL LOADING
+        if (isLoading && servicesList.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        // ERROR STATE
+        if (errorMsg.isNotEmpty && servicesList.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64),
+                const SizedBox(height: 16),
+                Text(errorMsg),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _retryFetch,
+                  child: const Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // EMPTY STATE
+        if (servicesList.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.search_off, size: 64),
+                const SizedBox(height: 16),
+                const Text('No services available'),
+                const SizedBox(height: 8),
+                Text('for $subCategoryName'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _fetchServices,
+                  child: const Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // LIST VIEW
+        return Column(
+          children: [
+            // TOTAL COUNT
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.grey[100],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${servicesList.length} of $totalServices services',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (isLoadingMore)
+                    const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: servicesList.length + (hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (hasMore && index == servicesList.length) {
+                    return Center(
+                      child: isLoadingMore
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                        onPressed: _loadMoreServices,
+                        child: const Text('Load More Services'),
+                      ),
+                    );
+                  }
+
+                  final service = servicesList[index];
+
+                  // 🔴 FAVORITE ACCESS
+                  final hasFavoriteAccess =
+                      service.accessibleBySubscription
+                          ?.contains('AddFavorites') ??
+                          false;
+
+                  // ⭐ SPONSORED LOGIC (CHANGE THIS IF NEEDED)
+                  final bool isSponsored =
+                      service.isSponsored == true;
+                  // ⬆️ if backend uses something else, update only this line
+
+                  return Obx(() {
+                    final bool isFavorited =
+                    servicesController.isServiceFavorited(service.id);
+                    final bool isLoadingFav =
+                    favoriteController.isFavoriteLoading(service.id);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Opacity(
+                        opacity: isLoadingFav ? 0.6 : 1,
+                        child: ServiceCard(
+                          imageUrl: service.fullImageUrl.isNotEmpty
+                              ? service.fullImageUrl
+                              : 'https://via.placeholder.com/150',
+                          title: service.name,
+                          subtitle: service.description,
+                          location: service.location,
+                          rating: service.rating,
+                          isFavorited: isFavorited,
+                          isFavoriteEnabled: hasFavoriteAccess,
+                          isSponsored: isSponsored, // ✅ PASSED HERE
+                          onTap: () {
+                            Get.toNamed(
+                              AppRoutes.homeServiceDetailsRoute,
+                              arguments: {
+                                'serviceId': service.id,
+                                'authorId': service.authorId ?? '',
+                                'author': service.author,
+                              },
+                            );
+                          },
+                          onFavorite: () {
+                            if (!hasFavoriteAccess || isLoadingFav) return;
+
+                            if (isFavorited) {
+                              servicesController
+                                  .removeFromFavorites(service.id);
+                            } else {
+                              servicesController.addToFavorites(service.id);
+                            }
+
+                            favoriteController
+                                .toggleFavorite(service.id)
+                                .catchError((_) {
+                              // revert on failure
+                              if (isFavorited) {
+                                servicesController
+                                    .addToFavorites(service.id);
+                              } else {
+                                servicesController
+                                    .removeFromFavorites(service.id);
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  });
+                },
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}

@@ -77,7 +77,7 @@ class HomeTopBar extends StatelessWidget {
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         onPressed: () {
-                          Get.toNamed(AppRoutes.homeSearchRoute);
+                          Get.toNamed(AppRoutes.homeServiceSearchScreen);
                         },
                         icon: const Icon(
                           CupertinoIcons.search,

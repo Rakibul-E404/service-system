@@ -48,12 +48,12 @@ class OngoingJobController extends GetxController {
       final String? accessToken = await sharedPrefService.getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Please login to view ongoing jobs',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        // Get.snackbar(
+        //   'Error',
+        //   'Please login to view ongoing jobs',
+        //   backgroundColor: Colors.red,
+        //   colorText: Colors.white,
+        // );
         isLoading.value = false;
         return;
       }

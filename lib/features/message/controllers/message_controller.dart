@@ -1057,14 +1057,14 @@ import 'package:manx_mate/core/utils/api/app_url.dart';
 import 'package:manx_mate/core/data/secured_storage.dart';
 import 'package:manx_mate/core/config/app_constants.dart';
 import '../model/conversation_all_list_response_model.dart';
-import '../model/conversation_single_response_model.dart';
+import '../model/conversation_single_response_model.dart' as single;
 import '../screens/individual_chat_screen.dart';
 import 'package:flutter/material.dart';
 
 class MessageController extends GetxController {
   // Observables using your direct models
   RxList<ConversationModel> conversations = <ConversationModel>[].obs;
-  RxList<MessageModel> messages = <MessageModel>[].obs;
+  RxList<single.MessageModel> messages = <single.MessageModel>[].obs;
   Rx<ConversationModel?> selectedConversation = Rx<ConversationModel?>(null);
 
   // UI States
@@ -1108,7 +1108,7 @@ class MessageController extends GetxController {
     SocketServices().listen("Message", (dynamic data) {
       try {
         if (data != null && data['newMessage'] != null) {
-          final newMessage = MessageModel.fromJson(data['newMessage']);
+          final newMessage = single.MessageModel.fromJson(data['newMessage']);
           if (selectedConversation.value != null &&
               newMessage.conversationId == selectedConversation.value!.id) {
             if (!messages.any((m) => m.id == newMessage.id)) {
@@ -1194,7 +1194,7 @@ class MessageController extends GetxController {
       );
 
       if (response.isSuccess && response.jsonResponse != null) {
-        final res = ConversationSingleResponseModel.fromJson(response.jsonResponse!);
+        final res = single.ConversationSingleResponseModel.fromJson(response.jsonResponse!);
         messages.value = res.data.messages;
 
         // Sort: Oldest at top, Newest at bottom
@@ -1205,6 +1205,29 @@ class MessageController extends GetxController {
       }
     } finally {
       showBannerLoading.value = false;
+    }
+  }
+
+  Future<void> createConversation(String receiverId) async {
+    try {
+      // showBannerLoading.value = true;
+      final String? token = await _secureStorage.read(AppConstants.authToken);
+      if (token == null) return;
+
+      final response = await _networkCaller.postRequest(
+        '${AppUrl.baseUrl}/conversation/create',
+        headers: {'Authorization': 'Bearer $token'},
+        body: {
+          "receiverId": receiverId
+        }
+      );
+
+      if (response.isSuccess && response.jsonResponse != null) {
+        final res = ConversationSingleResponseModel.fromJson(response.jsonResponse!);
+        selectConversation(res.data);
+      }
+    } finally {
+      // showBannerLoading.value = false;
     }
   }
 
