@@ -827,7 +827,7 @@ class HomeScreen extends StatelessWidget {
                                     additionalNoteTEController,
                                     onSubmitSuccess: () {
                                       debugPrint(
-                                          '✅ Inquiry submitted successfully!');
+                                          '✅ Inquiry submitted successfully !');
                                     },
                                   ),
                                 );
