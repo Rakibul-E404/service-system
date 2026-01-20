@@ -105,8 +105,21 @@ class AppUrl {
   static String allSubCategory(String categoryId) {
     return '$baseUrlV1/$version1/category/$categoryId/subcategories';
 }
-  static const String allService = '$baseUrlV1/$version1/service/all';
 
+
+  static String allService({String? categoryId, String? subCategoryId, int page = 1, int limit = 10}) {
+    String url = '$baseUrlV1/$version1/service/all?page=$page&limit=$limit';
+
+    if (categoryId != null && categoryId.isNotEmpty) {
+      url += '&category=$categoryId';
+    }
+
+    if (subCategoryId != null && subCategoryId.isNotEmpty) {
+      url += '&subCategory=$subCategoryId';
+    }
+
+    return url;
+  }
   static String getSubCategoriesUrl(String categoryId) {
     return '$baseUrl/category/$categoryId/subcategories';
   }

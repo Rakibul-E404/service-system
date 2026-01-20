@@ -39,7 +39,7 @@ import '../../features/auth/screens/sign_in_page.dart';
 import '../../features/auth/screens/sign_up_page.dart';
 import '../../features/auth/screens/verify_mail.dart';
 import '../../features/home/controllers/sub_categories_controller.dart';
-import '../../features/home/screens/home_search_screen.dart';
+import '../../features/home/screens/home_service_search_screen.dart';
 import '../../features/home/screens/service_page.dart';
 import '../../features/profile/controllers/privacy_policy_screen_controller.dart';
 import '../../features/profile/screens/user_provider_profile_page.dart';
@@ -102,8 +102,8 @@ class AppNavigation {
       binding: HomeBinding(),
     ),
     GetPage<dynamic>(
-      name: AppRoutes.homeSearchRoute,
-      page: () => const HomeSearchScreen(),
+      name: AppRoutes.homeServiceSearchScreen,
+      page: () => const HomeServiceSearchScreen(),
       transition: Transition.noTransition,
       binding: HomeBinding(),
     ),

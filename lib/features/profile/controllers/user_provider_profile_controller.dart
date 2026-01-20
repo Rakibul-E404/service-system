@@ -27,7 +27,7 @@ class UserProviderProfileController extends GetxController {
       final token = await SharedPrefService().getAccessToken();
       if (token == null) {
         errorMessage.value = "Authentication required.";
-        return;
+        return ;
       }
 
       final String url = AppUrl.userProviderProfile(profileId);
