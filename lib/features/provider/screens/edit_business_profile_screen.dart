@@ -187,6 +187,13 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                                   profileCtrl.categoryId.value = val;
                                   _categoryController.text = selectedCat.name;
                                   categoryCtrl.fetchSubCategories(val);
+
+
+                                  profileCtrl.updateBusinessProfile(
+
+                                    serviceCategoryId: val, // The newly selected ID
+                                  );
+
                                   Get.back(); // Close dialog
                                 },
                               );
