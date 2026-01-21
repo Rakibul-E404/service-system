@@ -111,16 +111,18 @@ class ProviderProfileController extends GetxController {
 
       debugPrint('🌐 --- STARTING PROFILE UPDATE ---');
       debugPrint('📍 URL: ${AppUrl.updateBusinessProfile}');
+      debugPrint('🔑 TOKEN: ${token?.substring(0, 10)}...'); // Log prefix only for security
 
       var request = http.MultipartRequest('PUT', Uri.parse(AppUrl.updateBusinessProfile));
 
+      // --- Header Logging ---
       request.headers.addAll({
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       });
+      debugPrint('📋 HEADERS: ${request.headers}');
 
       // --- Dynamic Field Mapping ---
-      // We only add fields to the request if they are NOT null to avoid sending "null" strings
       Map<String, String> fields = {};
       if (name != null) fields["name"] = name;
       if (phone != null) fields["phone"] = phone;
@@ -128,64 +130,74 @@ class ProviderProfileController extends GetxController {
       if (region != null) fields["region"] = region.toLowerCase();
       if (location != null) fields["location"] = location;
 
-      // LOGIC: Category Handling
       if (serviceCategoryId != null && serviceCategoryId.isNotEmpty) {
         fields["serviceCategory"] = serviceCategoryId;
-        debugPrint('✅ CATEGORY DETECTED: Sending serviceCategory -> $serviceCategoryId');
-      } else {
-        debugPrint('ℹ️ CATEGORY INFO: No category ID provided in this call');
       }
 
-      debugPrint('📝 FINAL PAYLOAD FIELDS: $fields');
+      debugPrint('📝 FIELDS BEING SENT: $fields');
       request.fields.addAll(fields);
 
       // --- Image Handling ---
       if (selectedImageFile.value != null) {
-        debugPrint('📸 IMAGE: Attaching file -> ${selectedImageFile.value!.path}');
         String filePath = selectedImageFile.value!.path;
         String extension = filePath.split('.').last.toLowerCase();
         String subType = (extension == 'jpg' || extension == 'jpeg') ? 'jpeg' : extension;
+
+        debugPrint('📸 ATTACHING IMAGE: $filePath');
+        debugPrint('🖼️ DETECTED MIME TYPE: image/$subType');
 
         request.files.add(await http.MultipartFile.fromPath(
           'image',
           filePath,
           contentType: http.MediaType('image', subType),
         ));
+      } else {
+        debugPrint('ℹ️ NO IMAGE SELECTED: Skipping file attachment');
       }
 
+      // --- Sending Request ---
+      debugPrint('⏳ SENDING REQUEST...');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
-      debugPrint('📡 RESPONSE CODE: ${response.statusCode}');
-      debugPrint('📄 RESPONSE BODY: ${response.body}');
+      debugPrint('📡 STATUS CODE: ${response.statusCode}');
 
-      var jsonResponse = jsonDecode(response.body);
+      // Attempt to pretty-print or safely log the body
+      try {
+        debugPrint('📄 RESPONSE BODY: ${response.body}');
+        var jsonResponse = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && jsonResponse['success'] == true) {
-        Get.snackbar('Success', jsonResponse['message'] ?? 'Profile updated',
-            backgroundColor: Colors.green, colorText: Colors.white);
+        if (response.statusCode == 200 && jsonResponse['success'] == true) {
+          debugPrint('✅ SUCCESS: Profile updated successfully');
 
-        selectedImageFile.value = null;
+          Get.snackbar('Success', jsonResponse['message'] ?? 'Profile updated',
+              backgroundColor: Colors.green, colorText: Colors.white);
 
-        debugPrint('🔄 REFRESHING: Fetching updated profile data from server...');
-        await fetchBusinessProfile();
+          selectedImageFile.value = null;
 
-        // Only go back if we are NOT in the middle of a category confirm dialog
-        // Usually, if we pass only serviceCategoryId, we want to stay on page to see it "lock"
-        if (serviceCategoryId == null) {
-          debugPrint('🚪 AUTO-CLOSE: Navigating back to previous screen');
-          Get.back();
+          debugPrint('🔄 REFRESHING: Fetching updated profile data...');
+          await fetchBusinessProfile();
+
+          if (serviceCategoryId == null) {
+            debugPrint('🚪 NAVIGATING BACK');
+            Get.back();
+          }
+        } else {
+          debugPrint('⚠️ SERVER REJECTED: ${jsonResponse['message'] ?? 'Unknown Error'}');
+          Get.snackbar('Update Failed', jsonResponse['message'] ?? 'Error ${response.statusCode}');
         }
-      } else {
-        debugPrint('❌ UPDATE FAILED: ${jsonResponse['message']}');
-        Get.snackbar('Update Failed', jsonResponse['message'] ?? 'Error ${response.statusCode}');
+      } catch (jsonErr) {
+        debugPrint('🚑 JSON PARSE ERROR: The server did not return valid JSON.');
+        debugPrint('📄 RAW BODY: ${response.body}');
       }
-    } catch (e) {
-      debugPrint('🧨 CRITICAL ERROR DURING UPDATE: $e');
+
+    } catch (e, stacktrace) {
+      debugPrint('🧨 CRITICAL ERROR: $e');
+      debugPrint('📚 STACKTRACE: $stacktrace');
       Get.snackbar('Error', 'Something went wrong');
     } finally {
       isLoading.value = false;
-      debugPrint('🏁 --- PROFILE UPDATE PROCESS FINISHED ---');
+      debugPrint('🏁 --- PROCESS FINISHED ---');
     }
   }
 
