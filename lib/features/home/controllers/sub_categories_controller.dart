@@ -113,6 +113,29 @@ class SubCategoriesController extends GetxController {
     fetchSubCategories();
   }
 
+
+  ///===================================>>>>>>
+  ///
+  ///
+  /// Set a new category and fetch subcategories
+  void setCategory(String newCategoryId, String newCategoryName) {
+    // Update category info
+    categoryId.value = newCategoryId;
+    categoryName.value = newCategoryName;
+
+    // Reset previous data
+    subCategories.clear();
+    errorMessage.value = '';
+    retryCount = 0;
+
+    // Fetch new subcategories
+    fetchSubCategories();
+  }
+
+  ///
+  ///
+  /// <<<<<===================================
+
   /// Fetch subcategories for the given category ID
   Future<void> fetchSubCategories() async {
     // Prevent duplicate calls
