@@ -216,7 +216,7 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                                 if (profileCtrl.isProfileComplete.value == false) {
                                   Get.defaultDialog(
                                     title: "Profile Incomplete",
-                                    middleText: "Please complete your general business information (Name,Phone,Region,Image, Bio, and Location) and save your profile before managing sub-categories.",
+                                    middleText: "Please complete your general business information (Name,Phone,Region,Image, Bio, and Location) and save your profile before manage/select sub-categories.",
                                     textConfirm: "OK",
                                     confirmTextColor: Colors.white,
                                     buttonColor: AppColors.primaryColor,
