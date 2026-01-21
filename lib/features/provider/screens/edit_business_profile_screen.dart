@@ -213,8 +213,20 @@ class _EditBusinessProfileScreenState extends State<EditBusinessProfileScreen> {
                             const SizedBox(height: 8),
                             InkWell(
                               onTap: () {
-                                profileCtrl.fetchSelfServices();
-                                _showSubCategoryPicker(context);
+                                if (profileCtrl.isProfileComplete.value == false) {
+                                  Get.defaultDialog(
+                                    title: "Profile Incomplete",
+                                    middleText: "Please complete your general business information (Name,Phone,Region,Image, Bio, and Location) and save your profile before managing sub-categories.",
+                                    textConfirm: "OK",
+                                    confirmTextColor: Colors.white,
+                                    buttonColor: AppColors.primaryColor,
+                                    onConfirm: () => Get.back(),
+                                  );
+                                } else {
+                                  // ✅ PROCEED: Profile is complete, fetch and show picker
+                                  profileCtrl.fetchSelfServices();
+                                  _showSubCategoryPicker(context);
+                                }
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
