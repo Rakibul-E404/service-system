@@ -28,6 +28,8 @@ class ProviderProfileController extends GetxController {
   final isUploadingImage = false.obs;
   final providerId = ''.obs;
 
+  final isProfileComplete = false.obs;
+
   // --- Observable Data ---
   final businessName = ''.obs;
   final location = ''.obs;
@@ -96,18 +98,20 @@ class ProviderProfileController extends GetxController {
   // --- NEW: UPDATE METHOD (Multipart PUT) ---
   // Remove serviceCategory and subCategory from the parameters
   Future<void> updateBusinessProfile({
-    required String name,
-    required String phone,
-    required String description,
-    required String region,
-    required String location,
-    String? serviceCategoryId, // Added optional parameter
+    String? name,
+    String? phone,
+    String? description,
+    String? region,
+    String? location,
+    String? serviceCategoryId,
   }) async {
     try {
       isLoading.value = true;
       final token = await _getAuthToken();
 
       debugPrint('🌐 --- STARTING PROFILE UPDATE ---');
+      debugPrint('📍 URL: ${AppUrl.updateBusinessProfile}');
+
       var request = http.MultipartRequest('PUT', Uri.parse(AppUrl.updateBusinessProfile));
 
       request.headers.addAll({
@@ -115,25 +119,29 @@ class ProviderProfileController extends GetxController {
         'Accept': 'application/json',
       });
 
-      // Base fields
-      Map<String, String> fields = {
-        "name": name,
-        "phone": phone,
-        "description": description,
-        "region": region.toLowerCase(),
-        "location": location,
-      };
+      // --- Dynamic Field Mapping ---
+      // We only add fields to the request if they are NOT null to avoid sending "null" strings
+      Map<String, String> fields = {};
+      if (name != null) fields["name"] = name;
+      if (phone != null) fields["phone"] = phone;
+      if (description != null) fields["description"] = description;
+      if (region != null) fields["region"] = region.toLowerCase();
+      if (location != null) fields["location"] = location;
 
-      // LOGIC: Only add serviceCategory if it was passed from the UI (first-time set)
+      // LOGIC: Category Handling
       if (serviceCategoryId != null && serviceCategoryId.isNotEmpty) {
         fields["serviceCategory"] = serviceCategoryId;
-        debugPrint('📝 New Category ID included: $serviceCategoryId');
+        debugPrint('✅ CATEGORY DETECTED: Sending serviceCategory -> $serviceCategoryId');
+      } else {
+        debugPrint('ℹ️ CATEGORY INFO: No category ID provided in this call');
       }
 
+      debugPrint('📝 FINAL PAYLOAD FIELDS: $fields');
       request.fields.addAll(fields);
 
-      // Image Handling
+      // --- Image Handling ---
       if (selectedImageFile.value != null) {
+        debugPrint('📸 IMAGE: Attaching file -> ${selectedImageFile.value!.path}');
         String filePath = selectedImageFile.value!.path;
         String extension = filePath.split('.').last.toLowerCase();
         String subType = (extension == 'jpg' || extension == 'jpeg') ? 'jpeg' : extension;
@@ -147,6 +155,10 @@ class ProviderProfileController extends GetxController {
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      debugPrint('📡 RESPONSE CODE: ${response.statusCode}');
+      debugPrint('📄 RESPONSE BODY: ${response.body}');
+
       var jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200 && jsonResponse['success'] == true) {
@@ -154,16 +166,26 @@ class ProviderProfileController extends GetxController {
             backgroundColor: Colors.green, colorText: Colors.white);
 
         selectedImageFile.value = null;
+
+        debugPrint('🔄 REFRESHING: Fetching updated profile data from server...');
         await fetchBusinessProfile();
-        Get.back();
+
+        // Only go back if we are NOT in the middle of a category confirm dialog
+        // Usually, if we pass only serviceCategoryId, we want to stay on page to see it "lock"
+        if (serviceCategoryId == null) {
+          debugPrint('🚪 AUTO-CLOSE: Navigating back to previous screen');
+          Get.back();
+        }
       } else {
+        debugPrint('❌ UPDATE FAILED: ${jsonResponse['message']}');
         Get.snackbar('Update Failed', jsonResponse['message'] ?? 'Error ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('🧨 CRITICAL ERROR: $e');
+      debugPrint('🧨 CRITICAL ERROR DURING UPDATE: $e');
       Get.snackbar('Error', 'Something went wrong');
     } finally {
       isLoading.value = false;
+      debugPrint('🏁 --- PROFILE UPDATE PROCESS FINISHED ---');
     }
   }
 
@@ -399,6 +421,7 @@ class ProviderProfileController extends GetxController {
     category.value = data.serviceCategory.name;
     email.value = emailValue;
     businessImage.value = data.image;
+    isProfileComplete.value = data.isProfileComplete;
 
     nameController.text = businessName.value;
     locationController.text = location.value;
