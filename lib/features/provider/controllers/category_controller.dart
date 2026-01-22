@@ -66,7 +66,7 @@ class CategoryController extends GetxController {
     }
   }
 
-  // --- Fetch Banners (without auth) ---
+  /// --- Fetch Banners (without auth) ---
   Future<void> fetchBanners() async {
     try {
       isLoadingBanners.value = true;
@@ -117,22 +117,22 @@ class CategoryController extends GetxController {
     }
   }
 
-  // --- Get Category Name by Banner Index ---
+  /// --- Get Category Name by Banner Index ---
   String? getCategoryNameByBannerIndex(int index) {
     return bannerToCategoryMap[index];
   }
 
-  // --- NEW: Get Category ID by Banner Index ---
+  /// --- NEW: Get Category ID by Banner Index ---
   String? getCategoryIdByBannerIndex(int index) {
     return bannerToCategoryIdMap[index];
   }
 
-  // --- NEW: Get Category ID by Name ---
+  /// --- NEW: Get Category ID by Name ---
   String? getCategoryIdByName(String categoryName) {
     return categoryNameToIdMap[categoryName];
   }
 
-  // --- Fetch Sub-Categories ---
+  /// --- Fetch Sub-Categories ---
   Future<void> fetchSubCategories(String categoryId) async {
     try {
       isSubLoading.value = true;
