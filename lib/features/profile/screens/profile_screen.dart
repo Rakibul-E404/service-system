@@ -6,8 +6,6 @@ import 'package:manx_mate/core/config/app_sizes.dart';
 import 'package:manx_mate/core/extensions/context_extensions.dart';
 import 'package:manx_mate/core/routes/app_routes.dart';
 import 'package:manx_mate/features/auth/screens/profile_service.dart';
-import '../../../core/config/app_colors.dart';
-import '../controllers/profile_controller.dart';
 import '../widgets/logout_modal.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -30,31 +28,6 @@ class ProfileScreen extends StatelessWidget {
 
           if (!profileService.isLoggedIn.value) {
             return Center(
-              // child: Column(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     const Icon(Icons.person_off, size: 64, color: Colors.grey),
-              //     const SizedBox(height: 16),
-              //     Text(
-              //       'Not Logged In',
-              //       style: Theme.of(context).textTheme.headlineSmall,
-              //     ),
-              //     const SizedBox(height: 8),
-              //     Text(
-              //       'Please login to view your profile',
-              //       style: Theme.of(context).textTheme.bodyMedium,
-              //     ),
-              //     const SizedBox(height: 24),
-              //     ElevatedButton(
-              //       onPressed: () {
-              //         Get.offAllNamed(AppRoutes.roleSelectionRoute);
-              //       },
-              //       child: const Text('Go to Login'),
-              //     ),
-              //   ],
-              // ),
-
-
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -75,8 +48,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
-
             );
           }
 
