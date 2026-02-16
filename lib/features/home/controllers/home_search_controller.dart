@@ -21,6 +21,7 @@ class HomeSearchController extends GetxController {
   String _currentCategoryId = '';
   String _currentSubCategoryId = '';
   String _currentKeyword = '';
+  String _currentLocation = ''; // <-- Added
 
   List<dynamic> get services => _services.value;
   List<dynamic> get filteredServices => _filteredServices.value;
@@ -44,6 +45,7 @@ class HomeSearchController extends GetxController {
     String? categoryId,
     String? subCategoryId,
     String? keyword,
+    String? location, // <-- Added
   }) async {
     if (refresh) {
       _currentPage.value = 1;
@@ -56,6 +58,7 @@ class HomeSearchController extends GetxController {
     if (categoryId != null) _currentCategoryId = categoryId;
     if (subCategoryId != null) _currentSubCategoryId = subCategoryId;
     if (keyword != null) _currentKeyword = keyword;
+    if (location != null) _currentLocation = location;
 
     if (_currentPage.value == 1) {
       _isLoading.value = true;
@@ -72,7 +75,7 @@ class HomeSearchController extends GetxController {
     }
 
     try {
-      // Build URL with filters
+      // Build URL with filters (API might not support location, so we filter locally)
       final url = AppUrl.allService(
         categoryId: _currentCategoryId.isEmpty ? null : _currentCategoryId,
         subCategoryId: _currentSubCategoryId.isEmpty ? null : _currentSubCategoryId,
@@ -84,6 +87,7 @@ class HomeSearchController extends GetxController {
       debugPrint('  - CategoryID: ${_currentCategoryId.isEmpty ? "None" : _currentCategoryId}');
       debugPrint('  - SubCategoryID: ${_currentSubCategoryId.isEmpty ? "None" : _currentSubCategoryId}');
       debugPrint('  - Keyword: ${_currentKeyword.isEmpty ? "None" : _currentKeyword}');
+      debugPrint('  - Location: ${_currentLocation.isEmpty ? "None" : _currentLocation}');
 
       NetworkResponse response = await NetworkCaller().getRequest(url, headers: headers);
 
@@ -101,12 +105,15 @@ class HomeSearchController extends GetxController {
           if (servicesData is List && servicesData.isNotEmpty) {
             final transformedData = _transformServiceData(servicesData);
 
+            // Apply both keyword and location filters locally
+            final filteredData = _applyFilters(transformedData);
+
             if (refresh || _currentPage.value == 1) {
               _services.value = transformedData;
-              _filteredServices.value = _applyKeywordFilter(transformedData);
+              _filteredServices.value = filteredData;
             } else {
               _services.addAll(transformedData);
-              _filteredServices.addAll(_applyKeywordFilter(transformedData));
+              _filteredServices.addAll(filteredData);
             }
 
             debugPrint('✅ Services loaded: ${_services.length} items (Page ${_currentPage.value})');
@@ -152,21 +159,20 @@ class HomeSearchController extends GetxController {
     }
   }
 
-  /// Apply keyword filter locally (since API doesn't support keyword search)
-  List<Map<String, dynamic>> _applyKeywordFilter(List<Map<String, dynamic>> services) {
-    if (_currentKeyword.isEmpty) return services;
-
-    final term = _currentKeyword.toLowerCase();
+  /// Apply keyword and location filter locally
+  List<Map<String, dynamic>> _applyFilters(List<Map<String, dynamic>> services) {
     return services.where((service) {
-      final name = (service['name'] ?? '').toString().toLowerCase();
-      final desc = (service['description'] ?? '').toString().toLowerCase();
-      final subCatName = (service['subCategory']?['name'] ?? '').toString().toLowerCase();
-      final subCatDesc = (service['subCategory']?['description'] ?? '').toString().toLowerCase();
+      final keywordMatch = _currentKeyword.isEmpty
+          ? true
+          : (service['name'] ?? '').toString().toLowerCase().contains(_currentKeyword.toLowerCase()) ||
+          (service['description'] ?? '').toString().toLowerCase().contains(_currentKeyword.toLowerCase());
 
-      return name.contains(term) ||
-          desc.contains(term) ||
-          subCatName.contains(term) ||
-          subCatDesc.contains(term);
+      final locationMatch = _currentLocation.isEmpty
+          ? true
+          : (service['location'] ?? service['region'] ?? '').toString().toLowerCase() ==
+          _currentLocation.toLowerCase();
+
+      return keywordMatch && locationMatch;
     }).toList();
   }
 
@@ -196,28 +202,22 @@ class HomeSearchController extends GetxController {
     }).toList();
   }
 
-  /// NEW: Search with category and subcategory IDs
+  /// Search with keyword, category, subcategory, and location
   void searchServices({
     String keyword = '',
     String? categoryId,
     String? subCategoryId,
+    String? location,
   }) {
-    debugPrint('🔍 Search called with:');
-    debugPrint('  - Keyword: $keyword');
-    debugPrint('  - CategoryID: $categoryId');
-    debugPrint('  - SubCategoryID: $subCategoryId');
+    debugPrint('🔍 Search called with: keyword=$keyword, categoryId=$categoryId, subCategoryId=$subCategoryId, location=$location');
 
-    // Reset to page 1 for new search
     _currentPage.value = 1;
     _currentKeyword = keyword;
+    _currentCategoryId = categoryId ?? '';
+    _currentSubCategoryId = subCategoryId ?? '';
+    _currentLocation = location ?? '';
 
-    // Fetch with new filters
-    fetchServices(
-      refresh: true,
-      categoryId: categoryId ?? '',
-      subCategoryId: subCategoryId ?? '',
-      keyword: keyword,
-    );
+    fetchServices(refresh: true);
   }
 
   void clearFilters() {
@@ -225,6 +225,7 @@ class HomeSearchController extends GetxController {
     _currentCategoryId = '';
     _currentSubCategoryId = '';
     _currentKeyword = '';
+    _currentLocation = '';
 
     fetchServices(refresh: true);
     update();

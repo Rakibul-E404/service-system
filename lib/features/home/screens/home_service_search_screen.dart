@@ -8,7 +8,6 @@ import '../../../core/config/app_colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../provider/controllers/category_controller.dart';
 import '../controllers/home_search_controller.dart';
-import 'all_service_screen.dart';
 import 'featured_providers_section.dart';
 import 'filter_bottom_sheet.dart';
 
@@ -28,11 +27,14 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
   String _selectedSubCategory = 'All Subcategories';
   String _selectedLocation = 'All Locations';
 
-  // Store IDs separately
   String? _selectedCategoryId;
   String? _selectedSubCategoryId;
 
   bool _initialSearchPerformed = false;
+
+  // Pagination state
+  bool _showAllServices = false;
+  final int _initialItemsPerPage = 4; // Show 4 items initially (matching your grid)
 
   final Map<String, List<String>> _categoryToSubCategories = <String, List<String>>{
     'All Categories': <String>['All Subcategories'],
@@ -60,6 +62,7 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
   void initState() {
     super.initState();
     _handleInitialArguments();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -67,6 +70,15 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
     _searchTEController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_showAllServices && !controller.isLoadingMore) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        controller.loadMoreServices();
+      }
+    }
   }
 
   Future<void> _refreshData() async {
@@ -78,6 +90,7 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
       _selectedCategoryId = null;
       _selectedSubCategoryId = null;
       _initialSearchPerformed = false;
+      _showAllServices = false;
     });
 
     await controller.fetchServices(refresh: true);
@@ -87,105 +100,65 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
   void _handleInitialArguments() {
     final args = Get.arguments;
 
-    if (args == null) {
-      debugPrint('📥 No arguments received');
-      return;
-    }
+    if (args == null) return;
 
     final String? initialCategory = args['initialCategory'] as String?;
     final String? initialCategoryId = args['initialCategoryId'] as String?;
     final bool fromBanner = args['fromBanner'] as bool? ?? false;
 
-    debugPrint('📥 Received Arguments:');
-    debugPrint('   - Category: $initialCategory');
-    debugPrint('   - Category ID: $initialCategoryId');
-    debugPrint('   - From Banner: $fromBanner');
+    if (initialCategory != null &&
+        initialCategory.isNotEmpty &&
+        _categoryToSubCategories.containsKey(initialCategory)) {
+      setState(() {
+        _selectedCategory = initialCategory;
+        _selectedCategoryId = initialCategoryId;
+        _selectedSubCategory = 'All Subcategories';
+        _selectedSubCategoryId = null;
+      });
 
-    if (initialCategory != null && initialCategory.isNotEmpty) {
-      // Validate if category exists in our map
-      if (_categoryToSubCategories.containsKey(initialCategory)) {
-        setState(() {
-          _selectedCategory = initialCategory;
-          _selectedCategoryId = initialCategoryId;
-          _selectedSubCategory = 'All Subcategories';
-          _selectedSubCategoryId = null;
-        });
-
-        // Set search text
-        if (fromBanner) {
-          _searchTEController.text = initialCategory;
-        }
-
-        debugPrint('✅ Filter State Updated:');
-        debugPrint('   - Selected Category: $_selectedCategory');
-        debugPrint('   - Selected Category ID: $_selectedCategoryId');
-        debugPrint('   - Search Text: ${_searchTEController.text}');
-
-        // Perform search after delay
-        Future.delayed(const Duration(milliseconds: 300), () {
-          _performSearch();
-        });
-
-        _initialSearchPerformed = true;
-      } else {
-        debugPrint('⚠️ Category "$initialCategory" not found in map');
-        debugPrint('   Available: ${_categoryToSubCategories.keys.toList()}');
-
-        Get.snackbar(
-          'Category Not Available',
-          'The category "$initialCategory" is not available',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
+      if (fromBanner) {
+        _searchTEController.text = initialCategory;
       }
-    } else {
-      debugPrint('⚠️ Initial category is null or empty');
+
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _performSearch();
+      });
+
+      _initialSearchPerformed = true;
     }
   }
 
   void _performSearch() {
     final String keyword = _searchTEController.text.trim();
+    final String location = _selectedLocation != 'All Locations' ? _selectedLocation : '';
 
-    // Get category ID - prefer stored ID, fallback to lookup
     String? categoryId = _selectedCategoryId;
 
     if (categoryId == null && _selectedCategory != 'All Categories') {
       final CategoryController catController = Get.find<CategoryController>();
       categoryId = catController.getCategoryIdByName(_selectedCategory);
-
-      if (categoryId != null) {
-        _selectedCategoryId = categoryId;
-      }
+      _selectedCategoryId = categoryId;
     }
 
-    debugPrint('🔍 Performing Search:');
-    debugPrint('   - Keyword: "$keyword"');
-    debugPrint('   - Category: $_selectedCategory');
-    debugPrint('   - Category ID: $categoryId');
-    debugPrint('   - SubCategory: $_selectedSubCategory');
-    debugPrint('   - SubCategory ID: $_selectedSubCategoryId');
+    String? subCategoryId = _selectedSubCategoryId;
+
+    debugPrint('🔍 Performing Search: keyword=$keyword, categoryId=$categoryId, subCategoryId=$subCategoryId, location=$location');
 
     setState(() {
       _initialSearchPerformed = true;
+      _showAllServices = false; // Reset to show limited results on new search
     });
 
     controller.searchServices(
       keyword: keyword,
       categoryId: categoryId,
-      subCategoryId: _selectedSubCategoryId,
+      subCategoryId: subCategoryId,
+      location: location,
     );
   }
 
-  List<dynamic> get _allServices {
-    return controller.filteredServices;
-  }
-
-  void _navigateToAllServices() {
-    final List<dynamic> allServices = _allServices;
-
-    if (allServices.isEmpty) {
+  void _toggleShowAllServices() {
+    if (controller.filteredServices.isEmpty) {
       Get.snackbar(
         'No Services',
         'There are no services to show.',
@@ -195,11 +168,15 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
       return;
     }
 
-    Get.to(
-          () => AllServicesScreen(
-        services: List<Map<String, dynamic>>.from(allServices),
-      ),
-      transition: Transition.rightToLeft,
+    setState(() {
+      _showAllServices = !_showAllServices;
+    });
+
+    // Scroll to top when toggling view
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
     );
   }
 
@@ -212,6 +189,7 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
       _selectedCategoryId = null;
       _selectedSubCategoryId = null;
       _initialSearchPerformed = false;
+      _showAllServices = false;
     });
     controller.clearFilters();
     Get.rawSnackbar(
@@ -222,10 +200,6 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
   }
 
   void _showFilterBottomSheet() {
-    debugPrint('🎛️ Opening Filter Bottom Sheet');
-    debugPrint('   Current Category: $_selectedCategory');
-    debugPrint('   Current SubCategory: $_selectedSubCategory');
-
     FilterBottomSheet.show(
       context: context,
       selectedCategory: _selectedCategory,
@@ -234,12 +208,6 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
       categoryToSubCategories: _categoryToSubCategories,
       locationOptions: _locationOptions,
       onApply: (String category, String subCategory, String location) {
-        debugPrint('🎯 Filter Apply Called:');
-        debugPrint('   - Category: $category');
-        debugPrint('   - SubCategory: $subCategory');
-        debugPrint('   - Location: $location');
-
-        // Get CategoryController to lookup IDs
         final CategoryController catController = Get.find<CategoryController>();
 
         setState(() {
@@ -247,21 +215,12 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
           _selectedSubCategory = subCategory;
           _selectedLocation = location;
 
-          // Update category ID
-          if (category != 'All Categories') {
-            _selectedCategoryId = catController.getCategoryIdByName(category);
-            debugPrint('   - Category ID: $_selectedCategoryId');
-          } else {
-            _selectedCategoryId = null;
-          }
+          _selectedCategoryId =
+          category != 'All Categories' ? catController.getCategoryIdByName(category) : null;
+          _selectedSubCategoryId = subCategory != 'All Subcategories' ? catController.getCategoryIdByName(subCategory) : null;
 
-          // Update search text
           if (category != 'All Categories') {
-            if (subCategory != 'All Subcategories') {
-              _searchTEController.text = subCategory;
-            } else {
-              _searchTEController.text = category;
-            }
+            _searchTEController.text = category;
           } else {
             _searchTEController.text = '';
           }
@@ -292,27 +251,64 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
+              // Search Input Section
               SliverToBoxAdapter(
                 child: SearchInputSection(
                   searchController: _searchTEController,
                   onSearch: _performSearch,
                 ),
               ),
+
+              // Featured Providers Section
               const SliverToBoxAdapter(child: FeaturedProvidersSection()),
+
+              // Search Results Header with See All/Show Less button
               SliverToBoxAdapter(
                 child: SearchResultsHeader(
                   searchTEController: _searchTEController,
                   initialSearchPerformed: _initialSearchPerformed,
                   controller: controller,
-                  onSeeAll: _navigateToAllServices,
+                  showAllServices: _showAllServices,
+                  onSeeAll: _toggleShowAllServices,
+                  initialItemsPerPage: _initialItemsPerPage,
                 ),
               ),
+
+              // Search Results Grid
               SearchResultsGrid(
                 searchTEController: _searchTEController,
                 initialSearchPerformed: _initialSearchPerformed,
                 controller: controller,
-                onSeeAll: _navigateToAllServices,
+                showAllServices: _showAllServices,
+                initialItemsPerPage: _initialItemsPerPage,
               ),
+
+              // Loading indicator for pagination
+              if (_showAllServices && controller.isLoadingMore)
+                const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+
+              // End of list indicator
+              if (_showAllServices &&  controller.filteredServices.isNotEmpty)
+                const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'No more services to load',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Advertisements Section
               const SliverToBoxAdapter(
                 child: Column(
                   children: [
@@ -321,6 +317,8 @@ class _HomeServiceSearchScreenState extends State<HomeServiceSearchScreen> {
                   ],
                 ),
               ),
+
+              // Bottom Spacing
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
           ),

@@ -163,3 +163,7 @@ class CategoryController extends GetxController {
     await fetchBanners();
   }
 }
+
+
+
+
