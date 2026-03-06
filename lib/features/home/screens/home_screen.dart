@@ -25,8 +25,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Initialize controllers properly (only once)
-    final ProfileController profileController =
-    Get.put(ProfileController(), permanent: true);
+    final ProfileController profileController = Get.put(ProfileController(), permanent: true);
     final HomeController controller = Get.put(HomeController());
     final CategoryController catController = Get.put(CategoryController());
     final TimeController timeController = Get.put(TimeController());
@@ -34,20 +33,18 @@ class HomeScreen extends StatelessWidget {
     // Text controllers for inquiry sheet
     final TextEditingController serviceNameTEController = TextEditingController();
     final TextEditingController locationTEController = TextEditingController();
-    final TextEditingController additionalNoteTEController =
-    TextEditingController();
+    final TextEditingController additionalNoteTEController = TextEditingController();
     final TextEditingController dateTEController = TextEditingController();
 
-    final GlobalKey<InquiryBottomSheetState> inquirySheetKey =
-    GlobalKey<InquiryBottomSheetState>();
+    final GlobalKey<InquiryBottomSheetState> inquirySheetKey = GlobalKey<InquiryBottomSheetState>();
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
           // Refresh all reactive data
           await profileController.refreshProfile(); // <-- Top bar
-          await controller.refreshAll();            // <-- Categories, etc
-          await catController.refreshBanners();     // <-- Banners
+          await controller.refreshAll(); // <-- Categories, etc
+          await catController.refreshBanners(); // <-- Banners
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -59,15 +56,10 @@ class HomeScreen extends StatelessWidget {
 
               /// ================= BANNER SECTION =================
               Obx(() {
-                if (catController.isLoadingBanners.value &&
-                    catController.banners.isEmpty) {
+                if (catController.isLoadingBanners.value && catController.banners.isEmpty) {
                   return const SizedBox(
                     height: 200,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
+                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
                   );
                 }
 
@@ -114,10 +106,8 @@ class HomeScreen extends StatelessWidget {
                   imgList: bannerImages,
                   height: 200,
                   onImageTap: (int index) {
-                    final String? categoryName =
-                    catController.getCategoryNameByBannerIndex(index);
-                    final String? categoryId =
-                    catController.getCategoryIdByBannerIndex(index);
+                    final String? categoryName = catController.getCategoryNameByBannerIndex(index);
+                    final String? categoryId = catController.getCategoryIdByBannerIndex(index);
 
                     debugPrint('🎯 Banner tapped - Index: $index');
                     debugPrint('   Category Name: $categoryName');
@@ -138,23 +128,24 @@ class HomeScreen extends StatelessWidget {
                   },
                 );
               }),
-              // ================= END BANNER =================
 
+              // ================= END BANNER =================
               const SizedBox(height: AppSizes.xl),
 
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.screenHorizontal),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenHorizontal),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Categories',
-                            style: context.txtTheme.headlineLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            )),
+                        Text(
+                          'Categories',
+                          style: context.txtTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -174,23 +165,22 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.error_outline,
-                                    size: 32, color: Colors.grey[400]),
+                                Icon(Icons.error_outline, size: 32, color: Colors.grey[400]),
                                 const SizedBox(height: 8),
                                 Text(
                                   controller.errorMessage.value,
-                                  style: const TextStyle(
-                                      color: Colors.red, fontSize: 14),
+                                  style: const TextStyle(color: Colors.red, fontSize: 14),
                                 ),
                                 const SizedBox(height: 8),
                                 ElevatedButton(
                                   onPressed: () => controller.retry(),
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 8),
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
                                   ),
-                                  child: const Text('Retry',
-                                      style: TextStyle(fontSize: 14)),
+                                  child: const Text('Retry', style: TextStyle(fontSize: 14)),
                                 ),
                               ],
                             ),
@@ -202,8 +192,11 @@ class HomeScreen extends StatelessWidget {
                         return const SizedBox(
                           height: 150,
                           child: Center(
-                              child: Text('No categories available',
-                                  style: TextStyle(color: AppColors.greyColor))),
+                            child: Text(
+                              'No categories available',
+                              style: TextStyle(color: AppColors.greyColor),
+                            ),
+                          ),
                         );
                       }
 
@@ -223,28 +216,24 @@ class HomeScreen extends StatelessWidget {
                               },
                               itemBuilder: (BuildContext context, int pageIndex) {
                                 final int startIndex = pageIndex * itemsPerPage;
-                                final int endIndex =
-                                min(startIndex + itemsPerPage, totalItems);
+                                final int endIndex = min(startIndex + itemsPerPage, totalItems);
 
                                 return Container(
                                   margin: const EdgeInsets.symmetric(horizontal: 2),
                                   child: GridView.builder(
-                                    physics:
-                                    const NeverScrollableScrollPhysics(),
+                                    physics: const NeverScrollableScrollPhysics(),
                                     padding: EdgeInsets.zero,
-                                    gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 3,
                                       crossAxisSpacing: 6,
                                       mainAxisSpacing: 6,
                                       childAspectRatio: 0.9,
                                     ),
                                     itemCount: endIndex - startIndex,
-                                    itemBuilder:
-                                        (BuildContext context, int gridIndex) {
+                                    itemBuilder: (BuildContext context, int gridIndex) {
                                       final int actualIndex = startIndex + gridIndex;
                                       final CategoryModel category =
-                                      controller.categories[actualIndex];
+                                          controller.categories[actualIndex];
 
                                       return ReusableSmallCard(
                                         imagePath: category.fullImageUrl,
@@ -275,39 +264,29 @@ class HomeScreen extends StatelessWidget {
                               margin: const EdgeInsets.only(top: 2),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: List<Widget>.generate(
-                                  totalPages,
-                                      (int index) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        controller.pageController.animateToPage(
-                                          index,
-                                          duration:
-                                          const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
-                                      },
-                                      child: AnimatedContainer(
-                                        duration:
-                                        const Duration(milliseconds: 200),
-                                        width: controller.currentPage.value == index
-                                            ? 24
-                                            : 6,
-                                        height: 6,
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 3),
-                                        decoration: BoxDecoration(
-                                          color: controller.currentPage.value ==
-                                              index
-                                              ? AppColors.primaryColor
-                                              : AppColors.greyColor
-                                              .withOpacity(0.3),
-                                          borderRadius: BorderRadius.circular(3),
-                                        ),
+                                children: List<Widget>.generate(totalPages, (int index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      controller.pageController.animateToPage(
+                                        index,
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      width: controller.currentPage.value == index ? 24 : 6,
+                                      height: 6,
+                                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                                      decoration: BoxDecoration(
+                                        color: controller.currentPage.value == index
+                                            ? AppColors.primaryColor
+                                            : AppColors.greyColor.withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(3),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  );
+                                }),
                               ),
                             );
                           }),
@@ -320,15 +299,10 @@ class HomeScreen extends StatelessWidget {
                     // ================= Inquiry Section =================
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius:
-                        BorderRadius.circular(AppSizes.borderRadiusMd),
+                        borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                         color: AppColors.whiteColor,
                         boxShadow: const <BoxShadow>[
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          ),
+                          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
                         ],
                       ),
                       child: Padding(
@@ -341,13 +315,11 @@ class HomeScreen extends StatelessWidget {
                                 const SizedBox(width: AppSizes.md),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
                                       Text(
                                         "Looking for immediate expert help?",
-                                        style: context.txtTheme.labelLarge
-                                            ?.copyWith(
+                                        style: context.txtTheme.labelLarge?.copyWith(
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.blackColor,
                                         ),
@@ -355,10 +327,7 @@ class HomeScreen extends StatelessWidget {
                                       const SizedBox(height: 4),
                                       const Text(
                                         "Share more details and let businesses get in touch with you.",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.greyColor,
-                                        ),
+                                        style: TextStyle(fontSize: 14, color: AppColors.greyColor),
                                       ),
                                     ],
                                   ),
@@ -384,11 +353,9 @@ class HomeScreen extends StatelessWidget {
                                     dateTEController: dateTEController,
                                     timeController: timeController,
                                     locationTEController: locationTEController,
-                                    additionalNoteTEController:
-                                    additionalNoteTEController,
+                                    additionalNoteTEController: additionalNoteTEController,
                                     onSubmitSuccess: () {
-                                      debugPrint(
-                                          '✅ Inquiry submitted successfully !');
+                                      debugPrint('✅ Inquiry submitted successfully !');
                                     },
                                   ),
                                 );

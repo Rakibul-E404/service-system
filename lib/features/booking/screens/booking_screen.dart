@@ -91,7 +91,7 @@ class BookingScreen extends StatelessWidget {
                     Tab(text: "Inquiry"),///Quote
                     Tab(text: "Active Job"),
                     Tab(text: "Ongoing Job"),
-                    Tab(text: "Past Job"),
+                    Tab(text: "Completed Job"),///past
                   ],
                 ),
 
