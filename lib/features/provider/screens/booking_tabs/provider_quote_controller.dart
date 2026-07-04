@@ -129,7 +129,8 @@ class ProviderQuoteController extends GetxController {
       processingIds.add(bookingId);
 
       final token = await _getAuthToken();
-      final url = Uri.parse('https://d7001.sobhoy.com/api/v1/service-inquiry/$bookingId/accept');
+      // final url = Uri.parse('https://d7001.sobhoy.com/api/v1/service-inquiry/$bookingId/accept');
+      final url = Uri.parse('https://5003.dipudebnath.tech/api/v1/service-inquiry/$bookingId/accept');
 
       final response = await http.post(
         url,

@@ -1,11 +1,19 @@
 class AppUrl {
   AppUrl._();
 
-  static const String baseUrl = 'https://d7001.sobhoy.com/api/v1';
-  static const String baseUrlV1 = 'https://d7001.sobhoy.com';
+  // static const String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  // static const String baseUrl = 'https://dipu5003.sobhoy.com/api/v1';
+  static const String baseUrl = 'https://5003.dipudebnath.tech/api/v1';
+  // static const String baseUrlV1 = 'https://d7001.sobhoy.com';
+  // static const String baseUrlV1 = 'https://dipu5003.sobhoy.com';
+  static const String baseUrlV1 = 'https://5003.dipudebnath.tech';
   static const String version1 = 'api/v1';
-  static const String imageBaseUrl = 'https://d7001.sobhoy.com';
-  static const String socketBaseUrl = 'https://d7002.sobhoy.com';
+  // static const String imageBaseUrl = 'https://d7001.sobhoy.com';
+  // static const String imageBaseUrl = 'https://dipu5003.sobhoy.com';
+  static const String imageBaseUrl = 'https://5003.dipudebnath.tech';
+  // static const String socketBaseUrl = 'https://d7002.sobhoy.com';
+  // static const String socketBaseUrl = 'https://dipu4003.sobhoy.com';
+  static const String socketBaseUrl = 'https://4003.dipudebnath.tech';
 
   // Auth URLs
   static const String signUpUrl = '$baseUrl/auth/signup';
@@ -25,7 +33,6 @@ class AppUrl {
   static const String getAllAdvertisement = '$baseUrlV1/$version1/adds/all';
 
   // nurujjaman
-
   static const String getBusinessProfile = '$baseUrl/business_profile/self';
   static const String featuredProviders = '$baseUrlV1/$version1/business_profile/featured-providers';
   static const String putAvailabilityPart = '$baseUrl/business_profile/ability';

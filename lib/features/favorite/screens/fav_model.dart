@@ -111,7 +111,8 @@ class ProviderService {
     if (image == null || image!.isEmpty) {
       return 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop';
     }
-    return 'https://d7001.sobhoy.com/$image';
+    // return 'https://d7001.sobhoy.com/$image';
+    return 'https://5003.dipudebnath.tech/$image';
   }
 }
 

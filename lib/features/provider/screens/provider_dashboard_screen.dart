@@ -98,15 +98,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           }),
                           const SizedBox(height: 30),
 
-                          // --- ANALYTICS SECTION ---
-                          _buildSectionHeader('Performance Insight', icon: Icons.analytics_outlined),
-                          const SizedBox(height: 12),
-
-                          _buildChartContainer(
-                            // title: "Ad Performance Metrics",
-                            subtitle: "Comparison of Impressions (Blue) and Clicks (Orange)",
-                            chart: LineChart(_multiLineChartData()), // Call the new multi-line method
-                          ),
+                          // // --- ANALYTICS SECTION ---
+                          // _buildSectionHeader('Performance Insight', icon: Icons.analytics_outlined),
+                          // const SizedBox(height: 12),
+                          //
+                          // _buildChartContainer(
+                          //   // title: "Ad Performance Metrics",
+                          //   subtitle: "Comparison of Impressions (Blue) and Clicks (Orange)",
+                          //   chart: LineChart(_multiLineChartData()), // Call the new multi-line method
+                          // ),
 
                           const SizedBox(height: 40),
 

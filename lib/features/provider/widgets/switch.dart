@@ -23,7 +23,8 @@ class ReminderController extends GetxController {
 
     try {
       final response = await http.put(
-        Uri.parse('https://d7001.sobhoy.com/api/v1/business_profile/$providerId/availability'),
+        // Uri.parse('https://d7001.sobhoy.com/api/v1/business_profile/$providerId/availability'),
+        Uri.parse('https://5003.dipudebnath.tech/api/v1/business_profile/$providerId/availability'),
         headers: {
           'Authorization': 'Bearer $providerAccessToken',
           'Content-Type': 'application/json',

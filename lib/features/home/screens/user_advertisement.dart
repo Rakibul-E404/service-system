@@ -41,7 +41,8 @@ class Advertisement {
     if (image.isEmpty) return '';
     if (image.startsWith('http')) return image;
     // ✅ Clean URL — no extra spaces!
-    return 'https://d7001.sobhoy.com/$image';
+    // return 'https://d7001.sobhoy.com/$image';
+    return 'https://5003.dipudebnath.tech/$image';
   }
 }
 

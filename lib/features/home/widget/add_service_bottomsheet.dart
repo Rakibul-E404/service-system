@@ -25,7 +25,8 @@ class AddServiceCategoryController extends GetxController {
   var subCategories = <Map<String, dynamic>>[].obs;
   var errorMessage = ''.obs;
 
-  final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  // final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  final String baseUrl = 'https://5003.dipudebnath.tech/api/v1';
 
   var selectedCategoryId = ''.obs;
   var selectedCategoryName = ''.obs;

@@ -13,7 +13,8 @@ import '../../../core/config/app_sizes.dart';
 
 
 class ReportController extends GetxController {
-  final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  // final String baseUrl = 'https://d7001.sobhoy.com/api/v1';
+  final String baseUrl = 'https://5003.dipudebnath.tech/api/v1';
   var isLoading = false.obs;
   var reportedUserId = ''.obs; // This is the author ID we need to pass as reportBy
   var userName = ''.obs;

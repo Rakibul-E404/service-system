@@ -440,7 +440,8 @@ class SubscriptionController extends GetxController {
     try {
       final accessToken = await _sharedPrefService.getAccessToken();
       final response = await _networkCaller.getRequest(
-        'https://d7001.sobhoy.com/api/v1/subscription/',
+        // 'https://d7001.sobhoy.com/api/v1/subscription/',
+        'https://5003.dipudebnath.tech/api/v1/subscription/',
         headers: {'Authorization': 'Bearer $accessToken'},
       );
 

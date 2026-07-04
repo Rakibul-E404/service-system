@@ -406,7 +406,8 @@ class ReviewController extends GetxController {
       // Make API call using NetworkCaller
       // IMPORTANT: Use BOOKING ID in the URL, not service ID
       final response = await _networkCaller.postRequest(
-        'https://d7001.sobhoy.com/api/v1/review/$bookingId',
+        // 'https://d7001.sobhoy.com/api/v1/review/$bookingId',
+        'https://5003.dipudebnath.tech/api/v1/review/$bookingId',
         body: requestBody,
         headers: headers,
       );

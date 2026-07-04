@@ -119,7 +119,8 @@ class HomeController extends GetxController {
               'title': ad['title']?.toString() ?? 'No Title',
               'description': ad['description']?.toString() ?? 'No Description',
               'image': ad['image'] != null
-                  ? 'https://d7001.sobhoy.com/${ad['image']}'
+                  // ? 'https://d7001.sobhoy.com/${ad['image']}'
+                  ? 'https://5003.dipudebnath.tech/${ad['image']}'
                   : null,
               'profile': ad['profile']?.toString() ?? '',
             };
